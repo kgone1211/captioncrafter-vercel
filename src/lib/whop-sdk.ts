@@ -53,11 +53,13 @@ class WhopSDK {
     
     // Development mode - use test user
     if (process.env.NODE_ENV === 'development' && !whopUserId) {
+      console.log('Development mode: Using test user');
       return { userId: 'test_user_123' };
     }
     
+    // Production mode - require Whop headers
     if (!whopUserId) {
-      throw new Error('No Whop user ID found in headers');
+      throw new Error('No Whop user ID found in headers. Please access this app through Whop with proper authentication.');
     }
     
     return { userId: whopUserId };
