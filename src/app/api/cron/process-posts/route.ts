@@ -1,0 +1,173 @@
+// Vercel Cron job for processing scheduled posts
+
+import { NextRequest, NextResponse } from 'next/server';
+import { Database } from '@/lib/db';
+
+export async function GET(request: NextRequest) {
+  try {
+    // Verify this is a cron request
+    const authHeader = request.headers.get('authorization');
+    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const db = new Database();
+    const duePosts = await db.getDuePosts();
+
+    let processedCount = 0;
+    const results = [];
+
+    for (const post of duePosts) {
+      try {
+        // Send email notification if configured
+        if (post.notify_via === 'Email' && post.email && post.text && post.hashtags) {
+          await sendEmailNotification({
+            id: post.id,
+            email: post.email,
+            platform: post.platform,
+            text: post.text,
+            hashtags: post.hashtags
+          });
+        }
+
+        // Mark post as sent
+        await db.markPostSent(post.id);
+        processedCount++;
+
+        results.push({
+          postId: post.id,
+          status: 'sent',
+          email: post.email
+        });
+
+      } catch (error) {
+        console.error(`Failed to process post ${post.id}:`, error);
+        results.push({
+          postId: post.id,
+          status: 'failed',
+          error: error instanceof Error ? error.message : 'Unknown error'
+        });
+      }
+    }
+
+    return NextResponse.json({
+      message: `Processed ${processedCount} posts`,
+      total: duePosts.length,
+      results
+    });
+
+  } catch (error) {
+    console.error('Cron job error:', error);
+    return NextResponse.json(
+      { error: 'Cron job failed' },
+      { status: 500 }
+    );
+  }
+}
+
+async function sendEmailNotification(post: { id: number; email: string; platform: string; text: string; hashtags: string[] }): Promise<void> {
+  const platformEmoji = {
+    instagram: '📸',
+    twitter: '🐦',
+    tiktok: '🎵'
+  }[post.platform.toLowerCase()] || '📱';
+
+  const htmlBody = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1.0">
+      <title>Caption Crafter - Post Ready</title>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 20px; background-color: #f8fafc; }
+        .container { max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); overflow: hidden; }
+        .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; }
+        .header h1 { margin: 0; font-size: 24px; font-weight: 600; }
+        .content { padding: 30px; }
+        .platform-badge { display: inline-block; background: #e0e7ff; color: #3730a3; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 500; margin-bottom: 20px; }
+        .caption-box { background: #f8fafc; border: 2px solid #e2e8f0; border-radius: 8px; padding: 20px; margin: 20px 0; font-size: 16px; line-height: 1.6; }
+        .hashtags { color: #059669; font-weight: 500; margin-top: 15px; }
+        .copy-button { background: #3b82f6; color: white; padding: 12px 24px; border: none; border-radius: 8px; font-size: 16px; font-weight: 500; cursor: pointer; margin-top: 20px; width: 100%; }
+        .footer { background: #f8fafc; padding: 20px; text-align: center; color: #64748b; font-size: 14px; }
+        .instructions { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0; border-radius: 0 8px 8px 0; }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <div class="header">
+          <h1>${platformEmoji} Caption Crafter</h1>
+          <p style="margin: 10px 0 0 0; opacity: 0.9;">Your scheduled post is ready!</p>
+        </div>
+        
+        <div class="content">
+          <div class="platform-badge">${platformEmoji} ${post.platform.charAt(0).toUpperCase() + post.platform.slice(1)}</div>
+          
+          <h2 style="margin-top: 0; color: #1f2937;">Your Caption:</h2>
+          <div class="caption-box">
+            ${post.text.replace(/\n/g, '<br>')}
+            <div class="hashtags">
+              ${post.hashtags.map(tag => `#${tag}`).join(' ')}
+            </div>
+          </div>
+          
+          <div class="instructions">
+            <strong>📋 Ready to Post:</strong><br>
+            Copy the caption above and paste it into your ${post.platform} post. Don't forget to add your image or video!
+          </div>
+          
+          <button class="copy-button" onclick="navigator.clipboard.writeText('${post.text}\\n\\n${post.hashtags.map(tag => `#${tag}`).join(' ')}')">
+            📋 Copy Caption & Hashtags
+          </button>
+        </div>
+        
+        <div class="footer">
+          <p>Generated by Caption Crafter • AI-Powered Social Media Content</p>
+          <p style="margin: 5px 0 0 0; font-size: 12px;">This is an automated notification. Please do not reply to this email.</p>
+        </div>
+      </div>
+    </body>
+    </html>
+  `;
+
+  const plainTextBody = `
+📱 Caption Crafter - Post Ready for ${post.platform}
+
+Your scheduled post is ready to go!
+
+Platform: ${post.platform}
+Caption: ${post.text}
+
+Hashtags: ${post.hashtags.map(tag => `#${tag}`).join(' ')}
+
+📋 Instructions:
+1. Copy the caption above
+2. Open ${post.platform}
+3. Create a new post
+4. Paste the caption
+5. Add your image/video
+6. Post!
+
+---
+Generated by Caption Crafter
+AI-Powered Social Media Content
+  `;
+
+  // This would integrate with your email service
+  // For now, we'll just log the notification
+  console.log(`📧 Enhanced email notification for post ${post.id}:`, {
+    to: post.email,
+    subject: `📱 Caption Crafter: Post Ready for ${post.platform}`,
+    htmlBody,
+    plainTextBody,
+    platform: post.platform,
+    captionLength: post.text.length,
+    hashtagCount: post.hashtags.length
+  });
+
+  // In a real implementation, you would:
+  // 1. Use SendGrid, Resend, or similar service
+  // 2. Send the actual email with both HTML and plain text
+  // 3. Handle errors appropriately
+  // 4. Track email delivery and open rates
+}

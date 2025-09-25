@@ -1,0 +1,57 @@
+{
+  "name": "Caption Crafter",
+  "description": "AI-powered social media caption generator with scheduling and content calendar",
+  "version": "1.0.0",
+  "author": "Caption Crafter Team",
+  "app_id": "app_q7Lh5ySKHnL4us",
+  "company_id": "biz_0iRabAN0PuLJni",
+  "agent_user_id": "user_gCaSpxjHUnvqn",
+  "permissions": [
+    "read:users",
+    "read:subscriptions"
+  ],
+  "scopes": [
+    "user:read",
+    "subscription:read"
+  ],
+  "webhook_endpoints": [],
+  "redirect_uris": [
+    "http://localhost:3007/whop",
+    "https://your-domain.vercel.app/whop"
+  ],
+  "iframe_url": "http://localhost:3007/whop",
+  "settings": {
+    "theme": "light",
+    "width": "100%",
+    "height": "100vh"
+  },
+  "features": [
+    "ai_caption_generation",
+    "content_scheduling",
+    "multi_platform_support",
+    "hashtag_optimization",
+    "content_calendar"
+  ],
+  "supported_platforms": [
+    "instagram",
+    "twitter",
+    "tiktok"
+  ],
+  "pricing_tiers": [
+    {
+      "name": "Free",
+      "caption_limit": 50,
+      "scheduled_posts": 10
+    },
+    {
+      "name": "Pro",
+      "caption_limit": 500,
+      "scheduled_posts": 100
+    },
+    {
+      "name": "Enterprise",
+      "caption_limit": -1,
+      "scheduled_posts": -1
+    }
+  ]
+}

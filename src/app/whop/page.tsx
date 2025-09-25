@@ -1,19 +1,27 @@
 'use client';
 
-import { useState } from 'react';
-import { Target, Calendar, BookOpen, User } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Target, Calendar, BookOpen, User, Loader2 } from 'lucide-react';
 import CaptionGenerator from '@/components/CaptionGenerator';
 import ContentCalendar from '@/components/ContentCalendar';
 import CaptionLibrary from '@/components/CaptionLibrary';
-import UserLogin from '@/components/UserLogin';
 import NotificationToast, { useNotifications } from '@/components/NotificationToast';
 import { UserStats } from '@/types';
 
-export default function Home() {
+interface WhopUser {
+  id: string;
+  email: string;
+  company_id: string;
+  subscription_status: 'active' | 'inactive' | 'cancelled';
+}
+
+export default function WhopPage() {
   const [activeTab, setActiveTab] = useState<'generate' | 'calendar' | 'library'>('generate');
   const [user, setUser] = useState<{ id: number; email: string } | null>(null);
+  const [whopUser, setWhopUser] = useState<WhopUser | null>(null);
   const [stats, setStats] = useState<UserStats | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const { notifications, removeNotification, showSuccess, showError } = useNotifications();
 
   const tabs = [
@@ -22,26 +30,61 @@ export default function Home() {
     { id: 'library', label: 'Library', icon: BookOpen },
   ];
 
-  const handleLogin = async (email: string) => {
-    setLoading(true);
+  useEffect(() => {
+    initializeWhopUser();
+  }, []);
+
+  const initializeWhopUser = async () => {
     try {
-      const response = await fetch('/api/users', {
+      setLoading(true);
+      
+      // Get Whop user ID from URL parameters or Whop context
+      const urlParams = new URLSearchParams(window.location.search);
+      let whopUserId = urlParams.get('userId') || urlParams.get('whop_user_id');
+      
+      // Development mode - use test user if no user ID provided
+      if (!whopUserId && process.env.NODE_ENV === 'development') {
+        whopUserId = 'test_user_123';
+        console.log('Development mode: Using test user ID');
+      }
+      
+      if (!whopUserId) {
+        setError('No Whop user ID provided');
+        setLoading(false);
+        return;
+      }
+
+      // Validate user with Whop API
+      const response = await fetch(`/api/whop/auth?userId=${whopUserId}`);
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        setError(errorData.error || 'Failed to authenticate with Whop');
+        setLoading(false);
+        return;
+      }
+
+      const { user: whopUserData } = await response.json();
+      setWhopUser(whopUserData);
+
+      // Create or get local user
+      const localUserResponse = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: whopUserData.email }),
       });
 
-      if (response.ok) {
-        const { userId } = await response.json();
-        setUser({ id: userId, email });
+      if (localUserResponse.ok) {
+        const { userId } = await localUserResponse.json();
+        setUser({ id: userId, email: whopUserData.email });
         await loadUserStats(userId);
-        showSuccess('Welcome back!', `Logged in as ${email}`);
-      } else {
-        showError('Login failed', 'Please try again with a valid email address');
+        showSuccess('Welcome!', `Logged in as ${whopUserData.email}`);
       }
+
     } catch (error) {
-      console.error('Login error:', error);
-      showError('Connection error', 'Unable to connect to the server');
+      console.error('Whop initialization error:', error);
+      setError('Failed to initialize Whop integration');
+      showError('Connection Error', 'Unable to connect to Whop');
     } finally {
       setLoading(false);
     }
@@ -61,30 +104,49 @@ export default function Home() {
 
   const handleLogout = () => {
     setUser(null);
+    setWhopUser(null);
     setStats(null);
+    setError(null);
   };
 
-  if (!user) {
+  if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center">
-        <div className="max-w-md w-full mx-4">
-          <div className="bg-white rounded-2xl shadow-xl p-8">
-            <div className="text-center mb-8">
-              <div className="w-16 h-16 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <Target className="h-8 w-8 text-white" />
-              </div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Caption Crafter</h1>
-              <p className="text-gray-600">AI-powered social media caption generator</p>
-            </div>
-            
-            <UserLogin onLogin={handleLogin} loading={loading} />
-            
-            <div className="mt-8 text-center">
-              <p className="text-sm text-gray-500">
-                No password required • Just enter your email to get started
-              </p>
-            </div>
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-500" />
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Connecting to Whop...</h2>
+          <p className="text-gray-600">Please wait while we authenticate your account.</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center max-w-md mx-4">
+          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <User className="h-8 w-8 text-red-500" />
           </div>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Authentication Error</h2>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user || !whopUser) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">No User Found</h2>
+          <p className="text-gray-600">Please try refreshing the page.</p>
         </div>
       </div>
     );
@@ -105,7 +167,7 @@ export default function Home() {
                 <p className="text-sm text-gray-500">Welcome back, {user.email}</p>
               </div>
             </div>
-            
+
             <div className="flex items-center space-x-4">
               {stats && (
                 <div className="hidden md:flex items-center space-x-6 text-sm text-gray-600">
@@ -119,14 +181,11 @@ export default function Home() {
                   </div>
                 </div>
               )}
-              
-              <button
-                onClick={handleLogout}
-                className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                <User className="h-4 w-4" />
-                <span>Logout</span>
-              </button>
+
+              <div className="flex items-center space-x-2">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span className="text-sm text-gray-600">Whop Connected</span>
+              </div>
             </div>
           </div>
         </div>
