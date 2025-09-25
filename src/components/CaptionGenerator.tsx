@@ -128,6 +128,61 @@ export default function CaptionGenerator({ userId, onStatsUpdate }: CaptionGener
     }
   };
 
+  const scheduleCaption = async (caption: CaptionGenerationResponse) => {
+    try {
+      // First save the caption if it hasn't been saved yet
+      const saveResponse = await fetch('/api/captions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          platform: formData.platform,
+          topic: formData.topic,
+          tone: formData.tone,
+          text: caption.caption,
+          hashtags: caption.hashtags,
+          charCount: caption.char_count,
+        }),
+      });
+
+      if (!saveResponse.ok) {
+        alert('Failed to save caption for scheduling');
+        return;
+      }
+
+      const { captionId } = await saveResponse.json();
+
+      // Get scheduling details from user
+      const scheduledAt = prompt('Enter scheduled date and time (YYYY-MM-DD HH:MM):');
+      if (!scheduledAt) return;
+
+      const notifyVia = confirm('Send email notification when post is due?') ? 'Email' : 'None';
+
+      // Schedule the post
+      const scheduleResponse = await fetch('/api/scheduled-posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          captionId,
+          platform: formData.platform,
+          scheduledAt: new Date(scheduledAt).toISOString(),
+          notifyVia,
+        }),
+      });
+
+      if (scheduleResponse.ok) {
+        alert('Caption scheduled successfully!');
+        onStatsUpdate();
+      } else {
+        alert('Failed to schedule caption');
+      }
+    } catch (error) {
+      console.error('Schedule error:', error);
+      alert('Error scheduling caption');
+    }
+  };
+
   const platformConfig = PLATFORM_LIMITS[formData.platform];
 
   return (
@@ -337,7 +392,10 @@ export default function CaptionGenerator({ userId, onStatsUpdate }: CaptionGener
                     <span>Save</span>
                   </button>
                   
-                  <button className="flex items-center space-x-1 px-3 py-1 text-sm text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors">
+                  <button
+                    onClick={() => scheduleCaption(caption)}
+                    className="flex items-center space-x-1 px-3 py-1 text-sm text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors"
+                  >
                     <Calendar className="h-4 w-4" />
                     <span>Schedule</span>
                   </button>

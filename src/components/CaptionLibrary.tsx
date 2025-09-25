@@ -68,6 +68,38 @@ export default function CaptionLibrary({ userId }: CaptionLibraryProps) {
     }
   };
 
+  const scheduleCaption = async (caption: Caption) => {
+    try {
+      // Get scheduling details from user
+      const scheduledAt = prompt('Enter scheduled date and time (YYYY-MM-DD HH:MM):');
+      if (!scheduledAt) return;
+
+      const notifyVia = confirm('Send email notification when post is due?') ? 'Email' : 'None';
+
+      // Schedule the post
+      const scheduleResponse = await fetch('/api/scheduled-posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId,
+          captionId: caption.id,
+          platform: caption.platform,
+          scheduledAt: new Date(scheduledAt).toISOString(),
+          notifyVia,
+        }),
+      });
+
+      if (scheduleResponse.ok) {
+        alert('Caption scheduled successfully!');
+      } else {
+        alert('Failed to schedule caption');
+      }
+    } catch (error) {
+      console.error('Schedule error:', error);
+      alert('Error scheduling caption');
+    }
+  };
+
   const filteredCaptions = captions.filter(caption => {
     const matchesSearch = searchTerm === '' || 
       caption.text.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -240,7 +272,10 @@ export default function CaptionLibrary({ userId }: CaptionLibraryProps) {
                     <span>{caption.is_favorite ? 'Favorited' : 'Favorite'}</span>
                   </button>
                   
-                  <button className="flex items-center space-x-1 px-3 py-1 text-sm text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors">
+                  <button
+                    onClick={() => scheduleCaption(caption)}
+                    className="flex items-center space-x-1 px-3 py-1 text-sm text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors"
+                  >
                     <Calendar className="h-4 w-4" />
                     <span>Schedule</span>
                   </button>
