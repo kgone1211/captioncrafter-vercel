@@ -104,6 +104,11 @@ export default async function Home() {
     console.log('Whop User:', whopUser);
     console.log('Access Pass:', accessResult);
 
+    // accessResult should never be null at this point since we checked hasAccess above
+    if (!accessResult) {
+      throw new Error('Access result is null despite having access');
+    }
+
     return <HomeClientPage whopUser={whopUser} accessPass={accessResult} />;
   } catch (error) {
     console.error('Error loading user:', error);
