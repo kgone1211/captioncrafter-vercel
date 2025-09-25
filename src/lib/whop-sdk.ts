@@ -184,5 +184,4 @@ class WhopSDK {
 // Export singleton instance
 export const whopSdk = new WhopSDK();
 
-// Export types for use in components
-export type { WhopCompany, WhopSubscription };
+// Types are already exported as interfaces above
