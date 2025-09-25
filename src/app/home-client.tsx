@@ -7,13 +7,14 @@ import ContentCalendar from '@/components/ContentCalendar';
 import CaptionLibrary from '@/components/CaptionLibrary';
 import NotificationToast, { useNotifications } from '@/components/NotificationToast';
 import { UserStats } from '@/types';
-import { WhopUser } from '@/lib/whop-sdk';
+import { WhopUser, WhopCompanyAccessResult } from '@/lib/whop-sdk';
 
 interface HomeClientPageProps {
   whopUser: WhopUser;
+  companyAccess: WhopCompanyAccessResult;
 }
 
-export default function HomeClientPage({ whopUser }: HomeClientPageProps) {
+export default function HomeClientPage({ whopUser, companyAccess }: HomeClientPageProps) {
   const [activeTab, setActiveTab] = useState<'generate' | 'calendar' | 'library'>('generate');
   const [user, setUser] = useState<{ id: number; email: string } | null>(null);
   const [stats, setStats] = useState<UserStats | null>(null);
@@ -152,10 +153,12 @@ export default function HomeClientPage({ whopUser }: HomeClientPageProps) {
                 </div>
               )}
               
-              <div className="flex items-center space-x-2">
-                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                <span className="text-sm text-gray-600">Whop Connected</span>
-              </div>
+                     <div className="flex items-center space-x-2">
+                       <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                       <span className="text-sm text-gray-600">
+                         Whop Connected • {companyAccess.role || 'Member'}
+                       </span>
+                     </div>
             </div>
           </div>
         </div>

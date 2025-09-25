@@ -28,6 +28,16 @@ export interface WhopSubscription {
   expires_at?: string;
 }
 
+export interface WhopAccessResult {
+  hasAccess: boolean;
+  accessLevel: 'admin' | 'customer' | 'no_access';
+}
+
+export interface WhopCompanyAccessResult {
+  hasAccess: boolean;
+  role?: 'owner' | 'admin' | 'member';
+}
+
 class WhopSDK {
   private apiKey: string;
   private baseUrl = 'https://api.whop.com/api/v2';
@@ -181,9 +191,146 @@ class WhopSDK {
     const status = await this.getUserSubscriptionStatus(userId);
     return status === 'active';
   }
+
+  /**
+   * Check if user has access to a specific experience
+   */
+  async checkIfUserHasAccessToExperience({ userId, experienceId }: { userId: string; experienceId: string }): Promise<WhopAccessResult> {
+    try {
+      // Test mode for development
+      if (process.env.NODE_ENV === 'development' && userId.startsWith('test_')) {
+        console.log('Development mode: Granting access to experience:', experienceId);
+        return {
+          hasAccess: true,
+          accessLevel: 'customer'
+        };
+      }
+
+      // Check user's subscription status first
+      const subscriptionStatus = await this.getUserSubscriptionStatus(userId);
+      
+      if (subscriptionStatus !== 'active') {
+        return {
+          hasAccess: false,
+          accessLevel: 'no_access'
+        };
+      }
+
+      // In a real implementation, you would check the user's role in the company
+      // For now, we'll assume all active subscribers are customers
+      // You can enhance this by checking company roles via Whop API
+      
+      const response = await fetch(`${this.baseUrl}/users/${userId}/companies`, {
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        return {
+          hasAccess: false,
+          accessLevel: 'no_access'
+        };
+      }
+
+      const companies = await response.json();
+      
+      // Check if user is admin of any company
+      const isAdmin = companies.data?.some((company: any) => 
+        company.role === 'owner' || company.role === 'admin'
+      );
+
+      if (isAdmin) {
+        return {
+          hasAccess: true,
+          accessLevel: 'admin'
+        };
+      }
+
+      // If user has active subscription, they're a customer
+      return {
+        hasAccess: true,
+        accessLevel: 'customer'
+      };
+
+    } catch (error) {
+      console.error('Error checking user access to experience:', error);
+      return {
+        hasAccess: false,
+        accessLevel: 'no_access'
+      };
+    }
+  }
+
+  /**
+   * Check if user has access to a specific company
+   */
+  async checkIfUserHasAccessToCompany({ userId, companyId }: { userId: string; companyId: string }): Promise<WhopCompanyAccessResult> {
+    try {
+      // Test mode for development
+      if (process.env.NODE_ENV === 'development' && userId.startsWith('test_')) {
+        console.log('Development mode: Granting access to company:', companyId);
+        return {
+          hasAccess: true,
+          role: 'admin'
+        };
+      }
+
+      if (!this.apiKey) {
+        throw new Error('Whop API Key is not configured.');
+      }
+
+      // Get user's companies
+      const response = await fetch(`${this.baseUrl}/users/${userId}/companies`, {
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        return {
+          hasAccess: false
+        };
+      }
+
+      const companies = await response.json();
+      
+      // Check if user is a member of the specified company
+      const userCompany = companies.data?.find((company: any) => 
+        company.company_id === companyId || company.id === companyId
+      );
+
+      if (!userCompany) {
+        return {
+          hasAccess: false
+        };
+      }
+
+      return {
+        hasAccess: true,
+        role: userCompany.role || 'member'
+      };
+
+    } catch (error) {
+      console.error('Error checking user access to company:', error);
+      return {
+        hasAccess: false
+      };
+    }
+  }
 }
 
-// Export singleton instance
-export const whopSdk = new WhopSDK();
+// Add access object to the SDK
+class WhopSDKWithAccess extends WhopSDK {
+  access = {
+    checkIfUserHasAccessToExperience: this.checkIfUserHasAccessToExperience.bind(this),
+    checkIfUserHasAccessToCompany: this.checkIfUserHasAccessToCompany.bind(this)
+  };
+}
+
+// Export singleton instance with access methods
+export const whopSdk = new WhopSDKWithAccess();
 
 // Types are already exported as interfaces above
