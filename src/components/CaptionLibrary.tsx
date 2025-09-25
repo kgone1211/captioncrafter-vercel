@@ -70,11 +70,11 @@ export default function CaptionLibrary({ userId }: CaptionLibraryProps) {
 
   const scheduleCaption = async (caption: Caption) => {
     try {
-      // Get scheduling details from user
-      const scheduledAt = prompt('Enter scheduled date and time (YYYY-MM-DD HH:MM):');
-      if (!scheduledAt) return;
+      // Show scheduling modal
+      const schedulingData = await showSchedulingModal();
+      if (!schedulingData) return;
 
-      const notifyVia = confirm('Send email notification when post is due?') ? 'Email' : 'None';
+      const { scheduledAt, notifyVia } = schedulingData;
 
       // Schedule the post
       const scheduleResponse = await fetch('/api/scheduled-posts', {
@@ -84,7 +84,7 @@ export default function CaptionLibrary({ userId }: CaptionLibraryProps) {
           userId,
           captionId: caption.id,
           platform: caption.platform,
-          scheduledAt: new Date(scheduledAt).toISOString(),
+          scheduledAt: scheduledAt.toISOString(),
           notifyVia,
         }),
       });
@@ -98,6 +98,113 @@ export default function CaptionLibrary({ userId }: CaptionLibraryProps) {
       console.error('Schedule error:', error);
       alert('Error scheduling caption');
     }
+  };
+
+  const showSchedulingModal = (): Promise<{ scheduledAt: Date; notifyVia: string } | null> => {
+    return new Promise((resolve) => {
+      // Create modal overlay
+      const overlay = document.createElement('div');
+      overlay.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+      
+      // Create modal content
+      const modal = document.createElement('div');
+      modal.className = 'bg-white rounded-xl shadow-xl p-6 w-full max-w-md mx-4';
+      
+      modal.innerHTML = `
+        <div class="space-y-4">
+          <div class="flex items-center justify-between">
+            <h3 class="text-lg font-semibold text-gray-900">Schedule Caption</h3>
+            <button id="close-modal" class="text-gray-400 hover:text-gray-600">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+              </svg>
+            </button>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Date</label>
+            <input type="date" id="schedule-date" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+          </div>
+          
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-2">Time</label>
+            <input type="time" id="schedule-time" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" required>
+          </div>
+          
+          <div>
+            <label class="flex items-center">
+              <input type="checkbox" id="email-notification" class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded">
+              <span class="ml-2 text-sm text-gray-700">Send email notification when post is due</span>
+            </label>
+          </div>
+          
+          <div class="flex space-x-3 pt-4">
+            <button id="cancel-schedule" class="flex-1 px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors">
+              Cancel
+            </button>
+            <button id="confirm-schedule" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+              Schedule
+            </button>
+          </div>
+        </div>
+      `;
+      
+      overlay.appendChild(modal);
+      document.body.appendChild(overlay);
+      
+      // Set minimum date to today
+      const dateInput = modal.querySelector('#schedule-date') as HTMLInputElement;
+      const today = new Date().toISOString().split('T')[0];
+      dateInput.min = today;
+      dateInput.value = today;
+      
+      // Set default time to 1 hour from now
+      const timeInput = modal.querySelector('#schedule-time') as HTMLInputElement;
+      const now = new Date();
+      now.setHours(now.getHours() + 1);
+      timeInput.value = now.toTimeString().slice(0, 5);
+      
+      // Event handlers
+      const closeModal = () => {
+        document.body.removeChild(overlay);
+        resolve(null);
+      };
+      
+      const confirmSchedule = () => {
+        const date = dateInput.value;
+        const time = timeInput.value;
+        const emailNotification = (modal.querySelector('#email-notification') as HTMLInputElement).checked;
+        
+        if (!date || !time) {
+          alert('Please select both date and time');
+          return;
+        }
+        
+        const scheduledAt = new Date(`${date}T${time}`);
+        
+        // Check if the date is in the future
+        if (scheduledAt <= new Date()) {
+          alert('Please schedule for a future date and time.');
+          return;
+        }
+        
+        document.body.removeChild(overlay);
+        resolve({
+          scheduledAt,
+          notifyVia: emailNotification ? 'Email' : 'None'
+        });
+      };
+      
+      // Add event listeners
+      overlay.querySelector('#close-modal')?.addEventListener('click', closeModal);
+      overlay.querySelector('#cancel-schedule')?.addEventListener('click', closeModal);
+      overlay.querySelector('#confirm-schedule')?.addEventListener('click', confirmSchedule);
+      
+      // Close on overlay click
+      overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) closeModal();
+      });
+    });
   };
 
   const filteredCaptions = captions.filter(caption => {

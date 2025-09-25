@@ -117,6 +117,11 @@ export class Database {
     notifyVia: 'None' | 'Email' = 'None'
   ): Promise<number> {
     try {
+      const caption = captions.find(c => c.id === captionId);
+      if (!caption) {
+        throw new Error('Caption not found');
+      }
+
       const newPost: ScheduledPost = {
         id: nextPostId++,
         user_id: userId,
@@ -125,7 +130,13 @@ export class Database {
         scheduled_at: scheduledAt,
         status: 'SCHEDULED',
         notify_via: notifyVia,
-        created_at: new Date().toISOString()
+        created_at: new Date().toISOString(),
+        caption: caption, // Include caption data
+        email: users.find(u => u.id === userId)?.email,
+        text: caption.text,
+        hashtags: caption.hashtags,
+        topic: caption.topic,
+        tone: caption.tone,
       };
       
       scheduledPosts.push(newPost);

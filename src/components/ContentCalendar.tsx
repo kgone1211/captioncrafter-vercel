@@ -1,14 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Calendar, Clock, Trash2, Edit, Mail } from 'lucide-react';
+import { Calendar, Clock, Trash2, Edit, Mail, RefreshCw } from 'lucide-react';
 import { ScheduledPost } from '@/types';
 
 interface ContentCalendarProps {
   userId: number;
+  onStatsUpdate?: () => void;
 }
 
-export default function ContentCalendar({ userId }: ContentCalendarProps) {
+export default function ContentCalendar({ userId, onStatsUpdate }: ContentCalendarProps) {
   const [posts, setPosts] = useState<ScheduledPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [viewType, setViewType] = useState<'list' | 'week' | 'month'>('list');
@@ -45,10 +46,17 @@ export default function ContentCalendar({ userId }: ContentCalendarProps) {
 
       if (response.ok) {
         setPosts(posts.filter(post => post.id !== postId));
+        onStatsUpdate?.(); // Update stats after deletion
       }
     } catch (error) {
       console.error('Error deleting post:', error);
     }
+  };
+
+  const refreshPosts = async () => {
+    setLoading(true);
+    await loadScheduledPosts();
+    onStatsUpdate?.(); // Update stats after refresh
   };
 
   const formatDate = (dateString: string) => {
@@ -105,7 +113,19 @@ export default function ContentCalendar({ userId }: ContentCalendarProps) {
   return (
     <div className="space-y-6">
       <div className="text-center">
-        <h2 className="text-3xl font-bold text-gray-900 mb-2">Content Calendar</h2>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex-1"></div>
+          <h2 className="text-3xl font-bold text-gray-900">Content Calendar</h2>
+          <div className="flex-1 flex justify-end">
+            <button
+              onClick={refreshPosts}
+              className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
+            >
+              <RefreshCw className="h-4 w-4" />
+              <span>Refresh</span>
+            </button>
+          </div>
+        </div>
         <p className="text-gray-600">Manage your scheduled posts</p>
         {userTimezone && (
           <div className="mt-2 flex items-center justify-center space-x-2 text-sm text-gray-500">
