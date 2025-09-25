@@ -88,6 +88,12 @@ POSTGRES_DATABASE=your_postgres_database_here
 
 # Cron Job Security (Required)
 CRON_SECRET=your_random_secret_string_here
+
+# Whop Integration (Required for Whop deployment)
+WHOP_API_KEY=your_whop_api_key_here
+NEXT_PUBLIC_WHOP_APP_ID=your_app_id
+NEXT_PUBLIC_WHOP_AGENT_USER_ID=your_agent_user_id
+NEXT_PUBLIC_WHOP_COMPANY_ID=your_company_id
 ```
 
 ### Optional Environment Variables
