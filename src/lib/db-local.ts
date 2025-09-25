@@ -4,9 +4,9 @@
 import { Caption, ScheduledPost, UserStats } from '@/types';
 
 // In-memory storage for local development
-let users: Array<{ id: number; email: string; created_at: string }> = [];
-let captions: Array<Caption> = [];
-let scheduledPosts: Array<ScheduledPost> = [];
+const users: Array<{ id: number; email: string; created_at: string }> = [];
+const captions: Array<Caption> = [];
+const scheduledPosts: Array<ScheduledPost> = [];
 let nextUserId = 1;
 let nextCaptionId = 1;
 let nextPostId = 1;

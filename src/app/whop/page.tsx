@@ -32,7 +32,7 @@ export default function WhopPage() {
 
   useEffect(() => {
     initializeWhopUser();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const initializeWhopUser = async () => {
     try {
@@ -102,12 +102,12 @@ export default function WhopPage() {
     }
   };
 
-  const handleLogout = () => {
-    setUser(null);
-    setWhopUser(null);
-    setStats(null);
-    setError(null);
-  };
+  // const handleLogout = () => {
+  //   setUser(null);
+  //   setWhopUser(null);
+  //   setStats(null);
+  //   setError(null);
+  // };
 
   if (loading) {
     return (

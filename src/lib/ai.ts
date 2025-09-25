@@ -267,7 +267,7 @@ Include emojis: ${request.include_emojis}`;
   }
 
   private adjustCaptionLength(template: string, topic: string, targetLength: number, includeEmojis: boolean): string {
-    let caption = template.replace('${topic}', topic);
+        const caption = template.replace('${topic}', topic);
     
     // If caption is already close to target length, return as is
     if (Math.abs(caption.length - targetLength) < 20) {

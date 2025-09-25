@@ -91,15 +91,15 @@ export default function CaptionGenerator({ userId, onStatsUpdate }: CaptionGener
     }
   };
 
-  const copyToClipboard = async (text: string, index: number) => {
-    try {
-      await navigator.clipboard.writeText(text);
-      setCopiedIndex(index);
-      setTimeout(() => setCopiedIndex(null), 2000);
-    } catch (error) {
-      console.error('Copy error:', error);
-    }
-  };
+  // const copyToClipboard = async (text: string, index: number) => {
+  //   try {
+  //     await navigator.clipboard.writeText(text);
+  //     setCopiedIndex(index);
+  //     setTimeout(() => setCopiedIndex(null), 2000);
+  //   } catch (error) {
+  //     console.error('Copy error:', error);
+  //   }
+  // };
 
   const copyCaptionWithHashtags = async (caption: CaptionGenerationResponse, index: number) => {
     try {

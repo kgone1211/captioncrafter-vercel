@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { BookOpen, Star, Search, Filter, Calendar, Copy, Instagram, Twitter, Music, Video, Smartphone, Settings } from 'lucide-react';
+import { BookOpen, Star, Search, Calendar, Copy, Instagram, Twitter, Settings } from 'lucide-react';
 import { Caption } from '@/types';
 
 interface CaptionLibraryProps {
