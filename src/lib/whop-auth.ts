@@ -24,6 +24,13 @@ export async function getWhopAuth(): Promise<WhopAuthResult> {
   const referer = headersList.get('referer');
   const userAgent = headersList.get('user-agent');
   
+  // Log all headers for debugging
+  const allHeaders: Record<string, string> = {};
+  headersList.forEach((value, key) => {
+    allHeaders[key] = value;
+  });
+  
+  console.log('All Headers:', allHeaders);
   console.log('Whop Auth Debug:', {
     authorization: authorization ? 'present' : 'missing',
     whopUserId: whopUserId || 'missing',
@@ -66,7 +73,30 @@ export async function getWhopAuth(): Promise<WhopAuthResult> {
     };
   }
   
-  // Method 4: Development mode fallback
+  // Method 4: Check for any Whop-related headers
+  const whopRelatedHeaders = Object.keys(allHeaders).filter(key => 
+    key.toLowerCase().includes('whop') || 
+    key.toLowerCase().includes('user') ||
+    key.toLowerCase().includes('auth')
+  );
+  
+  if (whopRelatedHeaders.length > 0) {
+    console.log('Found Whop-related headers:', whopRelatedHeaders);
+    // If we have any Whop-related headers, try to extract user info
+    const userIdFromHeaders = whopRelatedHeaders.find(key => 
+      key.toLowerCase().includes('user') && allHeaders[key]
+    );
+    
+    if (userIdFromHeaders) {
+      return {
+        userId: allHeaders[userIdFromHeaders],
+        isAuthenticated: true,
+        source: 'whop-headers'
+      };
+    }
+  }
+  
+  // Method 5: Development mode fallback
   if (process.env.NODE_ENV === 'development') {
     console.log('Development mode: Using test user');
     return {
