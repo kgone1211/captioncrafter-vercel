@@ -185,4 +185,4 @@ class WhopSDK {
 export const whopSdk = new WhopSDK();
 
 // Export types for use in components
-export type { WhopUser, WhopCompany, WhopSubscription };
+export type { WhopCompany, WhopSubscription };
