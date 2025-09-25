@@ -125,7 +125,7 @@ class WhopSDK {
    */
   async getUser({ userId }: { userId: string }): Promise<WhopUser> {
     // Test mode for development
-    if (process.env.NODE_ENV === 'development' && userId.startsWith('test_')) {
+    if (process.env.NODE_ENV === 'development') {
       return {
         id: userId,
         email: 'test@example.com',
