@@ -9,11 +9,11 @@ export default async function Home() {
     // Extract the user ID (read from a verified auth JWT token)
     const { userId } = await whopSdk.verifyUserToken(headersList);
 
-    // Check if user has access to the Caption Crafter company
-    const companyId = process.env.NEXT_PUBLIC_WHOP_COMPANY_ID || 'caption-crafter-company';
-    const result = await whopSdk.access.checkIfUserHasAccessToCompany({
+    // Check if user has access to the Caption Crafter access pass
+    const accessPassId = "prod_u7hI8fmabpPkI";
+    const result = await whopSdk.access.checkIfUserHasAccessToAccessPass({
       userId,
-      companyId,
+      accessPassId,
     });
 
     if (!result.hasAccess) {
@@ -26,9 +26,9 @@ export default async function Home() {
               </svg>
             </div>
             <h2 className="text-xl font-semibold text-gray-900 mb-2">Access Denied</h2>
-            <p className="text-gray-600 mb-4">You are not an authorized member of this company.</p>
+            <p className="text-gray-600 mb-4">You need a Caption Crafter access pass to use this app.</p>
             <p className="text-sm text-gray-500">
-              Please contact your company administrator for access.
+              Please purchase an access pass to continue.
             </p>
           </div>
         </div>
@@ -39,9 +39,9 @@ export default async function Home() {
     const whopUser = await whopSdk.getUser({ userId: userId });
 
     console.log('Whop User:', whopUser);
-    console.log('Company Access:', result);
+    console.log('Access Pass:', result);
 
-    return <HomeClientPage whopUser={whopUser} companyAccess={result} />;
+    return <HomeClientPage whopUser={whopUser} accessPass={result} />;
   } catch (error) {
     console.error('Error loading user:', error);
     

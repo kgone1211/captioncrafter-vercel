@@ -38,6 +38,12 @@ export interface WhopCompanyAccessResult {
   role?: 'owner' | 'admin' | 'member';
 }
 
+export interface WhopAccessPassResult {
+  hasAccess: boolean;
+  accessPassId: string;
+  userId: string;
+}
+
 class WhopSDK {
   private apiKey: string;
   private baseUrl = 'https://api.whop.com/api/v2';
@@ -320,13 +326,70 @@ class WhopSDK {
       };
     }
   }
+
+  /**
+   * Check if user has access to a specific access pass
+   */
+  async checkIfUserHasAccessToAccessPass({ accessPassId, userId }: { accessPassId: string; userId: string }): Promise<WhopAccessPassResult> {
+    try {
+      // Test mode for development
+      if (process.env.NODE_ENV === 'development' && userId.startsWith('test_')) {
+        console.log('Development mode: Granting access to access pass:', accessPassId);
+        return {
+          hasAccess: true,
+          accessPassId,
+          userId
+        };
+      }
+
+      if (!this.apiKey) {
+        throw new Error('Whop API Key is not configured.');
+      }
+
+      // Check if user has access to the specific access pass
+      const response = await fetch(`${this.baseUrl}/access-passes/${accessPassId}/users/${userId}`, {
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        return {
+          hasAccess: false,
+          accessPassId,
+          userId
+        };
+      }
+
+      const accessData = await response.json();
+      
+      // Check if the user has active access
+      const hasAccess = accessData.status === 'active' || accessData.has_access === true;
+
+      return {
+        hasAccess,
+        accessPassId,
+        userId
+      };
+
+    } catch (error) {
+      console.error('Error checking user access to access pass:', error);
+      return {
+        hasAccess: false,
+        accessPassId,
+        userId
+      };
+    }
+  }
 }
 
 // Add access object to the SDK
 class WhopSDKWithAccess extends WhopSDK {
   access = {
     checkIfUserHasAccessToExperience: this.checkIfUserHasAccessToExperience.bind(this),
-    checkIfUserHasAccessToCompany: this.checkIfUserHasAccessToCompany.bind(this)
+    checkIfUserHasAccessToCompany: this.checkIfUserHasAccessToCompany.bind(this),
+    checkIfUserHasAccessToAccessPass: this.checkIfUserHasAccessToAccessPass.bind(this)
   };
 }
 
