@@ -16,10 +16,10 @@
   ],
   "webhook_endpoints": [],
   "redirect_uris": [
-    "http://localhost:3007/whop",
-    "https://your-domain.vercel.app/whop"
+    "http://localhost:3000/whop",
+    "https://captioncrafterv2.vercel.app/whop"
   ],
-  "iframe_url": "http://localhost:3007/whop",
+  "iframe_url": "https://captioncrafterv2.vercel.app/whop",
   "settings": {
     "theme": "light",
     "width": "100%",
