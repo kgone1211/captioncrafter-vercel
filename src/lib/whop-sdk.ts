@@ -60,25 +60,64 @@ class WhopSDK {
    * This extracts the user ID from the verified JWT token
    */
   async verifyUserToken(headersList: Headers): Promise<{ userId: string }> {
-    // In a real Whop integration, you would verify the JWT token here
-    // For now, we'll extract from headers or use test mode
-    
+    // Check for Whop authentication headers
     const authorization = headersList.get('authorization');
     const whopUserId = headersList.get('x-whop-user-id');
     const whopCompanyId = headersList.get('x-whop-company-id');
+    const whopToken = headersList.get('x-whop-token');
     
-    // Development mode - use test user
-    if (process.env.NODE_ENV === 'development' && !whopUserId) {
+    console.log('Headers received:', {
+      authorization: authorization ? 'present' : 'missing',
+      whopUserId: whopUserId || 'missing',
+      whopCompanyId: whopCompanyId || 'missing',
+      whopToken: whopToken ? 'present' : 'missing'
+    });
+    
+    // Development mode - use test user if no Whop headers
+    if (process.env.NODE_ENV === 'development' && !whopUserId && !whopToken) {
       console.log('Development mode: Using test user');
       return { userId: 'test_user_123' };
     }
     
-    // Production mode - require Whop headers
-    if (!whopUserId) {
+    // Check for Whop token in authorization header
+    if (authorization && authorization.startsWith('Bearer ')) {
+      const token = authorization.replace('Bearer ', '');
+      try {
+        // In a real implementation, you would verify the JWT token here
+        // For now, we'll extract user info from the token or use it as user ID
+        console.log('Found Bearer token, using as user ID');
+        return { userId: token };
+      } catch (error) {
+        console.error('Error processing Bearer token:', error);
+      }
+    }
+    
+    // Check for Whop-specific headers
+    if (whopUserId) {
+      console.log('Found Whop user ID:', whopUserId);
+      return { userId: whopUserId };
+    }
+    
+    if (whopToken) {
+      console.log('Found Whop token, using as user ID');
+      return { userId: whopToken };
+    }
+    
+    // If we're in production and no Whop headers found, check if this is a direct access
+    const referer = headersList.get('referer');
+    const userAgent = headersList.get('user-agent');
+    
+    console.log('Referer:', referer);
+    console.log('User Agent:', userAgent);
+    
+    // If accessed directly (not through Whop), show authentication error
+    if (process.env.NODE_ENV === 'production') {
       throw new Error('No Whop user ID found in headers. Please access this app through Whop with proper authentication.');
     }
     
-    return { userId: whopUserId };
+    // Fallback for development
+    console.log('Development fallback: Using test user');
+    return { userId: 'test_user_123' };
   }
 
   /**
