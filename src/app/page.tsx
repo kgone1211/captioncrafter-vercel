@@ -55,14 +55,31 @@ export default async function Home() {
 
     const userId = auth.userId;
 
-    // Check if user has access to the Caption Crafter access pass
-    const accessPassId = "prod_u7hI8fmabpPkI";
-    const result = await whopSdk.access.checkIfUserHasAccessToAccessPass({
-      userId,
-      accessPassId,
-    });
+    // Check if user has access to any of the Caption Crafter access passes
+    const accessPassIds = [
+      "prod_u7hI8fmabpPkI",  // Original access pass
+      "prod_n9vXnFGqiIGZj"   // New access pass
+    ];
+    
+    let hasAccess = false;
+    let accessResult = null;
+    
+    // Check each access pass
+    for (const accessPassId of accessPassIds) {
+      const result = await whopSdk.access.checkIfUserHasAccessToAccessPass({
+        userId,
+        accessPassId,
+      });
+      
+      if (result.hasAccess) {
+        hasAccess = true;
+        accessResult = result;
+        console.log(`User has access via access pass: ${accessPassId}`);
+        break;
+      }
+    }
 
-    if (!result.hasAccess) {
+    if (!hasAccess) {
       return (
         <div className="min-h-screen bg-gray-50 flex items-center justify-center">
           <div className="text-center max-w-md mx-4">
@@ -85,9 +102,9 @@ export default async function Home() {
     const whopUser = await whopSdk.getUser({ userId: userId });
 
     console.log('Whop User:', whopUser);
-    console.log('Access Pass:', result);
+    console.log('Access Pass:', accessResult);
 
-    return <HomeClientPage whopUser={whopUser} accessPass={result} />;
+    return <HomeClientPage whopUser={whopUser} accessPass={accessResult} />;
   } catch (error) {
     console.error('Error loading user:', error);
     

@@ -380,6 +380,16 @@ class WhopSDK {
           userId
         };
       }
+      
+      // Development mode fallback for any user ID
+      if (process.env.NODE_ENV === 'development') {
+        console.log('Development mode: Granting access to access pass:', accessPassId);
+        return {
+          hasAccess: true,
+          accessPassId,
+          userId
+        };
+      }
 
       if (!this.apiKey) {
         throw new Error('Whop API Key is not configured.');
