@@ -98,8 +98,8 @@ export async function getWhopAuth(): Promise<WhopAuthResult> {
 /**
  * Check if the request is coming from Whop
  */
-export function isWhopRequest(): boolean {
-  const headersList = headers();
+export async function isWhopRequest(): Promise<boolean> {
+  const headersList = await headers();
   const referer = headersList.get('referer');
   const userAgent = headersList.get('user-agent');
   

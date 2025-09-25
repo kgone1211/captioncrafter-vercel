@@ -11,7 +11,7 @@ export default async function Home() {
     
     if (!auth.isAuthenticated) {
       // Check if this is a direct access (not through Whop)
-      if (!isWhopRequest()) {
+      if (!(await isWhopRequest())) {
         return (
           <div className="min-h-screen bg-gray-50 flex items-center justify-center">
             <div className="text-center max-w-md mx-4">
