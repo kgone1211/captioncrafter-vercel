@@ -164,22 +164,17 @@ export default function CaptionLibrary({ userId }: CaptionLibraryProps) {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Platform
             </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <Settings className="h-5 w-5 text-gray-400" />
-              </div>
-              <select
-                value={platformFilter}
-                onChange={(e) => setPlatformFilter(e.target.value)}
-                className="block w-full h-10 pl-10 pr-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-              >
+            <select
+              value={platformFilter}
+              onChange={(e) => setPlatformFilter(e.target.value)}
+              className="block w-full h-10 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            >
                 {platforms.map(platform => (
                   <option key={platform} value={platform}>
                     {platform === 'all' ? 'All Platforms' : platform.charAt(0).toUpperCase() + platform.slice(1)}
                   </option>
                 ))}
-              </select>
-            </div>
+            </select>
           </div>
 
           <div>
