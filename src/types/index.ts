@@ -45,6 +45,7 @@ export interface CaptionGenerationRequest {
   keywords?: string;
   cta?: string;
   include_emojis: boolean;
+  userId?: number;
 }
 
 export interface CaptionGenerationResponse {
