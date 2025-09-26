@@ -74,16 +74,17 @@ export async function getWhopAuth(): Promise<WhopAuthResult> {
   }
   
   // Method 4: Check for any Whop-related headers (exclude common browser headers)
-  const whopRelatedHeaders = Object.keys(allHeaders).filter(key => 
-    key.toLowerCase().includes('whop') &&
-    !key.toLowerCase().includes('user-agent') &&
-    !key.toLowerCase().includes('accept') &&
-    !key.toLowerCase().includes('host') &&
-    !key.toLowerCase().includes('connection') &&
-    !key.toLowerCase().includes('forwarded') &&
-    !key.toLowerCase().includes('cache') &&
-    !key.toLowerCase().includes('upgrade')
-  );
+  const whopRelatedHeaders = Object.keys(allHeaders).filter(key => {
+    const lowerKey = key.toLowerCase();
+    return lowerKey.includes('whop') && 
+           lowerKey !== 'user-agent' &&
+           lowerKey !== 'accept' &&
+           lowerKey !== 'host' &&
+           lowerKey !== 'connection' &&
+           lowerKey !== 'forwarded' &&
+           lowerKey !== 'cache' &&
+           lowerKey !== 'upgrade';
+  });
   
   if (whopRelatedHeaders.length > 0) {
     console.log('Found Whop-related headers:', whopRelatedHeaders);
