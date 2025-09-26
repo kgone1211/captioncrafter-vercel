@@ -9,15 +9,17 @@ interface PaywallProps {
 }
 
 export default function Paywall({ whopUser, onUpgrade }: PaywallProps) {
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState<string | null>(null);
 
-  const handleUpgrade = async () => {
-    setIsLoading(true);
+  const handleUpgrade = async (planId: string, planName: string) => {
+    setIsLoading(planId);
     try {
-      // Redirect to Whop subscription page
-      // You'll need to replace this with your actual Whop company URL
-      const whopUrl = process.env.NEXT_PUBLIC_WHOP_COMPANY_URL || 'https://whop.com/your-company';
-      window.open(whopUrl, '_blank');
+      // Create Whop checkout URL with the specific plan
+      const whopCompanyUrl = process.env.NEXT_PUBLIC_WHOP_COMPANY_URL || 'https://whop.com/your-company';
+      const checkoutUrl = `${whopCompanyUrl}/checkout/${planId}`;
+      
+      console.log(`Redirecting to ${planName} checkout:`, checkoutUrl);
+      window.open(checkoutUrl, '_blank');
       
       if (onUpgrade) {
         onUpgrade();
@@ -25,7 +27,7 @@ export default function Paywall({ whopUser, onUpgrade }: PaywallProps) {
     } catch (error) {
       console.error('Error redirecting to upgrade:', error);
     } finally {
-      setIsLoading(false);
+      setIsLoading(null);
     }
   };
 
@@ -140,55 +142,73 @@ export default function Paywall({ whopUser, onUpgrade }: PaywallProps) {
         <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
           <h2 className="text-xl font-semibold text-gray-900 mb-4">Choose Your Plan</h2>
           <div className="grid md:grid-cols-2 gap-4">
+            {/* Basic Plan */}
             <div className="border border-gray-200 rounded-lg p-4">
               <h3 className="font-semibold text-gray-900 mb-2">Basic Plan</h3>
               <div className="text-2xl font-bold text-gray-900 mb-2">$19/month</div>
-              <ul className="text-sm text-gray-600 space-y-1">
+              <ul className="text-sm text-gray-600 space-y-1 mb-4">
                 <li>• 100 captions per month</li>
                 <li>• Basic AI generation</li>
                 <li>• 3 platforms</li>
                 <li>• Email support</li>
               </ul>
+              <button
+                onClick={() => handleUpgrade('prod_OAeju0utHppI2', 'Basic Plan')}
+                disabled={isLoading === 'prod_OAeju0utHppI2'}
+                className="w-full bg-gray-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading === 'prod_OAeju0utHppI2' ? (
+                  <div className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Redirecting...
+                  </div>
+                ) : (
+                  'Choose Basic'
+                )}
+              </button>
             </div>
             
+            {/* Premium Plan */}
             <div className="border border-blue-500 rounded-lg p-4 bg-blue-50">
               <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold text-gray-900">Pro Plan</h3>
+                <h3 className="font-semibold text-gray-900">Premium Plan</h3>
                 <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">Popular</span>
               </div>
               <div className="text-2xl font-bold text-gray-900 mb-2">$39/month</div>
-              <ul className="text-sm text-gray-600 space-y-1">
+              <ul className="text-sm text-gray-600 space-y-1 mb-4">
                 <li>• Unlimited captions</li>
                 <li>• Advanced AI features</li>
                 <li>• All platforms</li>
                 <li>• Priority support</li>
                 <li>• Content calendar</li>
               </ul>
+              <button
+                onClick={() => handleUpgrade('prod_xcU9zERSGgyNK', 'Premium Plan')}
+                disabled={isLoading === 'prod_xcU9zERSGgyNK'}
+                className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading === 'prod_xcU9zERSGgyNK' ? (
+                  <div className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Redirecting...
+                  </div>
+                ) : (
+                  'Choose Premium'
+                )}
+              </button>
             </div>
           </div>
         </div>
 
-        {/* CTA */}
+        {/* Footer */}
         <div className="text-center">
-          <button
-            onClick={handleUpgrade}
-            disabled={isLoading}
-            className="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-8 py-4 rounded-lg font-semibold text-lg hover:from-blue-600 hover:to-purple-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
-          >
-            {isLoading ? (
-              <div className="flex items-center justify-center">
-                <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" fill="none" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-                Redirecting...
-              </div>
-            ) : (
-              'Upgrade Now'
-            )}
-          </button>
-          
-          <p className="text-sm text-gray-500 mt-4">
+          <p className="text-sm text-gray-500">
             Secure payment processing powered by Whop
           </p>
         </div>
