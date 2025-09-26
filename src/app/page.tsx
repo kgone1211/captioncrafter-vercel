@@ -4,6 +4,9 @@ import HomeClientPage from './home-client';
 import Paywall from '@/components/Paywall';
 import { Database } from '@/lib/db';
 
+// Force dynamic rendering since we use headers() for authentication
+export const dynamic = 'force-dynamic';
+
 export default async function Home() {
   try {
     // Get Whop authentication

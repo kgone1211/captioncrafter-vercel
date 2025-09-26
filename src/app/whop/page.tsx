@@ -2,6 +2,9 @@ import { whopSdk, WhopUser } from "@/lib/whop-sdk";
 import { getWhopAuth } from "@/lib/whop-auth";
 import WhopClientPage from './whop-client';
 
+// Force dynamic rendering since we use headers() for authentication
+export const dynamic = 'force-dynamic';
+
 export default async function WhopPage() {
   try {
     // Get Whop authentication
