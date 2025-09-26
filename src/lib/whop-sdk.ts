@@ -126,8 +126,8 @@ class WhopSDK {
   async getUser({ userId }: { userId: string }): Promise<WhopUser> {
     // Test mode for development or if no API key
     if (process.env.NODE_ENV === 'development' || !this.apiKey) {
-      const testUsername = process.env.TEST_USERNAME || 'john';
-      const testEmail = process.env.TEST_EMAIL || 'john@example.com';
+      const testUsername = process.env.TEST_USERNAME || 'Krista';
+      const testEmail = process.env.TEST_EMAIL || 'krista@example.com';
       
       return {
         id: userId,
@@ -188,6 +188,11 @@ class WhopSDK {
           fallbackUsername = userId.substring(0, 8) + '...';
         }
         
+        // If userId looks like a browser string, use a generic name
+        if (userId.includes('Mozilla') || userId.includes('Chrome') || userId.includes('Safari')) {
+          fallbackUsername = 'Whop User';
+        }
+        
         return {
           id: userId,
           email: `user-${userId}@whop.com`,
@@ -200,8 +205,8 @@ class WhopSDK {
       }
       
       // Development fallback
-      const testUsername = process.env.TEST_USERNAME || 'john';
-      const testEmail = process.env.TEST_EMAIL || 'john@example.com';
+      const testUsername = process.env.TEST_USERNAME || 'Krista';
+      const testEmail = process.env.TEST_EMAIL || 'krista@example.com';
       
       return {
         id: userId,
