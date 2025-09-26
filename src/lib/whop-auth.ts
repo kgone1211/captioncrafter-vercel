@@ -73,11 +73,12 @@ export async function getWhopAuth(): Promise<WhopAuthResult> {
     };
   }
   
-  // Method 4: Check for any Whop-related headers
+  // Method 4: Check for any Whop-related headers (exclude user-agent)
   const whopRelatedHeaders = Object.keys(allHeaders).filter(key => 
-    key.toLowerCase().includes('whop') || 
-    key.toLowerCase().includes('user') ||
-    key.toLowerCase().includes('auth')
+    (key.toLowerCase().includes('whop') || 
+     key.toLowerCase().includes('auth')) &&
+    !key.toLowerCase().includes('user-agent') &&
+    !key.toLowerCase().includes('accept')
   );
   
   if (whopRelatedHeaders.length > 0) {
