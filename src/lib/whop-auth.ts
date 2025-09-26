@@ -89,9 +89,19 @@ export async function getWhopAuth(): Promise<WhopAuthResult> {
   if (whopRelatedHeaders.length > 0) {
     console.log('Found Whop-related headers:', whopRelatedHeaders);
     // If we have any Whop-related headers, try to extract user info
-    const userIdFromHeaders = whopRelatedHeaders.find(key => 
-      key.toLowerCase().includes('user') && allHeaders[key]
-    );
+    // But exclude common browser headers that might contain 'user' in their name
+    const userIdFromHeaders = whopRelatedHeaders.find(key => {
+      const lowerKey = key.toLowerCase();
+      return lowerKey.includes('user') && 
+             lowerKey !== 'user-agent' &&
+             lowerKey !== 'accept' &&
+             lowerKey !== 'host' &&
+             lowerKey !== 'connection' &&
+             lowerKey !== 'forwarded' &&
+             lowerKey !== 'cache' &&
+             lowerKey !== 'upgrade' &&
+             allHeaders[key];
+    });
     
     if (userIdFromHeaders) {
       return {

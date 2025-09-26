@@ -165,10 +165,29 @@ class WhopSDK {
       // Get subscription status
       const subscriptionStatus = await this.getUserSubscriptionStatus(userId);
       
+      // Extract username with better fallback logic
+      let extractedUsername = 'User';
+      if (userData.username) {
+        extractedUsername = userData.username;
+      } else if (userData.display_name) {
+        extractedUsername = userData.display_name;
+      } else if (userData.name) {
+        extractedUsername = userData.name;
+      } else if (userData.first_name && userData.last_name) {
+        extractedUsername = `${userData.first_name} ${userData.last_name}`;
+      } else if (userData.first_name) {
+        extractedUsername = userData.first_name;
+      } else if (userData.email) {
+        // Extract name from email if available
+        extractedUsername = userData.email.split('@')[0];
+      }
+      
+      console.log('Extracted username:', extractedUsername);
+      
       return {
         id: userData.id,
         email: userData.email,
-        username: userData.username || userData.display_name || userData.name || 'User',
+        username: extractedUsername,
         profile_picture_url: userData.profile_picture_url,
         created_at: userData.created_at,
         updated_at: userData.updated_at,
@@ -180,17 +199,26 @@ class WhopSDK {
       
       // In production, try to extract username from userId or use a generic fallback
       if (process.env.NODE_ENV === 'production') {
+        // If userId looks like a browser string, use a generic name
+        if (userId.includes('Mozilla') || userId.includes('Chrome') || userId.includes('Safari') || 
+            userId.includes('AppleWebKit') || userId.includes('Version') || userId.includes('curl')) {
+          return {
+            id: userId,
+            email: `user-${Date.now()}@whop.com`,
+            username: 'Whop User',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            company_id: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID || 'biz_company',
+            subscription_status: 'active'
+          };
+        }
+        
         // Try to extract username from userId (common patterns)
         let fallbackUsername = 'User';
         if (userId.includes('_')) {
           fallbackUsername = userId.split('_').pop() || 'User';
         } else if (userId.length > 10) {
           fallbackUsername = userId.substring(0, 8) + '...';
-        }
-        
-        // If userId looks like a browser string, use a generic name
-        if (userId.includes('Mozilla') || userId.includes('Chrome') || userId.includes('Safari')) {
-          fallbackUsername = 'Whop User';
         }
         
         return {
