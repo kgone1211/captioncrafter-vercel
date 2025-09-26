@@ -128,8 +128,8 @@ class WhopSDK {
     if (process.env.NODE_ENV === 'development' || !this.apiKey) {
       return {
         id: userId,
-        email: 'test@example.com',
-        username: 'testuser',
+        email: 'john@example.com',
+        username: 'john',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         company_id: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID || 'biz_test_company',
@@ -169,8 +169,8 @@ class WhopSDK {
       // Fallback to test user if API fails
       return {
         id: userId,
-        email: 'test@example.com',
-        username: 'testuser',
+        email: 'john@example.com',
+        username: 'john',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         company_id: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID || 'biz_test_company',
