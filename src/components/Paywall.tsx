@@ -1,15 +1,39 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { WhopUser } from '@/lib/whop-sdk';
 
 interface PaywallProps {
   whopUser: WhopUser;
+  dbUserId: number;
   onUpgrade?: () => void;
 }
 
-export default function Paywall({ whopUser, onUpgrade }: PaywallProps) {
+export default function Paywall({ whopUser, dbUserId, onUpgrade }: PaywallProps) {
   const [isLoading, setIsLoading] = useState<string | null>(null);
+  const [usage, setUsage] = useState<{ freeCaptionsUsed: number; subscriptionStatus: string } | null>(null);
+  const [showSubscriptionForm, setShowSubscriptionForm] = useState(false);
+  const [formData, setFormData] = useState({
+    name: whopUser.username || '',
+    email: whopUser.email || '',
+    plan: 'premium'
+  });
+
+  useEffect(() => {
+    loadUsage();
+  }, []);
+
+  const loadUsage = async () => {
+    try {
+      const response = await fetch(`/api/usage?userId=${dbUserId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setUsage(data);
+      }
+    } catch (error) {
+      console.error('Error loading usage:', error);
+    }
+  };
 
   const handleUpgrade = async (planId: string, planName: string) => {
     setIsLoading(planId);
@@ -19,13 +43,34 @@ export default function Paywall({ whopUser, onUpgrade }: PaywallProps) {
       const checkoutUrl = `${whopCompanyUrl}/checkout/${planId}`;
       
       console.log(`Redirecting to ${planName} checkout:`, checkoutUrl);
-      window.open(checkoutUrl, '_blank');
+      
+      // Open in same window for better UX
+      window.location.href = checkoutUrl;
       
       if (onUpgrade) {
         onUpgrade();
       }
     } catch (error) {
       console.error('Error redirecting to upgrade:', error);
+    } finally {
+      setIsLoading(null);
+    }
+  };
+
+  const handleSubscriptionForm = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading('form');
+    
+    try {
+      // Here you would typically send the form data to your backend
+      // which would then create a Whop subscription
+      console.log('Subscription form submitted:', formData);
+      
+      // For now, redirect to Whop checkout
+      const planId = formData.plan === 'basic' ? 'prod_OAeju0utHppI2' : 'prod_xcU9zERSGgyNK';
+      await handleUpgrade(planId, formData.plan === 'basic' ? 'Basic Plan' : 'Premium Plan');
+    } catch (error) {
+      console.error('Error processing subscription:', error);
     } finally {
       setIsLoading(null);
     }
@@ -71,14 +116,31 @@ export default function Paywall({ whopUser, onUpgrade }: PaywallProps) {
             </span>
           </div>
           
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-            <div className="flex items-center">
-              <svg className="h-5 w-5 text-blue-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-              <p className="text-blue-800 font-medium">Free Trial Complete</p>
+          {usage && (
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm text-gray-600">Captions Used</span>
+                <span className="text-sm font-medium text-gray-900">
+                  {usage.freeCaptionsUsed} / 10
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2">
+                <div 
+                  className="bg-blue-500 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${Math.min((usage.freeCaptionsUsed / 10) * 100, 100)}%` }}
+                ></div>
+              </div>
             </div>
-            <p className="text-blue-700 text-sm mt-1">
+          )}
+          
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
+            <div className="flex items-center">
+              <svg className="h-5 w-5 text-red-400 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+              </svg>
+              <p className="text-red-800 font-medium">Free Trial Complete</p>
+            </div>
+            <p className="text-red-700 text-sm mt-1">
               You've used all 10 free captions. Upgrade to continue generating unlimited captions.
             </p>
           </div>
@@ -138,10 +200,36 @@ export default function Paywall({ whopUser, onUpgrade }: PaywallProps) {
           </div>
         </div>
 
-        {/* Pricing */}
+        {/* Subscription Options */}
         <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Choose Your Plan</h2>
-          <div className="grid md:grid-cols-2 gap-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-gray-900">Choose Your Plan</h2>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => setShowSubscriptionForm(false)}
+                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                  !showSubscriptionForm 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Quick Upgrade
+              </button>
+              <button
+                onClick={() => setShowSubscriptionForm(true)}
+                className={`px-3 py-1 rounded-lg text-sm font-medium transition-colors ${
+                  showSubscriptionForm 
+                    ? 'bg-blue-500 text-white' 
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                Custom Form
+              </button>
+            </div>
+          </div>
+
+          {!showSubscriptionForm ? (
+            <div className="grid md:grid-cols-2 gap-4">
             {/* Basic Plan */}
             <div className="border border-gray-200 rounded-lg p-4">
               <h3 className="font-semibold text-gray-900 mb-2">Basic Plan</h3>
@@ -205,6 +293,103 @@ export default function Paywall({ whopUser, onUpgrade }: PaywallProps) {
             </div>
           </div>
         </div>
+
+        {/* Subscription Form */}
+        {showSubscriptionForm && (
+          <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
+            <h2 className="text-xl font-semibold text-gray-900 mb-4">Complete Your Subscription</h2>
+            <form onSubmit={handleSubscriptionForm} className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Full Name
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    required
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Choose Your Plan
+                </label>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                    formData.plan === 'basic' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
+                  }`} onClick={() => setFormData({ ...formData, plan: 'basic' })}>
+                    <div className="flex items-center">
+                      <input
+                        type="radio"
+                        name="plan"
+                        value="basic"
+                        checked={formData.plan === 'basic'}
+                        onChange={() => setFormData({ ...formData, plan: 'basic' })}
+                        className="mr-2"
+                      />
+                      <div>
+                        <h3 className="font-semibold text-gray-900">Basic Plan</h3>
+                        <p className="text-sm text-gray-600">$19/month - 100 captions</p>
+                      </div>
+                    </div>
+                  </div>
+                  <div className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+                    formData.plan === 'premium' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
+                  }`} onClick={() => setFormData({ ...formData, plan: 'premium' })}>
+                    <div className="flex items-center">
+                      <input
+                        type="radio"
+                        name="plan"
+                        value="premium"
+                        checked={formData.plan === 'premium'}
+                        onChange={() => setFormData({ ...formData, plan: 'premium' })}
+                        className="mr-2"
+                      />
+                      <div>
+                        <h3 className="font-semibold text-gray-900">Premium Plan</h3>
+                        <p className="text-sm text-gray-600">$39/month - Unlimited captions</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <button
+                type="submit"
+                disabled={isLoading === 'form'}
+                className="w-full bg-blue-600 text-white px-4 py-3 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isLoading === 'form' ? (
+                  <div className="flex items-center justify-center">
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Processing...
+                  </div>
+                ) : (
+                  'Complete Subscription'
+                )}
+              </button>
+            </form>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="text-center">

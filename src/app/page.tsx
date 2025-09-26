@@ -75,7 +75,7 @@ export default async function Home() {
     
     // If user can't generate captions (hit limit), show paywall
     if (!canGenerate) {
-      return <Paywall whopUser={whopUser} />;
+      return <Paywall whopUser={whopUser} dbUserId={dbUserId} />;
     }
 
     // If user can generate captions, show the app
