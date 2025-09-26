@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Database } from '@/lib/db';
+import { sql } from '@vercel/postgres';
 
 export async function POST(request: NextRequest) {
   try {
@@ -39,10 +40,8 @@ export async function POST(request: NextRequest) {
 
 async function handleSubscriptionUpdate(subscriptionData: any) {
   try {
-    const db = new Database();
-    
     // Update user's subscription status
-    await db.sql`
+    await sql`
       UPDATE users 
       SET subscription_status = 'active'
       WHERE whop_user_id = ${subscriptionData.user_id}
@@ -56,10 +55,8 @@ async function handleSubscriptionUpdate(subscriptionData: any) {
 
 async function handleSubscriptionCancellation(subscriptionData: any) {
   try {
-    const db = new Database();
-    
     // Update user's subscription status to inactive
-    await db.sql`
+    await sql`
       UPDATE users 
       SET subscription_status = 'inactive'
       WHERE whop_user_id = ${subscriptionData.user_id}
@@ -73,10 +70,8 @@ async function handleSubscriptionCancellation(subscriptionData: any) {
 
 async function handlePaymentSuccess(paymentData: any) {
   try {
-    const db = new Database();
-    
     // Update user's subscription status to active
-    await db.sql`
+    await sql`
       UPDATE users 
       SET subscription_status = 'active'
       WHERE whop_user_id = ${paymentData.user_id}
