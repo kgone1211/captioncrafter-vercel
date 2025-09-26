@@ -126,10 +126,13 @@ class WhopSDK {
   async getUser({ userId }: { userId: string }): Promise<WhopUser> {
     // Test mode for development or if no API key
     if (process.env.NODE_ENV === 'development' || !this.apiKey) {
+      const testUsername = process.env.TEST_USERNAME || 'john';
+      const testEmail = process.env.TEST_EMAIL || 'john@example.com';
+      
       return {
         id: userId,
-        email: 'john@example.com',
-        username: 'john',
+        email: testEmail,
+        username: testUsername,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         company_id: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID || 'biz_test_company',
@@ -138,6 +141,9 @@ class WhopSDK {
     }
 
     try {
+      console.log(`Fetching Whop user data for userId: ${userId}`);
+      console.log(`Using API key: ${this.apiKey ? 'present' : 'missing'}`);
+      
       const response = await fetch(`${this.baseUrl}/users/${userId}`, {
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
@@ -145,11 +151,16 @@ class WhopSDK {
         },
       });
 
+      console.log(`Whop API response status: ${response.status}`);
+
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error(`Whop API error response: ${errorText}`);
         throw new Error(`Whop API error: ${response.status} ${response.statusText}`);
       }
 
       const userData = await response.json();
+      console.log('Whop API user data:', userData);
       
       // Get subscription status
       const subscriptionStatus = await this.getUserSubscriptionStatus(userId);
@@ -157,7 +168,7 @@ class WhopSDK {
       return {
         id: userData.id,
         email: userData.email,
-        username: userData.username,
+        username: userData.username || userData.display_name || userData.name || 'User',
         profile_picture_url: userData.profile_picture_url,
         created_at: userData.created_at,
         updated_at: userData.updated_at,
@@ -166,11 +177,36 @@ class WhopSDK {
       };
     } catch (error) {
       console.error('Error fetching Whop user:', error);
-      // Fallback to test user if API fails
+      
+      // In production, try to extract username from userId or use a generic fallback
+      if (process.env.NODE_ENV === 'production') {
+        // Try to extract username from userId (common patterns)
+        let fallbackUsername = 'User';
+        if (userId.includes('_')) {
+          fallbackUsername = userId.split('_').pop() || 'User';
+        } else if (userId.length > 10) {
+          fallbackUsername = userId.substring(0, 8) + '...';
+        }
+        
+        return {
+          id: userId,
+          email: `user-${userId}@whop.com`,
+          username: fallbackUsername,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          company_id: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID || 'biz_company',
+          subscription_status: 'active'
+        };
+      }
+      
+      // Development fallback
+      const testUsername = process.env.TEST_USERNAME || 'john';
+      const testEmail = process.env.TEST_EMAIL || 'john@example.com';
+      
       return {
         id: userId,
-        email: 'john@example.com',
-        username: 'john',
+        email: testEmail,
+        username: testUsername,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         company_id: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID || 'biz_test_company',
