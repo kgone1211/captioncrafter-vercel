@@ -35,25 +35,23 @@ export default function HomeClientPage({ whopUser }: HomeClientPageProps) {
     try {
       setLoading(true);
       
-      // Check if user has active subscription
-      if (whopUser.subscription_status !== 'active') {
-        setError('No active subscription found. Please subscribe to access Caption Crafter.');
-        setLoading(false);
-        return;
-      }
-
       // Create or get local user
       const localUserResponse = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: whopUser.email }),
+        body: JSON.stringify({ 
+          email: whopUser.email,
+          whopUserId: whopUser.id,
+          subscriptionStatus: whopUser.subscription_status
+        }),
       });
 
       if (localUserResponse.ok) {
         const { userId } = await localUserResponse.json();
         setUser({ id: userId, email: whopUser.email });
         await loadUserStats(userId);
-        showSuccess('Welcome!', `Logged in as ${whopUser.email}`);
+        const displayName = whopUser.username || whopUser.email.split('@')[0];
+        showSuccess('Welcome!', `Logged in as ${displayName}`);
       } else {
         setError('Failed to create local user account');
       }
@@ -81,11 +79,11 @@ export default function HomeClientPage({ whopUser }: HomeClientPageProps) {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-500" />
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Setting up your account...</h2>
-          <p className="text-gray-600">Please wait while we prepare Caption Crafter for you.</p>
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-blue-500 dark:text-blue-400" />
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Setting up your account...</h2>
+          <p className="text-gray-600 dark:text-gray-300">Please wait while we prepare Caption Crafter for you.</p>
         </div>
       </div>
     );
@@ -93,16 +91,16 @@ export default function HomeClientPage({ whopUser }: HomeClientPageProps) {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center max-w-md mx-4">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <User className="h-8 w-8 text-red-500" />
+          <div className="w-16 h-16 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mx-auto mb-4">
+            <User className="h-8 w-8 text-red-500 dark:text-red-400" />
           </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">Setup Error</h2>
-          <p className="text-gray-600 mb-4">{error}</p>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">Setup Error</h2>
+          <p className="text-gray-600 dark:text-gray-300 mb-4">{error}</p>
           <button
             onClick={() => window.location.reload()}
-            className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
+            className="px-4 py-2 bg-blue-500 dark:bg-blue-600 text-white rounded-lg hover:bg-blue-600 dark:hover:bg-blue-700 transition-colors"
           >
             Try Again
           </button>
@@ -113,19 +111,21 @@ export default function HomeClientPage({ whopUser }: HomeClientPageProps) {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
         <div className="text-center">
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">No User Found</h2>
-          <p className="text-gray-600">Please try refreshing the page.</p>
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">No User Found</h2>
+          <p className="text-gray-600 dark:text-gray-300">Please try refreshing the page.</p>
         </div>
       </div>
     );
   }
 
+  const displayName = whopUser.username || whopUser.email.split('@')[0];
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16 py-2">
             <div className="flex items-center space-x-3">
@@ -133,8 +133,8 @@ export default function HomeClientPage({ whopUser }: HomeClientPageProps) {
                 <Target className="h-6 w-6 text-white" />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">Caption Crafter</h1>
-                <p className="text-sm text-gray-500">Welcome back, {user.email}</p>
+                <h1 className="text-xl font-bold text-gray-900 dark:text-gray-100">Caption Crafter</h1>
+                <p className="text-sm text-gray-500 dark:text-gray-400">Welcome back, {displayName}</p>
               </div>
             </div>
             

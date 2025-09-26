@@ -5,7 +5,7 @@ import { Database } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email } = await request.json();
+    const { email, whopUserId, subscriptionStatus } = await request.json();
     
     if (!email) {
       return NextResponse.json(
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     }
 
     const db = new Database();
-    const userId = await db.upsertUser(email);
+    const userId = await db.upsertUser(email, whopUserId, subscriptionStatus);
 
     return NextResponse.json({ userId });
   } catch (error) {

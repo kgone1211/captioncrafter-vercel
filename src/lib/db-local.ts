@@ -4,7 +4,14 @@
 import { Caption, ScheduledPost, UserStats } from '@/types';
 
 // In-memory storage for local development
-const users: Array<{ id: number; email: string; created_at: string }> = [];
+const users: Array<{ 
+  id: number; 
+  email: string; 
+  whop_user_id?: string;
+  subscription_status: string;
+  free_captions_used: number;
+  created_at: string 
+}> = [];
 const captions: Array<Caption> = [];
 const scheduledPosts: Array<ScheduledPost> = [];
 let nextUserId = 1;
@@ -17,12 +24,17 @@ export class Database {
     console.log('Using in-memory database for local development');
   }
 
-  async upsertUser(email: string): Promise<number> {
+  async upsertUser(email: string, whopUserId?: string, subscriptionStatus?: string): Promise<number> {
     try {
-      // Check if user already exists
-      const existingUser = users.find(user => user.email === email);
+      // Check if user already exists by email or whop_user_id
+      const existingUser = users.find(user => 
+        user.email === email || (whopUserId && user.whop_user_id === whopUserId)
+      );
       
       if (existingUser) {
+        // Update user info if provided
+        if (whopUserId) existingUser.whop_user_id = whopUserId;
+        if (subscriptionStatus) existingUser.subscription_status = subscriptionStatus;
         return existingUser.id;
       }
 
@@ -30,6 +42,9 @@ export class Database {
       const newUser = {
         id: nextUserId++,
         email,
+        whop_user_id: whopUserId,
+        subscription_status: subscriptionStatus || 'inactive',
+        free_captions_used: 0,
         created_at: new Date().toISOString()
       };
       
@@ -216,6 +231,52 @@ export class Database {
     } catch (error) {
       console.error('Error getting user stats:', error);
       throw error;
+    }
+  }
+
+  async getUserUsage(userId: number): Promise<{ freeCaptionsUsed: number; subscriptionStatus: string }> {
+    try {
+      const user = users.find(u => u.id === userId);
+      if (!user) {
+        return { freeCaptionsUsed: 0, subscriptionStatus: 'inactive' };
+      }
+
+      return {
+        freeCaptionsUsed: user.free_captions_used,
+        subscriptionStatus: user.subscription_status
+      };
+    } catch (error) {
+      console.error('Error getting user usage:', error);
+      throw error;
+    }
+  }
+
+  async incrementUsage(userId: number): Promise<void> {
+    try {
+      const user = users.find(u => u.id === userId);
+      if (user) {
+        user.free_captions_used += 1;
+      }
+    } catch (error) {
+      console.error('Error incrementing usage:', error);
+      throw error;
+    }
+  }
+
+  async canGenerateCaption(userId: number): Promise<boolean> {
+    try {
+      const usage = await this.getUserUsage(userId);
+      
+      // If user has active subscription, they can generate unlimited captions
+      if (usage.subscriptionStatus === 'active') {
+        return true;
+      }
+      
+      // If user has used less than 10 free captions, they can generate more
+      return usage.freeCaptionsUsed < 10;
+    } catch (error) {
+      console.error('Error checking caption generation permission:', error);
+      return false;
     }
   }
 }

@@ -22,6 +22,9 @@ export class Database {
         CREATE TABLE IF NOT EXISTS users (
           id SERIAL PRIMARY KEY,
           email VARCHAR(255) UNIQUE NOT NULL,
+          whop_user_id VARCHAR(255),
+          subscription_status VARCHAR(20) DEFAULT 'inactive',
+          free_captions_used INTEGER DEFAULT 0,
           created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
       `;
@@ -63,24 +66,38 @@ export class Database {
     }
   }
 
-  async upsertUser(email: string): Promise<number> {
+  async upsertUser(email: string, whopUserId?: string, subscriptionStatus?: string): Promise<number> {
     if (isLocalDev) {
-      return localDb.upsertUser(email);
+      return localDb.upsertUser(email, whopUserId, subscriptionStatus);
     }
     
     try {
-      // Try to get existing user
+      // Try to get existing user by email or whop_user_id
       const existingUser = await sql`
-        SELECT id FROM users WHERE email = ${email}
+        SELECT id FROM users WHERE email = ${email} OR whop_user_id = ${whopUserId || ''}
       `;
 
       if (existingUser.rows.length > 0) {
-        return existingUser.rows[0].id;
+        const userId = existingUser.rows[0].id;
+        
+        // Update user info if provided
+        if (whopUserId || subscriptionStatus) {
+          await sql`
+            UPDATE users 
+            SET whop_user_id = COALESCE(${whopUserId}, whop_user_id),
+                subscription_status = COALESCE(${subscriptionStatus}, subscription_status)
+            WHERE id = ${userId}
+          `;
+        }
+        
+        return userId;
       }
 
       // Create new user
       const newUser = await sql`
-        INSERT INTO users (email) VALUES (${email}) RETURNING id
+        INSERT INTO users (email, whop_user_id, subscription_status) 
+        VALUES (${email}, ${whopUserId || null}, ${subscriptionStatus || 'inactive'}) 
+        RETURNING id
       `;
 
       return newUser.rows[0].id;
@@ -304,6 +321,70 @@ export class Database {
     } catch (error) {
       console.error('Error getting user stats:', error);
       throw error;
+    }
+  }
+
+  async getUserUsage(userId: number): Promise<{ freeCaptionsUsed: number; subscriptionStatus: string }> {
+    if (isLocalDev) {
+      return localDb.getUserUsage(userId);
+    }
+
+    try {
+      const result = await sql`
+        SELECT free_captions_used, subscription_status 
+        FROM users 
+        WHERE id = ${userId}
+      `;
+
+      if (result.rows.length === 0) {
+        return { freeCaptionsUsed: 0, subscriptionStatus: 'inactive' };
+      }
+
+      return {
+        freeCaptionsUsed: result.rows[0].free_captions_used || 0,
+        subscriptionStatus: result.rows[0].subscription_status || 'inactive'
+      };
+    } catch (error) {
+      console.error('Error getting user usage:', error);
+      throw error;
+    }
+  }
+
+  async incrementUsage(userId: number): Promise<void> {
+    if (isLocalDev) {
+      return localDb.incrementUsage(userId);
+    }
+
+    try {
+      await sql`
+        UPDATE users 
+        SET free_captions_used = free_captions_used + 1 
+        WHERE id = ${userId}
+      `;
+    } catch (error) {
+      console.error('Error incrementing usage:', error);
+      throw error;
+    }
+  }
+
+  async canGenerateCaption(userId: number): Promise<boolean> {
+    if (isLocalDev) {
+      return localDb.canGenerateCaption(userId);
+    }
+
+    try {
+      const usage = await this.getUserUsage(userId);
+      
+      // If user has active subscription, they can generate unlimited captions
+      if (usage.subscriptionStatus === 'active') {
+        return true;
+      }
+      
+      // If user has used less than 10 free captions, they can generate more
+      return usage.freeCaptionsUsed < 10;
+    } catch (error) {
+      console.error('Error checking caption generation permission:', error);
+      return false;
     }
   }
 }

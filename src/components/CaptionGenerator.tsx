@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Wand2, Copy, Star, Calendar, Hash, Clock } from 'lucide-react';
 import { CaptionGenerationRequest, CaptionGenerationResponse } from '@/types';
 import { PLATFORM_LIMITS, TONE_PRESETS, getLengthPresets } from '@/lib/presets';
+import UsageCounter from './UsageCounter';
 
 interface CaptionGeneratorProps {
   userId: number;
@@ -51,15 +52,29 @@ export default function CaptionGenerator({ userId, onStatsUpdate }: CaptionGener
       const response = await fetch('/api/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          userId: userId
+        }),
       });
 
-      if (response.ok) {
-        const { captions } = await response.json();
-        setCaptions(captions);
+      if (!response.ok) {
+        const errorData = await response.json();
+        
+        // Handle usage limit error
+        if (response.status === 403 && errorData.canGenerate === false) {
+          alert('You have used all 10 free captions. Please upgrade to continue.');
+          return;
+        }
+        
+        throw new Error(errorData.error || 'Failed to generate captions');
       }
+
+      const { captions } = await response.json();
+      setCaptions(captions);
     } catch (error) {
       console.error('Generation error:', error);
+      alert(error instanceof Error ? error.message : 'Failed to generate captions');
     } finally {
       setLoading(false);
     }
@@ -296,7 +311,8 @@ export default function CaptionGenerator({ userId, onStatsUpdate }: CaptionGener
     <div className="space-y-8">
       <div className="text-center">
         <h2 className="text-3xl font-bold text-gray-900 mb-2">Generate Captions</h2>
-        <p className="text-gray-600">Create engaging social media captions with AI</p>
+        <p className="text-gray-600 mb-4">Create engaging social media captions with AI</p>
+        <UsageCounter userId={userId} className="justify-center" />
       </div>
 
       {/* Generation Form */}
