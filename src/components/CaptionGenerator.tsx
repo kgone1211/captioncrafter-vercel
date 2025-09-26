@@ -26,6 +26,7 @@ export default function CaptionGenerator({ userId, onStatsUpdate }: CaptionGener
   const [captions, setCaptions] = useState<CaptionGenerationResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   const handleInputChange = (field: keyof CaptionGenerationRequest, value: string | number | boolean) => {
     setFormData(prev => {
@@ -72,6 +73,8 @@ export default function CaptionGenerator({ userId, onStatsUpdate }: CaptionGener
 
       const { captions } = await response.json();
       setCaptions(captions);
+      onStatsUpdate(); // Refresh usage counter after successful generation
+      setRefreshTrigger(prev => prev + 1); // Trigger UsageCounter refresh
     } catch (error) {
       console.error('Generation error:', error);
       alert(error instanceof Error ? error.message : 'Failed to generate captions');
@@ -312,7 +315,7 @@ export default function CaptionGenerator({ userId, onStatsUpdate }: CaptionGener
       <div className="text-center">
         <h2 className="text-3xl font-bold text-gray-900 mb-2">Generate Captions</h2>
         <p className="text-gray-600 mb-4">Create engaging social media captions with AI</p>
-        <UsageCounter userId={userId} className="justify-center" />
+        <UsageCounter userId={userId} className="justify-center" refreshTrigger={refreshTrigger} />
       </div>
 
       {/* Generation Form */}

@@ -6,15 +6,16 @@ import { Zap, Crown } from 'lucide-react';
 interface UsageCounterProps {
   userId: number;
   className?: string;
+  refreshTrigger?: number; // Add refresh trigger prop
 }
 
-export default function UsageCounter({ userId, className = '' }: UsageCounterProps) {
+export default function UsageCounter({ userId, className = '', refreshTrigger }: UsageCounterProps) {
   const [usage, setUsage] = useState<{ freeCaptionsUsed: number; subscriptionStatus: string } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     loadUsage();
-  }, [userId]);
+  }, [userId, refreshTrigger]); // Add refreshTrigger to dependencies
 
   const loadUsage = async () => {
     try {
