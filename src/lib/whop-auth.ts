@@ -76,7 +76,7 @@ export async function getWhopAuth(): Promise<WhopAuthResult> {
   // Method 4: Check for any Whop-related headers (exclude common browser headers)
   const whopRelatedHeaders = Object.keys(allHeaders).filter(key => {
     const lowerKey = key.toLowerCase();
-    return lowerKey.includes('whop') && 
+    return (lowerKey.startsWith('x-whop') || lowerKey.startsWith('whop-')) && 
            lowerKey !== 'user-agent' &&
            lowerKey !== 'accept' &&
            lowerKey !== 'host' &&
@@ -114,9 +114,11 @@ export async function getWhopAuth(): Promise<WhopAuthResult> {
   
   // Method 5: Development mode fallback - use a proper test user
   if (process.env.NODE_ENV === 'development') {
-    console.log('Development mode: Using test user');
+    const testUsername = process.env.TEST_USERNAME || 'Krista';
+    const testEmail = process.env.TEST_EMAIL || 'krista@example.com';
+    console.log('Development mode: Using test user', testUsername);
     return {
-      userId: 'dev_user_krista',
+      userId: `dev_user_${testUsername.toLowerCase()}`,
       isAuthenticated: true,
       source: 'development'
     };
