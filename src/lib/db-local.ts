@@ -267,10 +267,9 @@ export class Database {
     try {
       const usage = await this.getUserUsage(userId);
       
-      // If user has active subscription, they can generate unlimited captions
-      if (usage.subscriptionStatus === 'active') {
-        return true;
-      }
+      // For now, implement freemium model for ALL users
+      // TODO: In the future, check for actual paid subscription status
+      // For now, everyone gets 10 free captions regardless of Whop subscription status
       
       // If user has used less than 10 free captions, they can generate more
       return usage.freeCaptionsUsed < 10;
