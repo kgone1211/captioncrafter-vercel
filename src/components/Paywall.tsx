@@ -292,7 +292,7 @@ export default function Paywall({ whopUser, dbUserId, onUpgrade }: PaywallProps)
               </button>
             </div>
           </div>
-        </div>
+          ) : null}
 
         {/* Subscription Form */}
         {showSubscriptionForm && (
