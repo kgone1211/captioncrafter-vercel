@@ -26,6 +26,38 @@ export const PLATFORM_LIMITS: Record<string, PlatformConfig> = {
     style: 'friendly',
     cta_friendly: true,
     emoji_friendly: true
+  },
+  threads: {
+    char_limit: 500,
+    optimal_chars: [100, 500],
+    hashtag_range: [3, 8],
+    style: 'conversational',
+    cta_friendly: true,
+    emoji_friendly: true
+  },
+  linkedin: {
+    char_limit: 3000,
+    optimal_chars: [150, 3000],
+    hashtag_range: [3, 5],
+    style: 'professional',
+    cta_friendly: true,
+    emoji_friendly: false
+  },
+  facebook: {
+    char_limit: 63206,
+    optimal_chars: [100, 2000],
+    hashtag_range: [2, 5],
+    style: 'conversational',
+    cta_friendly: true,
+    emoji_friendly: true
+  },
+  telegram: {
+    char_limit: 4096,
+    optimal_chars: [100, 1000],
+    hashtag_range: [2, 6],
+    style: 'friendly',
+    cta_friendly: true,
+    emoji_friendly: true
   }
 };
 
@@ -61,6 +93,26 @@ export const BEST_TIMES: Record<string, string[]> = {
   tiktok: [
     '6:00 AM - 10:00 AM',
     '7:00 PM - 9:00 PM'
+  ],
+  threads: [
+    '7:00 AM - 9:00 AM',
+    '12:00 PM - 2:00 PM',
+    '6:00 PM - 8:00 PM'
+  ],
+  linkedin: [
+    '8:00 AM - 10:00 AM',
+    '12:00 PM - 2:00 PM',
+    '5:00 PM - 6:00 PM'
+  ],
+  facebook: [
+    '9:00 AM - 10:00 AM',
+    '3:00 PM - 4:00 PM',
+    '6:00 PM - 9:00 PM'
+  ],
+  telegram: [
+    '8:00 AM - 10:00 AM',
+    '1:00 PM - 3:00 PM',
+    '7:00 PM - 9:00 PM'
   ]
 };
 
@@ -70,7 +122,7 @@ export const LENGTH_PRESETS: Record<string, Record<string, number>> = {
     medium: 300,
     long: 800
   },
-  twitter: {
+  x: {
     short: 50,
     medium: 100,
     long: 200
@@ -79,6 +131,26 @@ export const LENGTH_PRESETS: Record<string, Record<string, number>> = {
     short: 50,
     medium: 100,
     long: 150
+  },
+  threads: {
+    short: 80,
+    medium: 200,
+    long: 400
+  },
+  linkedin: {
+    short: 150,
+    medium: 500,
+    long: 1200
+  },
+  facebook: {
+    short: 100,
+    medium: 300,
+    long: 800
+  },
+  telegram: {
+    short: 100,
+    medium: 300,
+    long: 600
   }
 };
 

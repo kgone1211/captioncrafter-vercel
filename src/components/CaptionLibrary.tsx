@@ -226,6 +226,14 @@ export default function CaptionLibrary({ userId }: CaptionLibraryProps) {
         return <Twitter className="h-5 w-5 text-blue-400" />;
       case 'tiktok':
         return <span className="text-lg">🎵</span>;
+      case 'threads':
+        return <span className="text-lg">🧵</span>;
+      case 'linkedin':
+        return <span className="text-lg">💼</span>;
+      case 'facebook':
+        return <span className="text-lg">📘</span>;
+      case 'telegram':
+        return <span className="text-lg">✈️</span>;
       default:
         return <div className="h-5 w-5 bg-gray-400 rounded" />;
     }
