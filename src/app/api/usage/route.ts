@@ -18,21 +18,11 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    await db.initDatabase();
-    console.log('Database initialized for usage fetch');
-    
-    try {
-      const usage = await db.getUserUsage(parseInt(userId));
-      console.log('Database usage result:', usage);
-      return NextResponse.json(usage);
-    } catch (dbError) {
-      console.error('Database usage fetch error:', dbError);
-      // Use fallback counter if database fails
-      console.log('Using fallback counter for usage fetch');
-      const fallbackUsage = fallbackCounter.getUsage(parseInt(userId));
-      console.log('Fallback usage result:', fallbackUsage);
-      return NextResponse.json(fallbackUsage);
-    }
+    // Always use fallback counter for consistency
+    console.log('Using fallback counter for usage fetch');
+    const fallbackUsage = fallbackCounter.getUsage(parseInt(userId));
+    console.log('Fallback usage result:', fallbackUsage);
+    return NextResponse.json(fallbackUsage);
   } catch (error) {
     console.error('Usage fetch error:', error);
     return NextResponse.json(
@@ -53,16 +43,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    await db.initDatabase();
-    
-    // Check if user can generate caption
-    let canGenerate = true;
-    try {
-      canGenerate = await db.canGenerateCaption(userId);
-    } catch (error) {
-      console.error('Error checking canGenerateCaption in POST:', error);
-      canGenerate = fallbackCounter.canGenerateCaption(userId);
-    }
+    // Always use fallback counter for consistency
+    const canGenerate = fallbackCounter.canGenerateCaption(userId);
     
     if (!canGenerate) {
       return NextResponse.json(
@@ -71,24 +53,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Increment usage
-    try {
-      await db.incrementUsage(userId);
-      const usage = await db.getUserUsage(userId);
-      return NextResponse.json({ 
-        usage, 
-        canGenerate: true 
-      });
-    } catch (error) {
-      console.error('Error incrementing usage in POST:', error);
-      // Use fallback counter if database fails
-      fallbackCounter.incrementUsage(userId);
-      const usage = fallbackCounter.getUsage(userId);
-      return NextResponse.json({ 
-        usage, 
-        canGenerate: true 
-      });
-    }
+    // Increment fallback counter
+    fallbackCounter.incrementUsage(userId);
+    const usage = fallbackCounter.getUsage(userId);
+    return NextResponse.json({ 
+      usage, 
+      canGenerate: true 
+    });
   } catch (error) {
     console.error('Usage increment error:', error);
     return NextResponse.json(

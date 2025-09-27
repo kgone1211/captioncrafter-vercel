@@ -18,7 +18,7 @@ class FallbackCounter {
 
   getUsage(userId: number): FallbackUsage {
     if (!this.counters.has(userId)) {
-      this.counters.set(userId, { freeCaptionsUsed: 0, subscriptionStatus: 'active' });
+      this.counters.set(userId, { freeCaptionsUsed: 0, subscriptionStatus: 'inactive' });
       console.log(`Created new fallback counter for user ${userId}`);
     }
     const usage = this.counters.get(userId)!;
@@ -37,6 +37,16 @@ class FallbackCounter {
   canGenerateCaption(userId: number): boolean {
     const usage = this.getUsage(userId);
     return usage.freeCaptionsUsed < 3;
+  }
+
+  resetUsage(userId: number): void {
+    this.counters.set(userId, { freeCaptionsUsed: 0, subscriptionStatus: 'inactive' });
+    console.log(`Reset fallback counter for user ${userId}`);
+  }
+
+  resetAll(): void {
+    this.counters.clear();
+    console.log('Reset all fallback counters');
   }
 }
 

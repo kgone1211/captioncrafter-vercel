@@ -21,45 +21,16 @@ export default function UsageCounter({ userId, className = '', refreshTrigger }:
     try {
       console.log('UsageCounter loading usage for userId:', userId);
       
-      // Always try both APIs and use the higher count
-      const [dbResponse, fallbackResponse] = await Promise.allSettled([
-        fetch(`/api/usage?userId=${userId}`),
-        fetch(`/api/fallback-usage?userId=${userId}`)
-      ]);
+      // Always use fallback counter for consistency
+      const response = await fetch(`/api/fallback-usage?userId=${userId}`);
+      console.log('Fallback response status:', response.status);
       
-      let dbUsage = null;
-      let fallbackUsage = null;
-      
-      // Process database response
-      if (dbResponse.status === 'fulfilled' && dbResponse.value.ok) {
-        dbUsage = await dbResponse.value.json();
-        console.log('Database usage:', dbUsage);
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Fallback usage data:', data);
+        setUsage(data);
       } else {
-        console.log('Database API failed or not available');
-      }
-      
-      // Process fallback response
-      if (fallbackResponse.status === 'fulfilled' && fallbackResponse.value.ok) {
-        fallbackUsage = await fallbackResponse.value.json();
-        console.log('Fallback usage:', fallbackUsage);
-      } else {
-        console.log('Fallback API failed or not available');
-      }
-      
-      // Use the higher count between database and fallback
-      if (dbUsage && fallbackUsage) {
-        const higherCount = Math.max(dbUsage.freeCaptionsUsed, fallbackUsage.freeCaptionsUsed);
-        const finalUsage = higherCount === fallbackUsage.freeCaptionsUsed ? fallbackUsage : dbUsage;
-        console.log('Using higher count:', finalUsage);
-        setUsage(finalUsage);
-      } else if (fallbackUsage) {
-        console.log('Using fallback counter (database unavailable)');
-        setUsage(fallbackUsage);
-      } else if (dbUsage) {
-        console.log('Using database counter (fallback unavailable)');
-        setUsage(dbUsage);
-      } else {
-        console.log('Both APIs failed, using default');
+        console.error('Fallback API error:', response.status, response.statusText);
         setUsage({ freeCaptionsUsed: 0, subscriptionStatus: 'active' });
       }
       
