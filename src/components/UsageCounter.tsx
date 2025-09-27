@@ -48,7 +48,7 @@ export default function UsageCounter({ userId, className = '', refreshTrigger }:
     return null;
   }
 
-  const remainingFree = Math.max(0, 10 - usage.freeCaptionsUsed);
+  const remainingFree = Math.max(0, 3 - usage.freeCaptionsUsed);
   // For now, everyone is on freemium model regardless of subscription status
   // TODO: In the future, check for actual paid subscription status
   const isSubscribed = false; // Disabled for now

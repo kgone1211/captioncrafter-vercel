@@ -37,7 +37,7 @@ export default function HomeClientPage({ whopUser, dbUserId }: HomeClientPagePro
       setLoading(true);
       
       // Use the dbUserId that was already created in the main page
-      setUser({ id: dbUserId, email: whopUser.email });
+      setUser({ id: dbUserId, email: whopUser.email, username: whopUser.username });
       await loadUserStats(dbUserId);
       const displayName = whopUser.username || whopUser.email.split('@')[0];
       showSuccess('Welcome!', `Logged in as ${displayName}`);
