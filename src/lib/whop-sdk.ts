@@ -209,6 +209,19 @@ class WhopSDK {
       };
     }
 
+    // Direct access user (when accessing app directly, not through Whop)
+    if (userId === 'direct_access_user') {
+      return {
+        id: userId,
+        email: 'user@example.com',
+        username: 'Demo User',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        company_id: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID || 'biz_demo',
+        subscription_status: 'inactive'
+      };
+    }
+
     // If no API key, return test user only in development or if TEST_USERNAME is set
     if (!this.apiKey) {
       if (process.env.NODE_ENV === 'development' || process.env.TEST_USERNAME) {

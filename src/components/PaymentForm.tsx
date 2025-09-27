@@ -29,11 +29,13 @@ export default function PaymentForm({ planId, planName, price, interval, userId,
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  // Mock saved payment methods (in real app, these would come from Whop API)
+  // Load saved payment methods (in real app, these would come from Whop API)
   useEffect(() => {
+    // For now, show demo payment methods
+    // In production, this would fetch real saved payment methods from Whop
     setSavedMethods([
       {
-        id: 'pm_1',
+        id: 'demo_visa',
         type: 'card',
         last4: '4242',
         brand: 'visa',
@@ -41,7 +43,7 @@ export default function PaymentForm({ planId, planName, price, interval, userId,
         expiryYear: 2025
       },
       {
-        id: 'pm_2',
+        id: 'demo_mastercard',
         type: 'card',
         last4: '5555',
         brand: 'mastercard',
@@ -115,6 +117,14 @@ export default function PaymentForm({ planId, planName, price, interval, userId,
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
+        </div>
+
+        {/* Demo Notice */}
+        <div className="px-6 py-3 bg-blue-50 border-b">
+          <p className="text-sm text-blue-800">
+            <strong>Demo Mode:</strong> This shows how the payment form would work. 
+            In production, you would see your real saved payment methods from Whop.
+          </p>
         </div>
 
         {/* Payment Form */}
