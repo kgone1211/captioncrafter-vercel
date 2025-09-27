@@ -57,17 +57,33 @@ export default function PaymentForm({ planId, planName, price, interval, userId,
     setError(null);
 
     try {
-      // Simulate payment processing
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Create checkout session with Whop
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          planId,
+          userId,
+          successUrl: `${window.location.origin}/success`,
+          cancelUrl: `${window.location.origin}/cancel`
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create checkout session');
+      }
+
+      const { checkoutUrl } = await response.json();
       
-      // Upgrade user to subscription
-      fallbackCounter.upgradeToSubscription(userId, planId);
+      // Redirect to Whop checkout
+      window.location.href = checkoutUrl;
       
-      // Mock successful payment
-      console.log('Payment successful for plan:', planId);
-      onSuccess();
     } catch (err) {
-      setError('Payment failed. Please try again.');
+      console.error('Payment error:', err);
+      setError(err instanceof Error ? err.message : 'Payment failed. Please try again.');
     } finally {
       setLoading(false);
     }

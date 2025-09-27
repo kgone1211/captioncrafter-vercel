@@ -14,22 +14,31 @@ function SuccessContent() {
     const handleSuccess = async () => {
       try {
         if (sessionId) {
-          // Here you would typically verify the payment with Whop
-          // and update the user's subscription status
-          console.log('Payment successful for session:', sessionId);
+          console.log('Processing successful payment for session:', sessionId);
           
-          // Simulate processing time
-          await new Promise(resolve => setTimeout(resolve, 2000));
-          
-          // Redirect back to the app
-          window.location.href = '/';
+          // Verify the session with Whop and update subscription
+          const response = await fetch('/api/verify-checkout', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId })
+          });
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to verify payment');
+          }
+
+          const result = await response.json();
+          console.log('Payment verification result:', result);
+
+          setLoading(false);
         } else {
           setError('No session ID provided');
+          setLoading(false);
         }
       } catch (err) {
         console.error('Error processing payment success:', err);
-        setError('Failed to process payment');
-      } finally {
+        setError(err instanceof Error ? err.message : 'Failed to process payment');
         setLoading(false);
       }
     };

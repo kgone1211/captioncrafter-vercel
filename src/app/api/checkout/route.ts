@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { whopSdk } from '@/lib/whop-sdk';
 
 export async function POST(request: NextRequest) {
   try {
     console.log('Checkout API called');
-    const { planId, userId } = await request.json();
-    console.log('Checkout request data:', { planId, userId });
+    const { planId, userId, successUrl, cancelUrl } = await request.json();
+    console.log('Checkout request data:', { planId, userId, successUrl, cancelUrl });
     
     if (!planId || !userId) {
       console.log('Missing required fields');
@@ -14,13 +15,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // For now, return a mock checkout session to test the flow
-    console.log('Returning mock checkout session...');
-    const mockCheckoutUrl = `https://captioncrafter-vercel.vercel.app/success?session_id=mock_${Date.now()}`;
+    // Create checkout session with Whop
+    console.log('Creating checkout session with Whop SDK...');
+    const checkoutSession = await whopSdk.createCheckoutSession({
+      planId,
+      userId: userId.toString(),
+      successUrl: successUrl || `${process.env.NEXT_PUBLIC_APP_URL || 'https://captioncrafter-vercel.vercel.app'}/success`,
+      cancelUrl: cancelUrl || `${process.env.NEXT_PUBLIC_APP_URL || 'https://captioncrafter-vercel.vercel.app'}/cancel`,
+      metadata: {
+        app_name: 'Caption Crafter',
+        user_id: userId.toString()
+      }
+    });
+    
+    console.log('Checkout session created:', checkoutSession);
     
     return NextResponse.json({
-      checkoutUrl: mockCheckoutUrl,
-      sessionId: `mock_${Date.now()}`
+      checkoutUrl: checkoutSession.url,
+      sessionId: checkoutSession.id
     });
 
   } catch (error) {
