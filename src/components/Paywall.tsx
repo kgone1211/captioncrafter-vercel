@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { WhopUser } from '@/lib/whop-sdk';
+import PaymentForm from './PaymentForm';
 
 interface PaywallProps {
   whopUser?: WhopUser;
@@ -16,6 +17,8 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
   const [usage, setUsage] = useState<{ freeCaptionsUsed: number; subscriptionStatus: string } | null>(null);
   const [showSubscriptionForm, setShowSubscriptionForm] = useState(false);
   const [plans, setPlans] = useState<any[]>([]);
+  const [showPaymentForm, setShowPaymentForm] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [formData, setFormData] = useState({
     name: whopUser?.username || 'User',
     email: whopUser?.email || 'user@example.com',
@@ -70,44 +73,38 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
   };
 
   const handleUpgrade = async (planId: string, planName: string) => {
-    setIsLoading(planId);
-    try {
-      // Get the target user ID
-      const targetUserId = userId || dbUserId;
-      if (!targetUserId) {
-        throw new Error('User ID not available');
-      }
-
-      // Create checkout session via API
-      const response = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          planId,
-          userId: targetUserId
-        })
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create checkout session');
-      }
-
-      const { checkoutUrl } = await response.json();
-      
-      console.log(`Redirecting to ${planName} checkout:`, checkoutUrl);
-      
-      // Redirect to Whop checkout
-      window.location.href = checkoutUrl;
-      
-    } catch (error) {
-      console.error('Error creating checkout session:', error);
-      alert(`Error: ${error instanceof Error ? error.message : 'Failed to start checkout'}`);
-    } finally {
-      setIsLoading(null);
+    // Find the selected plan
+    const plan = plans.find(p => p.id === planId);
+    if (!plan) {
+      console.error('Plan not found:', planId);
+      return;
     }
+
+    // Set the selected plan and show payment form
+    setSelectedPlan(plan);
+    setShowPaymentForm(true);
+  };
+
+  const handlePaymentSuccess = async () => {
+    try {
+      // Close payment form
+      setShowPaymentForm(false);
+      
+      // Show success message
+      alert('Payment successful! Your subscription has been activated.');
+      
+      // Call onUpgrade callback to refresh the app
+      if (onUpgrade) {
+        onUpgrade();
+      }
+    } catch (error) {
+      console.error('Error handling payment success:', error);
+    }
+  };
+
+  const handlePaymentCancel = () => {
+    setShowPaymentForm(false);
+    setSelectedPlan(null);
   };
 
   const handleSubscriptionForm = async (e: React.FormEvent) => {
@@ -131,6 +128,18 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
+      {/* Payment Form Modal */}
+      {showPaymentForm && selectedPlan && (
+        <PaymentForm
+          planId={selectedPlan.id}
+          planName={selectedPlan.name}
+          price={selectedPlan.price}
+          interval={selectedPlan.interval}
+          onSuccess={handlePaymentSuccess}
+          onCancel={handlePaymentCancel}
+        />
+      )}
+      
       <div className="max-w-2xl w-full relative">
         {/* Close Button */}
         {onClose && (
@@ -320,24 +329,13 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
                     </ul>
                     <button
                       onClick={() => handleUpgrade(plan.id, plan.name)}
-                      disabled={isLoading === plan.id}
-                      className={`w-full px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                      className={`w-full px-4 py-2 rounded-lg font-medium transition-colors ${
                         index === 1 
                           ? 'bg-blue-600 text-white hover:bg-blue-700' 
                           : 'bg-gray-600 text-white hover:bg-gray-700'
                       }`}
                     >
-                      {isLoading === plan.id ? (
-                        <div className="flex items-center justify-center">
-                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                          </svg>
-                          Redirecting...
-                        </div>
-                      ) : (
-                        `Choose ${plan.name}`
-                      )}
+                      Choose {plan.name}
                     </button>
                   </div>
                 ))
