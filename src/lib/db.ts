@@ -181,7 +181,15 @@ export class Database {
     hashtags: string[],
     charCount: number
   ): Promise<number> {
-    if (isLocalDev) {
+    const localDev = isLocalDev();
+    const supabaseAvailable = hasSupabase();
+    
+    if (supabaseAvailable) {
+      // TODO: Implement Supabase saveCaption
+      return this.localDb.saveCaption(userId, platform, topic, tone, text, hashtags, charCount);
+    }
+    
+    if (localDev) {
       return this.localDb.saveCaption(userId, platform, topic, tone, text, hashtags, charCount);
     }
 
@@ -204,7 +212,15 @@ export class Database {
     platform?: string,
     favoriteOnly?: boolean
   ): Promise<Caption[]> {
-    if (isLocalDev) {
+    const localDev = isLocalDev();
+    const supabaseAvailable = hasSupabase();
+    
+    if (supabaseAvailable) {
+      // TODO: Implement Supabase listCaptions
+      return this.localDb.listCaptions(userId, platform, favoriteOnly);
+    }
+    
+    if (localDev) {
       return this.localDb.listCaptions(userId, platform, favoriteOnly);
     }
 
@@ -245,7 +261,15 @@ export class Database {
   }
 
   async toggleFavorite(captionId: number): Promise<boolean> {
-    if (isLocalDev) {
+    const localDev = isLocalDev();
+    const supabaseAvailable = hasSupabase();
+    
+    if (supabaseAvailable) {
+      // TODO: Implement Supabase toggleFavorite
+      return this.localDb.toggleFavorite(captionId);
+    }
+    
+    if (localDev) {
       return this.localDb.toggleFavorite(captionId);
     }
     
@@ -271,7 +295,15 @@ export class Database {
     scheduledAt: string,
     notifyVia: string = 'None'
   ): Promise<number> {
-    if (isLocalDev) {
+    const localDev = isLocalDev();
+    const supabaseAvailable = hasSupabase();
+    
+    if (supabaseAvailable) {
+      // TODO: Implement Supabase schedulePost
+      return this.localDb.schedulePost(userId, captionId, platform, scheduledAt, notifyVia as 'None' | 'Email');
+    }
+    
+    if (localDev) {
       return this.localDb.schedulePost(userId, captionId, platform, scheduledAt, notifyVia as 'None' | 'Email');
     }
     
@@ -365,7 +397,15 @@ export class Database {
   }
 
   async getUserStats(userId: number): Promise<UserStats> {
-    if (isLocalDev) {
+    const localDev = isLocalDev();
+    const supabaseAvailable = hasSupabase();
+    
+    if (supabaseAvailable) {
+      // TODO: Implement Supabase getUserStats
+      return this.localDb.getUserStats(userId);
+    }
+    
+    if (localDev) {
       return this.localDb.getUserStats(userId);
     }
     
@@ -445,7 +485,15 @@ export class Database {
   }
 
   async canGenerateCaption(userId: number): Promise<boolean> {
-    if (isLocalDev) {
+    const localDev = isLocalDev();
+    const supabaseAvailable = hasSupabase();
+    
+    if (supabaseAvailable) {
+      // TODO: Implement Supabase canGenerateCaption
+      return this.localDb.canGenerateCaption(userId);
+    }
+    
+    if (localDev) {
       return this.localDb.canGenerateCaption(userId);
     }
 
