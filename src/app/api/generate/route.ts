@@ -63,7 +63,9 @@ export async function POST(request: NextRequest) {
         console.error('Error incrementing usage in database:', error);
         // Use fallback counter if database fails
         console.log('Using fallback counter for usage increment');
+        console.log('Before increment - fallback usage:', fallbackCounter.getUsage(body.userId));
         fallbackCounter.incrementUsage(body.userId);
+        console.log('After increment - fallback usage:', fallbackCounter.getUsage(body.userId));
         console.log(`Fallback usage incremented for userId: ${body.userId}`);
       }
     }
