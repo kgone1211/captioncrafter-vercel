@@ -21,6 +21,11 @@ export async function GET(request: NextRequest) {
     await db.initDatabase();
     console.log('Database initialized');
     
+    // Check which database we're using
+    const isLocalDev = !process.env.DATABASE_URL || process.env.DATABASE_URL.includes('localhost');
+    const hasSupabase = !!(process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL);
+    console.log('Database type check:', { isLocalDev, hasSupabase });
+    
     // Get all users to see what's in the database
     const allUsers = await db.getAllUsers();
     console.log('All users in database:', allUsers);
@@ -43,6 +48,7 @@ export async function GET(request: NextRequest) {
       allUsers,
       usageBefore: usage,
       usageAfter: usageAfter,
+      databaseType: { isLocalDev, hasSupabase },
       message: 'Debug completed successfully'
     });
   } catch (error) {
