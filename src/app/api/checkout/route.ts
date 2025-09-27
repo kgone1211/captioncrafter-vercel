@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { whopSdk } from '@/lib/whop-sdk';
 
 export async function POST(request: NextRequest) {
   try {
