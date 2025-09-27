@@ -147,7 +147,8 @@ class WhopSDK {
       console.log(`Fetching Whop user data for userId: ${userId}`);
       console.log(`Using API key: ${this.apiKey ? 'present' : 'missing'}`);
       
-      const response = await fetch(`${this.baseUrl}/users/${userId}`, {
+      // Use the /v5/me endpoint to get current user profile
+      const response = await fetch(`${this.baseUrl}/v5/me`, {
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
           'Content-Type': 'application/json',

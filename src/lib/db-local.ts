@@ -98,7 +98,7 @@ export class Database {
   ): Promise<number> {
     try {
       const newCaption: Caption = {
-        id: globalData.__captionCrafterDb.nextCaptionId++,
+        id: this.globalData.__captionCrafterDb.nextCaptionId++,
         user_id: userId,
         platform,
         topic,
@@ -110,7 +110,7 @@ export class Database {
         created_at: new Date().toISOString()
       };
       
-      captions.push(newCaption);
+      this.globalData.__captionCrafterDb.captions.push(newCaption);
       return newCaption.id;
     } catch (error) {
       console.error('Error saving caption:', error);
@@ -124,7 +124,7 @@ export class Database {
     favoriteOnly?: boolean
   ): Promise<Caption[]> {
     try {
-      let filteredCaptions = captions.filter((caption: any) => caption.user_id === userId);
+      let filteredCaptions = this.globalData.__captionCrafterDb.captions.filter((caption: any) => caption.user_id === userId);
       
       if (platform) {
         filteredCaptions = filteredCaptions.filter((caption: any) => caption.platform === platform);
@@ -143,7 +143,7 @@ export class Database {
 
   async toggleFavorite(captionId: number): Promise<boolean> {
     try {
-      const caption = captions.find((c: any) => c.id === captionId);
+      const caption = this.globalData.__captionCrafterDb.captions.find((c: any) => c.id === captionId);
       if (caption) {
         caption.is_favorite = !caption.is_favorite;
         return true;
@@ -163,13 +163,13 @@ export class Database {
     notifyVia: 'None' | 'Email' = 'None'
   ): Promise<number> {
     try {
-      const caption = captions.find((c: any) => c.id === captionId);
+      const caption = this.globalData.__captionCrafterDb.captions.find((c: any) => c.id === captionId);
       if (!caption) {
         throw new Error('Caption not found');
       }
 
       const newPost: ScheduledPost = {
-        id: globalData.__captionCrafterDb.nextPostId++,
+        id: this.globalData.__captionCrafterDb.nextPostId++,
         user_id: userId,
         caption_id: captionId,
         platform,
@@ -178,14 +178,14 @@ export class Database {
         notify_via: notifyVia,
         created_at: new Date().toISOString(),
         caption: caption, // Include caption data
-        email: users.find((u: any) => u.id === userId)?.email,
+        email: this.globalData.__captionCrafterDb.users.find((u: any) => u.id === userId)?.email,
         text: caption.text,
         hashtags: caption.hashtags,
         topic: caption.topic,
         tone: caption.tone,
       };
       
-      scheduledPosts.push(newPost);
+      this.globalData.__captionCrafterDb.scheduledPosts.push(newPost);
       return newPost.id;
     } catch (error) {
       console.error('Error scheduling post:', error);
@@ -195,7 +195,7 @@ export class Database {
 
   async listScheduledPosts(userId: number, status?: string): Promise<ScheduledPost[]> {
     try {
-      let filteredPosts = scheduledPosts.filter((post: any) => post.user_id === userId);
+      let filteredPosts = this.globalData.__captionCrafterDb.scheduledPosts.filter((post: any) => post.user_id === userId);
       
       if (status) {
         filteredPosts = filteredPosts.filter((post: any) => post.status === status);
@@ -203,7 +203,7 @@ export class Database {
       
       // Join with caption data
       const postsWithCaptions = filteredPosts.map((post: any) => {
-        const caption = captions.find((c: any) => c.id === post.caption_id);
+        const caption = this.globalData.__captionCrafterDb.captions.find((c: any) => c.id === post.caption_id);
         return {
           ...post,
           text: caption?.text,
@@ -222,7 +222,7 @@ export class Database {
 
   async markPostSent(postId: number): Promise<boolean> {
     try {
-      const post = scheduledPosts.find((p: any) => p.id === postId);
+      const post = this.globalData.__captionCrafterDb.scheduledPosts.find((p: any) => p.id === postId);
       if (post) {
         post.status = 'SENT';
         return true;
@@ -236,9 +236,9 @@ export class Database {
 
   async deleteScheduledPost(postId: number): Promise<boolean> {
     try {
-      const index = scheduledPosts.findIndex((p: any) => p.id === postId);
+      const index = this.globalData.__captionCrafterDb.scheduledPosts.findIndex((p: any) => p.id === postId);
       if (index !== -1) {
-        scheduledPosts.splice(index, 1);
+        this.globalData.__captionCrafterDb.scheduledPosts.splice(index, 1);
         return true;
       }
       return false;
@@ -250,8 +250,8 @@ export class Database {
 
   async getUserStats(userId: number): Promise<UserStats> {
     try {
-      const userCaptions = captions.filter((c: any) => c.user_id === userId);
-      const userScheduledPosts = scheduledPosts.filter((p: any) => p.user_id === userId);
+      const userCaptions = this.globalData.__captionCrafterDb.captions.filter((c: any) => c.user_id === userId);
+      const userScheduledPosts = this.globalData.__captionCrafterDb.scheduledPosts.filter((p: any) => p.user_id === userId);
       
       return {
         total_captions: userCaptions.length,
