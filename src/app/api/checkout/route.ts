@@ -15,24 +15,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('Creating checkout session...');
-    // Create checkout session
-    const checkoutSession = await whopSdk.createCheckoutSession({
-      planId,
-      userId: userId.toString(),
-      successUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://captioncrafter-vercel.vercel.app'}/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://captioncrafter-vercel.vercel.app'}/cancel`,
-      metadata: {
-        plan_id: planId,
-        user_id: userId,
-        timestamp: new Date().toISOString()
-      }
-    });
-
-    console.log('Checkout session created:', checkoutSession);
+    // For now, return a mock checkout session to test the flow
+    console.log('Returning mock checkout session...');
+    const mockCheckoutUrl = `https://captioncrafter-vercel.vercel.app/success?session_id=mock_${Date.now()}`;
+    
     return NextResponse.json({
-      checkoutUrl: checkoutSession.url,
-      sessionId: checkoutSession.id
+      checkoutUrl: mockCheckoutUrl,
+      sessionId: `mock_${Date.now()}`
     });
 
   } catch (error) {
