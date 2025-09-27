@@ -182,11 +182,13 @@ class WhopSDK {
 
     // If no API key, return test user (for development)
     if (!this.apiKey) {
-      console.log('No API key, returning test user');
+      const testUsername = process.env.TEST_USERNAME || 'Krista';
+      const testEmail = process.env.TEST_EMAIL || 'krista@example.com';
+      console.log('No API key, returning test user:', testUsername);
       return {
         id: userId,
-        email: 'test@example.com',
-        username: 'testuser',
+        email: testEmail,
+        username: testUsername,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         company_id: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID || 'biz_test_company',

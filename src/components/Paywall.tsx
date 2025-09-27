@@ -19,9 +19,22 @@ export default function Paywall({ whopUser, dbUserId, onUpgrade }: PaywallProps)
     plan: 'premium'
   });
 
+  // Debug logging
+  console.log('Paywall received whopUser:', whopUser);
+  console.log('Paywall formData initialized with:', formData);
+
   useEffect(() => {
     loadUsage();
   }, []);
+
+  // Update form data when whopUser changes
+  useEffect(() => {
+    setFormData({
+      name: whopUser.username || whopUser.email || '',
+      email: whopUser.email || '',
+      plan: 'premium'
+    });
+  }, [whopUser]);
 
   const loadUsage = async () => {
     try {

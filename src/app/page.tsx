@@ -78,6 +78,7 @@ export default async function Home() {
     
     // If user can't generate captions (hit limit), show paywall
     if (!canGenerate) {
+      console.log('Showing paywall for user:', whopUser);
       return <Paywall whopUser={whopUser} dbUserId={dbUserId} />;
     }
 
