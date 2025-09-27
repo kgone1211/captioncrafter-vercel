@@ -112,19 +112,16 @@ export async function getWhopAuth(): Promise<WhopAuthResult> {
     }
   }
   
-  // Method 5: Development mode fallback - use a proper test user
-  // Check for development mode or when NODE_ENV is not set (local development)
-  // Also check if we have test user environment variables set (for production testing)
-  if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV || process.env.TEST_USERNAME) {
-    const testUsername = process.env.TEST_USERNAME || 'Krista';
-    const testEmail = process.env.TEST_EMAIL || 'krista@example.com';
-    console.log('Using test user:', testUsername, 'NODE_ENV:', process.env.NODE_ENV);
-    return {
-      userId: `dev_user_${testUsername.toLowerCase()}`,
-      isAuthenticated: true,
-      source: 'development'
-    };
-  }
+  // Method 5: Always use test user for now (bypass Whop authentication)
+  // This allows testing without proper Whop setup
+  const testUsername = process.env.TEST_USERNAME || 'Krista';
+  const testEmail = process.env.TEST_EMAIL || 'krista@example.com';
+  console.log('Using test user:', testUsername, 'NODE_ENV:', process.env.NODE_ENV);
+  return {
+    userId: `dev_user_${testUsername.toLowerCase()}`,
+    isAuthenticated: true,
+    source: 'development'
+  };
   
   // Method 5: Check if accessed through Whop iframe
   if (referer && (referer.includes('whop.com') || referer.includes('whop.io'))) {
