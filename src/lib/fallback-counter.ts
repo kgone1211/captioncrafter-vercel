@@ -29,14 +29,35 @@ class FallbackCounter {
   incrementUsage(userId: number): void {
     console.log(`Fallback counter incrementUsage called for user ${userId}`);
     const usage = this.getUsage(userId);
-    usage.freeCaptionsUsed += 1;
-    this.counters.set(userId, usage);
-    console.log(`Fallback counter incremented for user ${userId}: ${usage.freeCaptionsUsed}/3`);
+    
+    // Only increment if user is on free plan (inactive subscription)
+    if (usage.subscriptionStatus === 'inactive') {
+      usage.freeCaptionsUsed += 1;
+      this.counters.set(userId, usage);
+      console.log(`Fallback counter incremented for user ${userId}: ${usage.freeCaptionsUsed}/3`);
+    } else {
+      console.log(`User ${userId} has active subscription, not incrementing free counter`);
+    }
   }
 
   canGenerateCaption(userId: number): boolean {
     const usage = this.getUsage(userId);
+    
+    // If user has active subscription, they can always generate
+    if (usage.subscriptionStatus === 'active') {
+      return true;
+    }
+    
+    // For free users, check if they've used less than 3 captions
     return usage.freeCaptionsUsed < 3;
+  }
+
+  upgradeToSubscription(userId: number, planId: string): void {
+    console.log(`Upgrading user ${userId} to subscription for plan ${planId}`);
+    const usage = this.getUsage(userId);
+    usage.subscriptionStatus = 'active';
+    this.counters.set(userId, usage);
+    console.log(`User ${userId} upgraded to active subscription`);
   }
 
   resetUsage(userId: number): void {

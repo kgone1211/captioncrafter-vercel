@@ -2,12 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { CreditCard, Lock, CheckCircle, AlertCircle } from 'lucide-react';
+import { fallbackCounter } from '@/lib/fallback-counter';
 
 interface PaymentFormProps {
   planId: string;
   planName: string;
   price: number;
   interval: string;
+  userId: number;
   onSuccess: () => void;
   onCancel: () => void;
 }
@@ -21,7 +23,7 @@ interface SavedPaymentMethod {
   expiryYear: number;
 }
 
-export default function PaymentForm({ planId, planName, price, interval, onSuccess, onCancel }: PaymentFormProps) {
+export default function PaymentForm({ planId, planName, price, interval, userId, onSuccess, onCancel }: PaymentFormProps) {
   const [savedMethods, setSavedMethods] = useState<SavedPaymentMethod[]>([]);
   const [selectedMethod, setSelectedMethod] = useState<string>('new');
   const [loading, setLoading] = useState(false);
@@ -57,6 +59,9 @@ export default function PaymentForm({ planId, planName, price, interval, onSucce
     try {
       // Simulate payment processing
       await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      // Upgrade user to subscription
+      fallbackCounter.upgradeToSubscription(userId, planId);
       
       // Mock successful payment
       console.log('Payment successful for plan:', planId);

@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
             );
           }
           
-          // Increment fallback counter
+          // Increment fallback counter (only for free users)
           console.log('Before increment - fallback usage:', fallbackCounter.getUsage(body.userId));
           fallbackCounter.incrementUsage(body.userId);
           console.log('After increment - fallback usage:', fallbackCounter.getUsage(body.userId));
