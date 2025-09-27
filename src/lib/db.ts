@@ -20,8 +20,14 @@ function getLocalDb(): LocalDatabase {
   return localDbInstance;
 }
 
-// Export the local database instance for direct access
-export const localDb = getLocalDb();
+// Export the local database instance for direct access - create once
+export const localDb = (() => {
+  if (!localDbInstance) {
+    localDbInstance = LocalDatabase.getInstance();
+    console.log('Created new LocalDatabase singleton instance for export');
+  }
+  return localDbInstance;
+})();
 
 export class Database {
   private static instance: Database | null = null;
@@ -35,7 +41,7 @@ export class Database {
 
   // Use the shared localDb instance
   private get localDb() {
-    return localDb;
+    return getLocalDb();
   }
 
   async initDatabase(): Promise<void> {
