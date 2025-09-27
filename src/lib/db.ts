@@ -6,10 +6,14 @@ import { Database as LocalDatabase } from './db-local';
 import { supabaseDb } from './supabase';
 
 // Check if we're in local development mode (no database URL)
-const isLocalDev = !process.env.DATABASE_URL || process.env.DATABASE_URL.includes('localhost');
+function isLocalDev(): boolean {
+  return !process.env.DATABASE_URL || process.env.DATABASE_URL.includes('localhost');
+}
 
 // Check if Supabase is available
-const hasSupabase = !!(process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL);
+function hasSupabase(): boolean {
+  return !!(process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL);
+}
 
 // Use local database for development - create singleton
 let localDbInstance: LocalDatabase | null = null;
@@ -49,14 +53,16 @@ export class Database {
   }
 
   async initDatabase(): Promise<void> {
-    console.log('Database init called. isLocalDev:', isLocalDev, 'hasSupabase:', hasSupabase, 'DATABASE_URL:', process.env.DATABASE_URL ? 'present' : 'missing');
+    const localDev = isLocalDev();
+    const supabaseAvailable = hasSupabase();
+    console.log('Database init called. isLocalDev:', localDev, 'hasSupabase:', supabaseAvailable, 'DATABASE_URL:', process.env.DATABASE_URL ? 'present' : 'missing');
     
-    if (hasSupabase) {
+    if (supabaseAvailable) {
       console.log('Using Supabase database');
       return supabaseDb.initDatabase();
     }
     
-    if (isLocalDev) {
+    if (localDev) {
       console.log('Using local database');
       return this.localDb.initDatabase();
     }
@@ -114,14 +120,16 @@ export class Database {
   }
 
   async upsertUser(email: string, whopUserId?: string, subscriptionStatus?: string): Promise<number> {
-    console.log('upsertUser called with:', { email, whopUserId, subscriptionStatus, isLocalDev, hasSupabase });
+    const localDev = isLocalDev();
+    const supabaseAvailable = hasSupabase();
+    console.log('upsertUser called with:', { email, whopUserId, subscriptionStatus, isLocalDev: localDev, hasSupabase: supabaseAvailable });
     
-    if (hasSupabase) {
+    if (supabaseAvailable) {
       console.log('Using Supabase for upsertUser');
       return supabaseDb.upsertUser(email, whopUserId, subscriptionStatus);
     }
     
-    if (isLocalDev) {
+    if (localDev) {
       console.log('Using local database for upsertUser');
       return this.localDb.upsertUser(email, whopUserId, subscriptionStatus);
     }
@@ -382,14 +390,16 @@ export class Database {
   }
 
   async getUserUsage(userId: number): Promise<{ freeCaptionsUsed: number; subscriptionStatus: string }> {
-    console.log('getUserUsage called with userId:', userId, 'isLocalDev:', isLocalDev, 'hasSupabase:', hasSupabase);
+    const localDev = isLocalDev();
+    const supabaseAvailable = hasSupabase();
+    console.log('getUserUsage called with userId:', userId, 'isLocalDev:', localDev, 'hasSupabase:', supabaseAvailable);
     
-    if (hasSupabase) {
+    if (supabaseAvailable) {
       console.log('Using Supabase for getUserUsage');
       return supabaseDb.getUserUsage(userId);
     }
     
-    if (isLocalDev) {
+    if (localDev) {
       console.log('Using local database for getUserUsage');
       return this.localDb.getUserUsage(userId);
     }
@@ -455,7 +465,14 @@ export class Database {
   }
 
   async getAllUsers(): Promise<any[]> {
-    if (isLocalDev) {
+    const localDev = isLocalDev();
+    const supabaseAvailable = hasSupabase();
+    
+    if (supabaseAvailable) {
+      return supabaseDb.getAllUsers();
+    }
+    
+    if (localDev) {
       return this.localDb.getAllUsers();
     }
     
