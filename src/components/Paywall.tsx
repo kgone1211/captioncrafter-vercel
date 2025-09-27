@@ -252,6 +252,7 @@ export default function Paywall({ whopUser, dbUserId, onUpgrade }: PaywallProps)
                 <li>• Basic AI generation</li>
                 <li>• 3 platforms</li>
                 <li>• Email support</li>
+                <li>• Upgrade from 3 free captions</li>
               </ul>
               <button
                 onClick={() => handleUpgrade('prod_OAeju0utHppI2', 'Basic Plan')}
@@ -285,6 +286,7 @@ export default function Paywall({ whopUser, dbUserId, onUpgrade }: PaywallProps)
                 <li>• All platforms</li>
                 <li>• Priority support</li>
                 <li>• Content calendar</li>
+                <li>• Upgrade from 3 free captions</li>
               </ul>
               <button
                 onClick={() => handleUpgrade('prod_xcU9zERSGgyNK', 'Premium Plan')}

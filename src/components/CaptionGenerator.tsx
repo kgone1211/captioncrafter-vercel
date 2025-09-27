@@ -64,7 +64,7 @@ export default function CaptionGenerator({ userId, onStatsUpdate }: CaptionGener
         
         // Handle usage limit error
         if (response.status === 403 && errorData.canGenerate === false) {
-          alert('You have used all 10 free captions. Please upgrade to continue.');
+          alert('You have used all 3 free captions. Please upgrade to continue.');
           return;
         }
         

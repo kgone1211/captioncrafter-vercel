@@ -188,16 +188,12 @@ export class SupabaseDatabase {
       
       // For now, implement freemium model for ALL users
       // TODO: In the future, check for actual paid subscription status
-      // For now, everyone gets 10 free captions regardless of Whop subscription status
+      // For now, everyone gets 3 free captions regardless of Whop subscription status
       
-      // If user has used less than 10 free captions, they can generate more
-      const canGenerate = usage.freeCaptionsUsed < 10;
-      console.log('Can generate caption:', canGenerate, '(used:', usage.freeCaptionsUsed, '/10)');
-      
-      // For testing: force paywall after 3 captions instead of 10
-      const testCanGenerate = usage.freeCaptionsUsed < 3;
-      console.log('Test can generate caption:', testCanGenerate, '(used:', usage.freeCaptionsUsed, '/3)');
-      return testCanGenerate;
+      // If user has used less than 3 free captions, they can generate more
+      const canGenerate = usage.freeCaptionsUsed < 3;
+      console.log('Can generate caption:', canGenerate, '(used:', usage.freeCaptionsUsed, '/3)');
+      return canGenerate;
     } catch (error) {
       console.error('Supabase canGenerateCaption error:', error);
       return false;

@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           { 
             error: 'Usage limit reached', 
-            message: 'You have used all 10 free captions. Please upgrade to continue.',
+            message: 'You have used all 3 free captions. Please upgrade to continue.',
             canGenerate: false 
           },
           { status: 403 }
