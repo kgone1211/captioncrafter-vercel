@@ -4,8 +4,8 @@ import { sql } from '@vercel/postgres';
 import { Caption, ScheduledPost, UserStats } from '@/types';
 import { Database as LocalDatabase } from './db-local';
 
-// Check if we're in local development mode (no Vercel Postgres)
-const isLocalDev = !process.env.POSTGRES_URL || process.env.POSTGRES_URL.includes('localhost');
+// Check if we're in local development mode (no database URL)
+const isLocalDev = !process.env.DATABASE_URL || process.env.DATABASE_URL.includes('localhost');
 
 // Use local database for development - create singleton
 let localDbInstance: LocalDatabase | null = null;
@@ -45,7 +45,7 @@ export class Database {
   }
 
   async initDatabase(): Promise<void> {
-    console.log('Database init called. isLocalDev:', isLocalDev, 'POSTGRES_URL:', process.env.POSTGRES_URL ? 'present' : 'missing');
+    console.log('Database init called. isLocalDev:', isLocalDev, 'DATABASE_URL:', process.env.DATABASE_URL ? 'present' : 'missing');
     if (isLocalDev) {
       console.log('Using local database');
       return this.localDb.initDatabase();

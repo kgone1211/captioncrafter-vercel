@@ -5,14 +5,14 @@ import { db } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
-    const isLocalDev = !process.env.POSTGRES_URL || process.env.POSTGRES_URL.includes('localhost');
+    const isLocalDev = !process.env.DATABASE_URL || process.env.DATABASE_URL.includes('localhost');
     
     return NextResponse.json({
       isLocalDev,
-      hasPostgresUrl: !!process.env.POSTGRES_URL,
-      postgresUrl: process.env.POSTGRES_URL ? 'present' : 'missing',
+      hasDatabaseUrl: !!process.env.DATABASE_URL,
+      databaseUrl: process.env.DATABASE_URL ? 'present' : 'missing',
       nodeEnv: process.env.NODE_ENV,
-      message: isLocalDev ? 'Using local database' : 'Using Vercel Postgres'
+      message: isLocalDev ? 'Using local database' : 'Using Supabase'
     });
   } catch (error) {
     console.error('Database type test error:', error);
