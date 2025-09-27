@@ -4,6 +4,13 @@ import { createClient } from '@supabase/supabase-js'
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY
 
+console.log('Supabase configuration check:', {
+  hasUrl: !!supabaseUrl,
+  hasKey: !!supabaseKey,
+  url: supabaseUrl ? 'present' : 'missing',
+  key: supabaseKey ? 'present' : 'missing'
+});
+
 if (!supabaseUrl || !supabaseKey) {
   console.warn('Supabase environment variables not found. Using fallback configuration.');
 }
