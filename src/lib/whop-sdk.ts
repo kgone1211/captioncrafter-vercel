@@ -202,20 +202,34 @@ class WhopSDK {
       };
     }
 
-    // If no API key, return test user (for development)
+    // If no API key, return test user only in development or if TEST_USERNAME is set
     if (!this.apiKey) {
-      const testUsername = process.env.TEST_USERNAME || 'Krista';
-      const testEmail = process.env.TEST_EMAIL || 'krista@example.com';
-      console.log('No API key, returning test user:', testUsername);
-      return {
-        id: userId,
-        email: testEmail,
-        username: testUsername,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        company_id: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID || 'biz_test_company',
-        subscription_status: 'active'
-      };
+      if (process.env.NODE_ENV === 'development' || process.env.TEST_USERNAME) {
+        const testUsername = process.env.TEST_USERNAME || 'Krista';
+        const testEmail = process.env.TEST_EMAIL || 'krista@example.com';
+        console.log('No API key, returning test user:', testUsername);
+        return {
+          id: userId,
+          email: testEmail,
+          username: testUsername,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          company_id: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID || 'biz_test_company',
+          subscription_status: 'active'
+        };
+      } else {
+        // In production without API key, return minimal user data
+        console.log('No API key in production, returning minimal user data');
+        return {
+          id: userId,
+          email: 'user@example.com',
+          username: 'User',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          company_id: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID || 'biz_production',
+          subscription_status: 'inactive'
+        };
+      }
     }
 
     try {
@@ -247,15 +261,17 @@ class WhopSDK {
       };
     } catch (error) {
       console.error('Error fetching Whop user:', error);
-      // Fallback to test user if API fails
+      // Fallback user data if API fails
+      const fallbackUsername = process.env.TEST_USERNAME || 'User';
+      const fallbackEmail = process.env.TEST_EMAIL || 'user@example.com';
       return {
         id: userId,
-        email: 'krista@example.com',
-        username: 'Krista',
+        email: fallbackEmail,
+        username: fallbackUsername,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        company_id: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID || 'biz_test_company',
-        subscription_status: 'active'
+        company_id: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID || 'biz_fallback',
+        subscription_status: 'inactive'
       };
     }
   }

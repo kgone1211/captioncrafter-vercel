@@ -112,16 +112,17 @@ export async function getWhopAuth(): Promise<WhopAuthResult> {
     }
   }
   
-  // Always use test user for now (bypass Whop authentication)
-  // This allows testing without proper Whop setup
-  const testUsername = process.env.TEST_USERNAME || 'Krista';
-  const testEmail = process.env.TEST_EMAIL || 'krista@example.com';
-  console.log('Using test user:', testUsername, 'NODE_ENV:', process.env.NODE_ENV);
-  return {
-    userId: `dev_user_${testUsername.toLowerCase()}`,
-    isAuthenticated: true,
-    source: 'development'
-  };
+  // Only use test user in development mode or if TEST_USERNAME is explicitly set
+  if (process.env.NODE_ENV === 'development' || process.env.TEST_USERNAME) {
+    const testUsername = process.env.TEST_USERNAME || 'Krista';
+    const testEmail = process.env.TEST_EMAIL || 'krista@example.com';
+    console.log('Using test user:', testUsername, 'NODE_ENV:', process.env.NODE_ENV);
+    return {
+      userId: `dev_user_${testUsername.toLowerCase()}`,
+      isAuthenticated: true,
+      source: 'development'
+    };
+  }
   
   // Method 5: Check if accessed through Whop iframe
   if (referer && (referer?.includes('whop.com') || referer?.includes('whop.io'))) {
