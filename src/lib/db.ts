@@ -497,8 +497,8 @@ export class Database {
     const supabaseAvailable = hasSupabase();
     
     if (supabaseAvailable) {
-      // TODO: Implement Supabase canGenerateCaption
-      return this.localDb.canGenerateCaption(userId);
+      console.log('Using Supabase for canGenerateCaption');
+      return supabaseDb.canGenerateCaption(userId);
     }
     
     if (localDev) {

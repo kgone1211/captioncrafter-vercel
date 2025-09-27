@@ -178,6 +178,26 @@ export class SupabaseDatabase {
     }
   }
 
+  async canGenerateCaption(userId: number): Promise<boolean> {
+    console.log('Supabase canGenerateCaption called with userId:', userId);
+    try {
+      const usage = await this.getUserUsage(userId);
+      console.log('Usage for canGenerateCaption:', usage);
+      
+      // For now, implement freemium model for ALL users
+      // TODO: In the future, check for actual paid subscription status
+      // For now, everyone gets 10 free captions regardless of Whop subscription status
+      
+      // If user has used less than 10 free captions, they can generate more
+      const canGenerate = usage.freeCaptionsUsed < 10;
+      console.log('Can generate caption:', canGenerate, '(used:', usage.freeCaptionsUsed, '/10)');
+      return canGenerate;
+    } catch (error) {
+      console.error('Supabase canGenerateCaption error:', error);
+      return false;
+    }
+  }
+
   async getAllUsers(): Promise<any[]> {
     try {
       const { data: users, error } = await supabase
