@@ -82,6 +82,13 @@ class WhopSDK {
   }
 
   /**
+   * Check if API key is available
+   */
+  hasApiKey(): boolean {
+    return !!this.apiKey;
+  }
+
+  /**
    * Verify user token from Whop headers
    * This follows Whop's official authentication flow
    */

@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
     console.log('Verifying checkout session:', sessionId);
 
     // Verify the session with Whop (if API key is available)
-    if (whopSdk.apiKey) {
+    if (whopSdk.hasApiKey()) {
       try {
         // In a real implementation, you would verify the session with Whop's API
         // For now, we'll assume successful verification for non-mock sessions
