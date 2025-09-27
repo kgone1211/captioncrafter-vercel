@@ -119,14 +119,14 @@ export class Database {
     }
   }
 
-  async upsertUser(email: string, whopUserId?: string, subscriptionStatus?: string): Promise<number> {
+  async upsertUser(email: string, whopUserId?: string, subscriptionStatus?: string, username?: string): Promise<number> {
     const localDev = isLocalDev();
     const supabaseAvailable = hasSupabase();
-    console.log('upsertUser called with:', { email, whopUserId, subscriptionStatus, isLocalDev: localDev, hasSupabase: supabaseAvailable });
+    console.log('upsertUser called with:', { email, whopUserId, subscriptionStatus, username, isLocalDev: localDev, hasSupabase: supabaseAvailable });
     
     if (supabaseAvailable) {
       console.log('Using Supabase for upsertUser');
-      return supabaseDb.upsertUser(email, whopUserId, subscriptionStatus);
+      return supabaseDb.upsertUser(email, whopUserId, subscriptionStatus, username);
     }
     
     if (localDev) {

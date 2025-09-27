@@ -59,14 +59,14 @@ export class SupabaseDatabase {
     console.log('Supabase database initialization completed (tables should be created manually)');
   }
 
-  async upsertUser(email: string, whopUserId?: string, subscriptionStatus?: string): Promise<number> {
-    console.log('Supabase upsertUser called with:', { email, whopUserId, subscriptionStatus });
+  async upsertUser(email: string, whopUserId?: string, subscriptionStatus?: string, username?: string): Promise<number> {
+    console.log('Supabase upsertUser called with:', { email, whopUserId, subscriptionStatus, username });
 
     try {
       // Check if user exists
       const { data: existingUser, error: selectError } = await supabase
         .from('users')
-        .select('id, whop_user_id, subscription_status')
+        .select('id, whop_user_id, subscription_status, username')
         .or(`email.eq.${email}${whopUserId ? `,whop_user_id.eq.${whopUserId}` : ''}`)
         .single();
 
@@ -74,12 +74,13 @@ export class SupabaseDatabase {
         console.log('Found existing user:', existingUser);
         
         // Update user if needed
-        if (whopUserId || subscriptionStatus) {
+        if (whopUserId || subscriptionStatus || username) {
           const { error: updateError } = await supabase
             .from('users')
             .update({
               whop_user_id: whopUserId || existingUser.whop_user_id,
-              subscription_status: subscriptionStatus || existingUser.subscription_status
+              subscription_status: subscriptionStatus || existingUser.subscription_status,
+              username: username || existingUser.username
             })
             .eq('id', existingUser.id);
 
@@ -98,6 +99,7 @@ export class SupabaseDatabase {
           email,
           whop_user_id: whopUserId,
           subscription_status: subscriptionStatus || 'inactive',
+          username: username,
           free_captions_used: 0
         })
         .select('id')
@@ -191,7 +193,11 @@ export class SupabaseDatabase {
       // If user has used less than 10 free captions, they can generate more
       const canGenerate = usage.freeCaptionsUsed < 10;
       console.log('Can generate caption:', canGenerate, '(used:', usage.freeCaptionsUsed, '/10)');
-      return canGenerate;
+      
+      // For testing: force paywall after 3 captions instead of 10
+      const testCanGenerate = usage.freeCaptionsUsed < 3;
+      console.log('Test can generate caption:', testCanGenerate, '(used:', usage.freeCaptionsUsed, '/3)');
+      return testCanGenerate;
     } catch (error) {
       console.error('Supabase canGenerateCaption error:', error);
       return false;

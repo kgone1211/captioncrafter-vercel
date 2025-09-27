@@ -70,7 +70,8 @@ export default async function Home() {
     const dbUserId = await db.upsertUser(
       whopUser.email, 
       whopUser.id, 
-      whopUser.subscription_status
+      whopUser.subscription_status,
+      whopUser.username
     );
 
     // Check if user can generate captions (freemium model)
