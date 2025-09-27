@@ -112,7 +112,7 @@ export async function getWhopAuth(): Promise<WhopAuthResult> {
     }
   }
   
-  // Method 5: Always use test user for now (bypass Whop authentication)
+  // Always use test user for now (bypass Whop authentication)
   // This allows testing without proper Whop setup
   const testUsername = process.env.TEST_USERNAME || 'Krista';
   const testEmail = process.env.TEST_EMAIL || 'krista@example.com';
