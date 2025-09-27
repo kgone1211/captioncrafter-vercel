@@ -1,7 +1,7 @@
 // API route for user operations
 
 import { NextRequest, NextResponse } from 'next/server';
-import { Database } from '@/lib/db';
+import { db } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,7 +14,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const db = new Database();
     const userId = await db.upsertUser(email, whopUserId, subscriptionStatus);
 
     return NextResponse.json({ userId });

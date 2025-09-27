@@ -113,7 +113,8 @@ export async function getWhopAuth(): Promise<WhopAuthResult> {
   }
   
   // Method 5: Development mode fallback - use a proper test user
-  if (process.env.NODE_ENV === 'development') {
+  // Check for development mode or when NODE_ENV is not set (local development)
+  if (process.env.NODE_ENV === 'development' || !process.env.NODE_ENV || process.env.NODE_ENV === 'undefined') {
     const testUsername = process.env.TEST_USERNAME || 'Krista';
     const testEmail = process.env.TEST_EMAIL || 'krista@example.com';
     console.log('Development mode: Using test user', testUsername);

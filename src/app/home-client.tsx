@@ -11,9 +11,10 @@ import { WhopUser } from '@/lib/whop-sdk';
 
 interface HomeClientPageProps {
   whopUser: WhopUser;
+  dbUserId: number;
 }
 
-export default function HomeClientPage({ whopUser }: HomeClientPageProps) {
+export default function HomeClientPage({ whopUser, dbUserId }: HomeClientPageProps) {
   const [activeTab, setActiveTab] = useState<'generate' | 'calendar' | 'library'>('generate');
   const [user, setUser] = useState<{ id: number; email: string } | null>(null);
   const [stats, setStats] = useState<UserStats | null>(null);
@@ -35,26 +36,11 @@ export default function HomeClientPage({ whopUser }: HomeClientPageProps) {
     try {
       setLoading(true);
       
-      // Create or get local user
-      const localUserResponse = await fetch('/api/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          email: whopUser.email,
-          whopUserId: whopUser.id,
-          subscriptionStatus: whopUser.subscription_status
-        }),
-      });
-
-      if (localUserResponse.ok) {
-        const { userId } = await localUserResponse.json();
-        setUser({ id: userId, email: whopUser.email });
-        await loadUserStats(userId);
-        const displayName = whopUser.username || whopUser.email.split('@')[0];
-        showSuccess('Welcome!', `Logged in as ${displayName}`);
-      } else {
-        setError('Failed to create local user account');
-      }
+      // Use the dbUserId that was already created in the main page
+      setUser({ id: dbUserId, email: whopUser.email });
+      await loadUserStats(dbUserId);
+      const displayName = whopUser.username || whopUser.email.split('@')[0];
+      showSuccess('Welcome!', `Logged in as ${displayName}`);
 
     } catch (error) {
       console.error('User initialization error:', error);

@@ -3,11 +3,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { CaptionGenerator } from '@/lib/ai';
 import { CaptionGenerationRequest } from '@/types';
-import { Database } from '@/lib/db';
+import { db } from '@/lib/db';
 
 export async function POST(request: NextRequest) {
   try {
     const body: CaptionGenerationRequest = await request.json();
+    
+    // Initialize database if needed
+    await db.initDatabase();
     
     // Validate request
     if (!body.platform || !body.topic || !body.tone) {
@@ -19,7 +22,6 @@ export async function POST(request: NextRequest) {
 
     // Check if user can generate captions (usage limit)
     if (body.userId) {
-      const db = new Database();
       const canGenerate = await db.canGenerateCaption(body.userId);
       
       if (!canGenerate) {
@@ -39,8 +41,9 @@ export async function POST(request: NextRequest) {
 
     // Increment usage after successful generation
     if (body.userId) {
-      const db = new Database();
+      console.log(`Incrementing usage for userId: ${body.userId}`);
       await db.incrementUsage(body.userId);
+      console.log(`Usage incremented for userId: ${body.userId}`);
     }
 
     return NextResponse.json({ captions });

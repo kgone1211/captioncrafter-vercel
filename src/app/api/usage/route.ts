@@ -1,7 +1,7 @@
 // API route for usage tracking
 
 import { NextRequest, NextResponse } from 'next/server';
-import { Database } from '@/lib/db';
+import { db } from '@/lib/db';
 
 export async function GET(request: NextRequest) {
   try {
@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const db = new Database();
+    await db.initDatabase();
     const usage = await db.getUserUsage(parseInt(userId));
 
     return NextResponse.json(usage);
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const db = new Database();
+    await db.initDatabase();
     
     // Check if user can generate caption
     const canGenerate = await db.canGenerateCaption(userId);

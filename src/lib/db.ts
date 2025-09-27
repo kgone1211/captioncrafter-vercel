@@ -7,13 +7,40 @@ import { Database as LocalDatabase } from './db-local';
 // Check if we're in local development mode (no Vercel Postgres)
 const isLocalDev = !process.env.POSTGRES_URL || process.env.POSTGRES_URL.includes('localhost');
 
-// Use local database for development
-const localDb = new LocalDatabase();
+// Use local database for development - create singleton
+let localDbInstance: LocalDatabase | null = null;
+
+function getLocalDb(): LocalDatabase {
+  if (!localDbInstance) {
+    localDbInstance = LocalDatabase.getInstance();
+    console.log('Created new LocalDatabase singleton instance');
+  } else {
+    console.log('Reusing existing LocalDatabase singleton instance');
+  }
+  return localDbInstance;
+}
+
+// Export the local database instance for direct access
+export const localDb = getLocalDb();
 
 export class Database {
+  private static instance: Database | null = null;
+
+  static getInstance(): Database {
+    if (!Database.instance) {
+      Database.instance = new Database();
+    }
+    return Database.instance;
+  }
+
+  // Use the shared localDb instance
+  private get localDb() {
+    return localDb;
+  }
+
   async initDatabase(): Promise<void> {
     if (isLocalDev) {
-      return localDb.initDatabase();
+      return this.localDb.initDatabase();
     }
     
     try {
@@ -68,7 +95,7 @@ export class Database {
 
   async upsertUser(email: string, whopUserId?: string, subscriptionStatus?: string): Promise<number> {
     if (isLocalDev) {
-      return localDb.upsertUser(email, whopUserId, subscriptionStatus);
+      return this.localDb.upsertUser(email, whopUserId, subscriptionStatus);
     }
     
     try {
@@ -117,7 +144,7 @@ export class Database {
     charCount: number
   ): Promise<number> {
     if (isLocalDev) {
-      return localDb.saveCaption(userId, platform, topic, tone, text, hashtags, charCount);
+      return this.localDb.saveCaption(userId, platform, topic, tone, text, hashtags, charCount);
     }
 
     try {
@@ -140,7 +167,7 @@ export class Database {
     favoriteOnly?: boolean
   ): Promise<Caption[]> {
     if (isLocalDev) {
-      return localDb.listCaptions(userId, platform, favoriteOnly);
+      return this.localDb.listCaptions(userId, platform, favoriteOnly);
     }
 
     try {
@@ -181,7 +208,7 @@ export class Database {
 
   async toggleFavorite(captionId: number): Promise<boolean> {
     if (isLocalDev) {
-      return localDb.toggleFavorite(captionId);
+      return this.localDb.toggleFavorite(captionId);
     }
     
     try {
@@ -207,7 +234,7 @@ export class Database {
     notifyVia: string = 'None'
   ): Promise<number> {
     if (isLocalDev) {
-      return localDb.schedulePost(userId, captionId, platform, scheduledAt, notifyVia as 'None' | 'Email');
+      return this.localDb.schedulePost(userId, captionId, platform, scheduledAt, notifyVia as 'None' | 'Email');
     }
     
     try {
@@ -301,7 +328,7 @@ export class Database {
 
   async getUserStats(userId: number): Promise<UserStats> {
     if (isLocalDev) {
-      return localDb.getUserStats(userId);
+      return this.localDb.getUserStats(userId);
     }
     
     try {
@@ -326,7 +353,7 @@ export class Database {
 
   async getUserUsage(userId: number): Promise<{ freeCaptionsUsed: number; subscriptionStatus: string }> {
     if (isLocalDev) {
-      return localDb.getUserUsage(userId);
+      return this.localDb.getUserUsage(userId);
     }
 
     try {
@@ -352,7 +379,7 @@ export class Database {
 
   async incrementUsage(userId: number): Promise<void> {
     if (isLocalDev) {
-      return localDb.incrementUsage(userId);
+      return this.localDb.incrementUsage(userId);
     }
 
     try {
@@ -369,7 +396,7 @@ export class Database {
 
   async canGenerateCaption(userId: number): Promise<boolean> {
     if (isLocalDev) {
-      return localDb.canGenerateCaption(userId);
+      return this.localDb.canGenerateCaption(userId);
     }
 
     try {
@@ -386,4 +413,29 @@ export class Database {
       return false;
     }
   }
+
+  async getAllUsers(): Promise<any[]> {
+    if (isLocalDev) {
+      return this.localDb.getAllUsers();
+    }
+    
+    try {
+      const result = await sql`SELECT * FROM users ORDER BY created_at DESC`;
+      return result.rows;
+    } catch (error) {
+      console.error('Error getting all users:', error);
+      throw error;
+    }
+  }
 }
+
+// Export singleton instance - create once and reuse
+let dbInstance: Database | null = null;
+
+export const db = (() => {
+  if (!dbInstance) {
+    dbInstance = Database.getInstance();
+    console.log('Created new Database singleton instance');
+  }
+  return dbInstance;
+})();

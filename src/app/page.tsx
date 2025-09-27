@@ -2,7 +2,7 @@ import { whopSdk, WhopUser } from "@/lib/whop-sdk";
 import { getWhopAuth, isWhopRequest } from "@/lib/whop-auth";
 import HomeClientPage from './home-client';
 import Paywall from '@/components/Paywall';
-import { Database } from '@/lib/db';
+import { db } from '@/lib/db';
 
 // Force dynamic rendering since we use headers() for authentication
 export const dynamic = 'force-dynamic';
@@ -66,7 +66,7 @@ export default async function Home() {
     console.log('Whop User:', whopUser);
 
     // Create/update user in our database
-    const db = new Database();
+    await db.initDatabase();
     const dbUserId = await db.upsertUser(
       whopUser.email, 
       whopUser.id, 
@@ -82,7 +82,7 @@ export default async function Home() {
     }
 
     // If user can generate captions, show the app
-    return <HomeClientPage whopUser={whopUser} />;
+    return <HomeClientPage whopUser={whopUser} dbUserId={dbUserId} />;
   } catch (error) {
     console.error('Error loading user:', error);
     

@@ -3,44 +3,68 @@
 
 import { Caption, ScheduledPost, UserStats } from '@/types';
 
-// In-memory storage for local development
-const users: Array<{ 
-  id: number; 
-  email: string; 
-  whop_user_id?: string;
-  subscription_status: string;
-  free_captions_used: number;
-  created_at: string 
-}> = [];
-const captions: Array<Caption> = [];
-const scheduledPosts: Array<ScheduledPost> = [];
-let nextUserId = 1;
-let nextCaptionId = 1;
-let nextPostId = 1;
+// Global in-memory storage for local development
+// Use globalThis to ensure data persists across different execution contexts
+const globalData = globalThis as any;
+
+if (!globalData.__captionCrafterDb) {
+  globalData.__captionCrafterDb = {
+    users: [],
+    captions: [],
+    scheduledPosts: [],
+    nextUserId: 1,
+    nextCaptionId: 1,
+    nextPostId: 1
+  };
+  console.log('Global database initialized');
+}
+
+const { users, captions, scheduledPosts, nextUserId, nextCaptionId, nextPostId } = globalData.__captionCrafterDb;
+
+// Create singleton instance - global
+let databaseInstance: Database | null = null;
 
 export class Database {
+  static getInstance(): Database {
+    if (!databaseInstance) {
+      databaseInstance = new Database();
+      console.log('Created new LocalDatabase singleton instance');
+    } else {
+      console.log('Reusing existing LocalDatabase singleton instance');
+    }
+    return databaseInstance;
+  }
+
   async initDatabase(): Promise<void> {
     // No-op for local development
     console.log('Using in-memory database for local development');
   }
 
+  async getAllUsers(): Promise<any[]> {
+    return users;
+  }
+
   async upsertUser(email: string, whopUserId?: string, subscriptionStatus?: string): Promise<number> {
     try {
+      console.log('upsertUser called with:', { email, whopUserId, subscriptionStatus });
+      
       // Check if user already exists by email or whop_user_id
       const existingUser = users.find(user => 
         user.email === email || (whopUserId && user.whop_user_id === whopUserId)
       );
       
       if (existingUser) {
+        console.log('Found existing user:', existingUser);
         // Update user info if provided
         if (whopUserId) existingUser.whop_user_id = whopUserId;
         if (subscriptionStatus) existingUser.subscription_status = subscriptionStatus;
+        console.log('Updated user:', existingUser);
         return existingUser.id;
       }
 
       // Create new user
       const newUser = {
-        id: nextUserId++,
+        id: globalData.__captionCrafterDb.nextUserId++,
         email,
         whop_user_id: whopUserId,
         subscription_status: subscriptionStatus || 'inactive',
@@ -48,7 +72,9 @@ export class Database {
         created_at: new Date().toISOString()
       };
       
+      console.log('Creating new user:', newUser);
       users.push(newUser);
+      console.log('All users:', users);
       return newUser.id;
     } catch (error) {
       console.error('Error upserting user:', error);
@@ -67,7 +93,7 @@ export class Database {
   ): Promise<number> {
     try {
       const newCaption: Caption = {
-        id: nextCaptionId++,
+        id: globalData.__captionCrafterDb.nextCaptionId++,
         user_id: userId,
         platform,
         topic,
@@ -138,7 +164,7 @@ export class Database {
       }
 
       const newPost: ScheduledPost = {
-        id: nextPostId++,
+        id: globalData.__captionCrafterDb.nextPostId++,
         user_id: userId,
         caption_id: captionId,
         platform,
@@ -236,15 +262,21 @@ export class Database {
 
   async getUserUsage(userId: number): Promise<{ freeCaptionsUsed: number; subscriptionStatus: string }> {
     try {
+      console.log('getUserUsage called with userId:', userId);
+      console.log('All users in getUserUsage:', users);
       const user = users.find(u => u.id === userId);
+      console.log('Found user:', user);
       if (!user) {
+        console.log('User not found, returning default');
         return { freeCaptionsUsed: 0, subscriptionStatus: 'inactive' };
       }
 
-      return {
+      const result = {
         freeCaptionsUsed: user.free_captions_used,
         subscriptionStatus: user.subscription_status
       };
+      console.log('Returning usage:', result);
+      return result;
     } catch (error) {
       console.error('Error getting user usage:', error);
       throw error;
@@ -255,7 +287,10 @@ export class Database {
     try {
       const user = users.find(u => u.id === userId);
       if (user) {
-        user.free_captions_used += 1;
+        user.free_captions_used++;
+        console.log(`User ${userId} usage incremented to: ${user.free_captions_used}`);
+      } else {
+        console.warn(`User ${userId} not found for usage increment.`);
       }
     } catch (error) {
       console.error('Error incrementing usage:', error);
@@ -266,10 +301,6 @@ export class Database {
   async canGenerateCaption(userId: number): Promise<boolean> {
     try {
       const usage = await this.getUserUsage(userId);
-      
-      // TEMPORARY: Force paywall for testing
-      // Set this to true to test the paywall: return false;
-      // Set this to false to test normal app: return usage.freeCaptionsUsed < 10;
       
       // For now, implement freemium model for ALL users
       // TODO: In the future, check for actual paid subscription status
