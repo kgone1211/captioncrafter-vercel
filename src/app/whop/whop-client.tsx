@@ -55,6 +55,7 @@ export default function WhopClientPage({ whopUser }: WhopClientPageProps) {
 
       if (localUserResponse.ok) {
         const { userId } = await localUserResponse.json();
+        console.log('User created/retrieved with ID:', userId);
         setUser({ 
           id: userId, 
           email: whopUser.email,

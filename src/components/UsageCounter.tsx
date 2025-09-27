@@ -19,10 +19,14 @@ export default function UsageCounter({ userId, className = '', refreshTrigger }:
 
   const loadUsage = async () => {
     try {
+      console.log('UsageCounter loading usage for userId:', userId);
       const response = await fetch(`/api/usage?userId=${userId}`);
       if (response.ok) {
         const data = await response.json();
+        console.log('UsageCounter received data:', data);
         setUsage(data);
+      } else {
+        console.error('UsageCounter API error:', response.status, response.statusText);
       }
     } catch (error) {
       console.error('Error loading usage:', error);
