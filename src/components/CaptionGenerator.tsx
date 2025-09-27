@@ -6,13 +6,15 @@ import { CaptionGenerationRequest, CaptionGenerationResponse } from '@/types';
 import { PLATFORM_LIMITS, TONE_PRESETS, getLengthPresets } from '@/lib/presets';
 import UsageCounter from './UsageCounter';
 import Paywall from './Paywall';
+import { WhopUser } from '@/lib/whop-sdk';
 
 interface CaptionGeneratorProps {
   userId: number;
   onStatsUpdate: () => void;
+  whopUser?: WhopUser;
 }
 
-export default function CaptionGenerator({ userId, onStatsUpdate }: CaptionGeneratorProps) {
+export default function CaptionGenerator({ userId, onStatsUpdate, whopUser }: CaptionGeneratorProps) {
   const [formData, setFormData] = useState<CaptionGenerationRequest>({
     platform: 'instagram',
     topic: '',
@@ -317,7 +319,8 @@ export default function CaptionGenerator({ userId, onStatsUpdate }: CaptionGener
     <div className="space-y-8">
       {showPaywall && (
         <Paywall 
-          userId={userId} 
+          userId={userId}
+          whopUser={whopUser}
           onClose={() => setShowPaywall(false)}
           onUpgrade={() => {
             setShowPaywall(false);

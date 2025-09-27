@@ -197,7 +197,7 @@ export default function WhopClientPage({ whopUser }: WhopClientPageProps) {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === 'generate' && <CaptionGenerator userId={user.id} onStatsUpdate={() => loadUserStats(user.id)} />}
+        {activeTab === 'generate' && <CaptionGenerator userId={user.id} onStatsUpdate={() => loadUserStats(user.id)} whopUser={whopUser} />}
         {activeTab === 'calendar' && <ContentCalendar userId={user.id} />}
         {activeTab === 'library' && <CaptionLibrary userId={user.id} />}
       </main>
