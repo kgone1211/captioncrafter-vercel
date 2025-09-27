@@ -46,7 +46,13 @@ export class Database {
   }
 
   async getAllUsers(): Promise<any[]> {
-    return this.globalData.__captionCrafterDb.users;
+    try {
+      console.log('getAllUsers called, returning all users:', this.globalData.__captionCrafterDb.users);
+      return this.globalData.__captionCrafterDb.users;
+    } catch (error) {
+      console.error('Error getting all users:', error);
+      return [];
+    }
   }
 
   async upsertUser(email: string, whopUserId?: string, subscriptionStatus?: string): Promise<number> {
@@ -319,13 +325,4 @@ export class Database {
     }
   }
 
-  async getAllUsers(): Promise<any[]> {
-    try {
-      console.log('getAllUsers called, returning all users:', this.globalData.__captionCrafterDb.users);
-      return this.globalData.__captionCrafterDb.users;
-    } catch (error) {
-      console.error('Error getting all users:', error);
-      return [];
-    }
-  }
 }
