@@ -2,7 +2,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { supabaseDb, supabase } from '@/lib/supabase';
+import { supabaseDb } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
   try {
@@ -32,43 +32,7 @@ export async function POST(request: NextRequest) {
     let result = {};
 
     if (hasSupabase) {
-      console.log('Clearing Supabase database...');
-      
-      // Clear all tables in order (respecting foreign key constraints)
-      const { error: captionsError } = await supabase
-        .from('captions')
-        .delete()
-        .neq('id', 0); // Delete all rows
-      
-      if (captionsError) {
-        console.log('Error clearing captions (might not exist):', captionsError.message);
-      } else {
-        console.log('Captions table cleared');
-      }
-
-      const { error: scheduledError } = await supabase
-        .from('scheduled_posts')
-        .delete()
-        .neq('id', 0); // Delete all rows
-      
-      if (scheduledError) {
-        console.log('Error clearing scheduled_posts (might not exist):', scheduledError.message);
-      } else {
-        console.log('Scheduled posts table cleared');
-      }
-
-      const { error: usersError } = await supabase
-        .from('users')
-        .delete()
-        .neq('id', 0); // Delete all rows
-      
-      if (usersError) {
-        console.log('Error clearing users:', usersError.message);
-        result = { error: 'Failed to clear users table', details: usersError.message };
-      } else {
-        console.log('Users table cleared');
-        result = { message: 'Supabase database cleared successfully' };
-      }
+      result = await supabaseDb.clearDatabase();
     } else if (isLocalDev) {
       console.log('Clearing local database...');
       // For local database, we can't easily clear it, but we can reset the counter

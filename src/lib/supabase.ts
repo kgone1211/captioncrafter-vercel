@@ -217,9 +217,64 @@ export class SupabaseDatabase {
       return [];
     }
   }
+
+  async clearDatabase(): Promise<{ success: boolean; message: string; errors?: string[] }> {
+    console.log('Clearing Supabase database...');
+    const errors: string[] = [];
+    
+    try {
+      // Clear all tables in order (respecting foreign key constraints)
+      const { error: captionsError } = await supabase
+        .from('captions')
+        .delete()
+        .neq('id', 0); // Delete all rows
+      
+      if (captionsError) {
+        console.log('Error clearing captions (might not exist):', captionsError.message);
+        errors.push(`Captions: ${captionsError.message}`);
+      } else {
+        console.log('Captions table cleared');
+      }
+
+      const { error: scheduledError } = await supabase
+        .from('scheduled_posts')
+        .delete()
+        .neq('id', 0); // Delete all rows
+      
+      if (scheduledError) {
+        console.log('Error clearing scheduled_posts (might not exist):', scheduledError.message);
+        errors.push(`Scheduled posts: ${scheduledError.message}`);
+      } else {
+        console.log('Scheduled posts table cleared');
+      }
+
+      const { error: usersError } = await supabase
+        .from('users')
+        .delete()
+        .neq('id', 0); // Delete all rows
+      
+      if (usersError) {
+        console.log('Error clearing users:', usersError.message);
+        errors.push(`Users: ${usersError.message}`);
+        return { success: false, message: 'Failed to clear users table', errors };
+      } else {
+        console.log('Users table cleared');
+      }
+
+      return { 
+        success: true, 
+        message: 'Supabase database cleared successfully',
+        errors: errors.length > 0 ? errors : undefined
+      };
+    } catch (error) {
+      console.error('Supabase clearDatabase error:', error);
+      return { 
+        success: false, 
+        message: 'Failed to clear database', 
+        errors: [error instanceof Error ? error.message : 'Unknown error']
+      };
+    }
+  }
 }
 
 export const supabaseDb = new SupabaseDatabase();
-
-// Export the supabase client for direct access
-export { supabase };
