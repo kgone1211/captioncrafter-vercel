@@ -4,18 +4,20 @@ import { useState, useEffect } from 'react';
 import { WhopUser } from '@/lib/whop-sdk';
 
 interface PaywallProps {
-  whopUser: WhopUser;
-  dbUserId: number;
+  whopUser?: WhopUser;
+  dbUserId?: number;
+  userId?: number;
   onUpgrade?: () => void;
+  onClose?: () => void;
 }
 
-export default function Paywall({ whopUser, dbUserId, onUpgrade }: PaywallProps) {
+export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose }: PaywallProps) {
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const [usage, setUsage] = useState<{ freeCaptionsUsed: number; subscriptionStatus: string } | null>(null);
   const [showSubscriptionForm, setShowSubscriptionForm] = useState(false);
   const [formData, setFormData] = useState({
-    name: whopUser.username || '',
-    email: whopUser.email || '',
+    name: whopUser?.username || 'User',
+    email: whopUser?.email || 'user@example.com',
     plan: 'premium'
   });
 
@@ -25,7 +27,7 @@ export default function Paywall({ whopUser, dbUserId, onUpgrade }: PaywallProps)
 
   useEffect(() => {
     loadUsage();
-  }, []);
+  }, [userId, dbUserId]);
 
   // Update form data when whopUser changes
   useEffect(() => {
@@ -38,7 +40,10 @@ export default function Paywall({ whopUser, dbUserId, onUpgrade }: PaywallProps)
 
   const loadUsage = async () => {
     try {
-      const response = await fetch(`/api/usage?userId=${dbUserId}`);
+      const targetUserId = userId || dbUserId;
+      if (!targetUserId) return;
+      
+      const response = await fetch(`/api/usage?userId=${targetUserId}`);
       if (response.ok) {
         const data = await response.json();
         setUsage(data);
@@ -91,7 +96,19 @@ export default function Paywall({ whopUser, dbUserId, onUpgrade }: PaywallProps)
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      <div className="max-w-2xl w-full">
+      <div className="max-w-2xl w-full relative">
+        {/* Close Button */}
+        {onClose && (
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 transition-colors"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        )}
+        
         {/* Header */}
         <div className="text-center mb-8">
           <div className="w-20 h-20 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -108,14 +125,14 @@ export default function Paywall({ whopUser, dbUserId, onUpgrade }: PaywallProps)
           <div className="flex items-center space-x-4">
             <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
               <span className="text-lg font-semibold text-gray-600">
-                {whopUser.username?.charAt(0).toUpperCase() || whopUser.email.charAt(0).toUpperCase()}
+                {(whopUser?.username || whopUser?.email || 'U').charAt(0).toUpperCase()}
               </span>
             </div>
             <div>
               <h3 className="font-semibold text-gray-900">
-                Welcome, {whopUser.username || whopUser.email.split('@')[0]}!
+                Welcome, {whopUser?.username || whopUser?.email?.split('@')[0] || 'User'}!
               </h3>
-              <p className="text-sm text-gray-500">{whopUser.email}</p>
+              <p className="text-sm text-gray-500">{whopUser?.email || 'user@example.com'}</p>
             </div>
           </div>
         </div>

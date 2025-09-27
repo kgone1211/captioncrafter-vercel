@@ -5,6 +5,7 @@ import { Wand2, Copy, Star, Calendar, Hash, Clock } from 'lucide-react';
 import { CaptionGenerationRequest, CaptionGenerationResponse } from '@/types';
 import { PLATFORM_LIMITS, TONE_PRESETS, getLengthPresets } from '@/lib/presets';
 import UsageCounter from './UsageCounter';
+import Paywall from './Paywall';
 
 interface CaptionGeneratorProps {
   userId: number;
@@ -28,6 +29,7 @@ export default function CaptionGenerator({ userId, onStatsUpdate }: CaptionGener
   const [loading, setLoading] = useState(false);
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [showPaywall, setShowPaywall] = useState(false);
 
   const handleInputChange = (field: keyof CaptionGenerationRequest, value: string | number | boolean) => {
     setFormData(prev => {
@@ -65,7 +67,7 @@ export default function CaptionGenerator({ userId, onStatsUpdate }: CaptionGener
         
         // Handle usage limit error
         if (response.status === 403 && errorData.canGenerate === false) {
-          alert('You have used all 3 free captions. Please upgrade to continue.');
+          setShowPaywall(true);
           return;
         }
         
@@ -313,6 +315,17 @@ export default function CaptionGenerator({ userId, onStatsUpdate }: CaptionGener
 
   return (
     <div className="space-y-8">
+      {showPaywall && (
+        <Paywall 
+          userId={userId} 
+          onClose={() => setShowPaywall(false)}
+          onUpgrade={() => {
+            setShowPaywall(false);
+            onStatsUpdate(); // Refresh usage counter after upgrade
+          }}
+        />
+      )}
+      
       <div className="text-center">
         <h2 className="text-3xl font-bold text-gray-900 mb-2">Generate Captions</h2>
         <p className="text-gray-600 mb-4">Create engaging social media captions with AI</p>
