@@ -45,9 +45,13 @@ export class Database {
   }
 
   async initDatabase(): Promise<void> {
+    console.log('Database init called. isLocalDev:', isLocalDev, 'POSTGRES_URL:', process.env.POSTGRES_URL ? 'present' : 'missing');
     if (isLocalDev) {
+      console.log('Using local database');
       return this.localDb.initDatabase();
     }
+    
+    console.log('Using Vercel Postgres database');
     
     try {
       // Create users table
@@ -100,9 +104,13 @@ export class Database {
   }
 
   async upsertUser(email: string, whopUserId?: string, subscriptionStatus?: string): Promise<number> {
+    console.log('upsertUser called with:', { email, whopUserId, subscriptionStatus, isLocalDev });
     if (isLocalDev) {
+      console.log('Using local database for upsertUser');
       return this.localDb.upsertUser(email, whopUserId, subscriptionStatus);
     }
+    
+    console.log('Using Vercel Postgres for upsertUser');
     
     try {
       // Try to get existing user by email or whop_user_id

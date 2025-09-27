@@ -7,6 +7,8 @@ export async function POST(request: NextRequest) {
   try {
     const { email, whopUserId, subscriptionStatus } = await request.json();
     
+    console.log('User creation API called with:', { email, whopUserId, subscriptionStatus });
+    
     if (!email) {
       return NextResponse.json(
         { error: 'Email is required' },
@@ -14,7 +16,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    await db.initDatabase();
+    console.log('Database initialized for user creation');
+    
     const userId = await db.upsertUser(email, whopUserId, subscriptionStatus);
+    console.log('User created/updated with ID:', userId);
 
     return NextResponse.json({ userId });
   } catch (error) {
