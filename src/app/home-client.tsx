@@ -16,7 +16,7 @@ interface HomeClientPageProps {
 
 export default function HomeClientPage({ whopUser, dbUserId }: HomeClientPageProps) {
   const [activeTab, setActiveTab] = useState<'generate' | 'calendar' | 'library'>('generate');
-  const [user, setUser] = useState<{ id: number; email: string } | null>(null);
+  const [user, setUser] = useState<{ id: number; email: string; username?: string } | null>(null);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
