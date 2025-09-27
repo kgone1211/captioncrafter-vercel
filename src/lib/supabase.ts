@@ -19,25 +19,44 @@ export class SupabaseDatabase {
   async initDatabase(): Promise<void> {
     console.log('Initializing Supabase database...');
     
-    // Create users table
-    const { error: usersError } = await supabase.rpc('create_users_table_if_not_exists');
-    if (usersError) {
-      console.log('Users table might already exist or error creating:', usersError.message);
-    }
+    // For now, we'll assume the tables exist or will be created manually
+    // In a production setup, you would run these SQL commands in the Supabase SQL editor:
+    /*
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      email VARCHAR(255) UNIQUE NOT NULL,
+      whop_user_id VARCHAR(255),
+      subscription_status VARCHAR(20) DEFAULT 'inactive',
+      free_captions_used INTEGER DEFAULT 0,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
 
-    // Create captions table
-    const { error: captionsError } = await supabase.rpc('create_captions_table_if_not_exists');
-    if (captionsError) {
-      console.log('Captions table might already exist or error creating:', captionsError.message);
-    }
+    CREATE TABLE IF NOT EXISTS captions (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id),
+      platform VARCHAR(50) NOT NULL,
+      topic VARCHAR(255) NOT NULL,
+      tone VARCHAR(100) NOT NULL,
+      text TEXT NOT NULL,
+      hashtags TEXT[] NOT NULL,
+      char_count INTEGER NOT NULL,
+      is_favorite BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
 
-    // Create scheduled_posts table
-    const { error: postsError } = await supabase.rpc('create_scheduled_posts_table_if_not_exists');
-    if (postsError) {
-      console.log('Scheduled posts table might already exist or error creating:', postsError.message);
-    }
-
-    console.log('Supabase database initialization completed');
+    CREATE TABLE IF NOT EXISTS scheduled_posts (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id),
+      caption_id INTEGER NOT NULL REFERENCES captions(id),
+      platform VARCHAR(50) NOT NULL,
+      scheduled_at TIMESTAMP NOT NULL,
+      status VARCHAR(20) DEFAULT 'PENDING',
+      notify_via VARCHAR(20) DEFAULT 'None',
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+    */
+    
+    console.log('Supabase database initialization completed (tables should be created manually)');
   }
 
   async upsertUser(email: string, whopUserId?: string, subscriptionStatus?: string): Promise<number> {
@@ -47,7 +66,7 @@ export class SupabaseDatabase {
       // Check if user exists
       const { data: existingUser, error: selectError } = await supabase
         .from('users')
-        .select('id')
+        .select('id, whop_user_id, subscription_status')
         .or(`email.eq.${email}${whopUserId ? `,whop_user_id.eq.${whopUserId}` : ''}`)
         .single();
 
@@ -127,13 +146,29 @@ export class SupabaseDatabase {
     console.log('Supabase incrementUsage called with userId:', userId);
 
     try {
-      const { error } = await supabase.rpc('increment_user_usage', {
-        user_id: userId
-      });
+      // First get current usage
+      const { data: user, error: selectError } = await supabase
+        .from('users')
+        .select('free_captions_used')
+        .eq('id', userId)
+        .single();
 
-      if (error) {
-        console.error('Error incrementing usage:', error);
-        throw error;
+      if (selectError || !user) {
+        console.error('Error getting user for increment:', selectError);
+        throw selectError || new Error('User not found');
+      }
+
+      // Increment usage
+      const { error: updateError } = await supabase
+        .from('users')
+        .update({
+          free_captions_used: (user.free_captions_used || 0) + 1
+        })
+        .eq('id', userId);
+
+      if (updateError) {
+        console.error('Error incrementing usage:', updateError);
+        throw updateError;
       }
 
       console.log('Usage incremented successfully');
