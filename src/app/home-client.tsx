@@ -39,7 +39,7 @@ export default function HomeClientPage({ whopUser, dbUserId }: HomeClientPagePro
       // Use the dbUserId that was already created in the main page
       setUser({ id: dbUserId, email: whopUser.email, username: whopUser.username });
       await loadUserStats(dbUserId);
-      const displayName = whopUser.username || whopUser.email.split('@')[0];
+      const displayName = whopUser.username || 'User';
       showSuccess('Welcome!', `Logged in as ${displayName}`);
 
     } catch (error) {
@@ -106,7 +106,7 @@ export default function HomeClientPage({ whopUser, dbUserId }: HomeClientPagePro
     );
   }
 
-  const displayName = whopUser.username || whopUser.email.split('@')[0];
+  const displayName = whopUser.username || 'User';
 
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
