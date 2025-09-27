@@ -19,11 +19,15 @@ class FallbackCounter {
   getUsage(userId: number): FallbackUsage {
     if (!this.counters.has(userId)) {
       this.counters.set(userId, { freeCaptionsUsed: 0, subscriptionStatus: 'active' });
+      console.log(`Created new fallback counter for user ${userId}`);
     }
-    return this.counters.get(userId)!;
+    const usage = this.counters.get(userId)!;
+    console.log(`Fallback counter getUsage for user ${userId}:`, usage);
+    return usage;
   }
 
   incrementUsage(userId: number): void {
+    console.log(`Fallback counter incrementUsage called for user ${userId}`);
     const usage = this.getUsage(userId);
     usage.freeCaptionsUsed += 1;
     this.counters.set(userId, usage);

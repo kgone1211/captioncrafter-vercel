@@ -21,6 +21,7 @@ export default function UsageCounter({ userId, className = '', refreshTrigger }:
     try {
       console.log('UsageCounter loading usage for userId:', userId);
       const response = await fetch(`/api/usage?userId=${userId}`);
+      console.log('UsageCounter response status:', response.status);
       if (response.ok) {
         const data = await response.json();
         console.log('UsageCounter received data:', data);
@@ -31,6 +32,7 @@ export default function UsageCounter({ userId, className = '', refreshTrigger }:
         console.log('Trying fallback counter due to API error');
         try {
           const fallbackResponse = await fetch(`/api/fallback-usage?userId=${userId}`);
+          console.log('Fallback response status:', fallbackResponse.status);
           if (fallbackResponse.ok) {
             const fallbackData = await fallbackResponse.json();
             console.log('Fallback usage data:', fallbackData);
@@ -50,9 +52,10 @@ export default function UsageCounter({ userId, className = '', refreshTrigger }:
       console.log('Trying fallback counter due to request error');
       try {
         const fallbackResponse = await fetch(`/api/fallback-usage?userId=${userId}`);
+        console.log('Fallback response status (catch):', fallbackResponse.status);
         if (fallbackResponse.ok) {
           const fallbackData = await fallbackResponse.json();
-          console.log('Fallback usage data:', fallbackData);
+          console.log('Fallback usage data (catch):', fallbackData);
           setUsage(fallbackData);
         } else {
           console.log('Fallback counter also failed, using default');
