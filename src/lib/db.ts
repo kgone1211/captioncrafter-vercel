@@ -468,7 +468,15 @@ export class Database {
   }
 
   async incrementUsage(userId: number): Promise<void> {
-    if (isLocalDev) {
+    const localDev = isLocalDev();
+    const supabaseAvailable = hasSupabase();
+    
+    if (supabaseAvailable) {
+      console.log('Using Supabase for incrementUsage');
+      return supabaseDb.incrementUsage(userId);
+    }
+    
+    if (localDev) {
       return this.localDb.incrementUsage(userId);
     }
 
