@@ -129,7 +129,7 @@ export class Database {
         filteredCaptions = filteredCaptions.filter((caption: any) => caption.is_favorite);
       }
       
-      return filteredCaptions.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      return filteredCaptions.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
     } catch (error) {
       console.error('Error listing captions:', error);
       throw error;
@@ -208,7 +208,7 @@ export class Database {
         };
       });
       
-      return postsWithCaptions.sort((a, b) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
+      return postsWithCaptions.sort((a: any, b: any) => new Date(a.scheduled_at).getTime() - new Date(b.scheduled_at).getTime());
     } catch (error) {
       console.error('Error listing scheduled posts:', error);
       throw error;
