@@ -590,6 +590,52 @@ class WhopSDK {
     console.log(`Mock: User ${userId} subscription updated to ${status} for plan ${planId}`);
     return true;
   }
+
+  /**
+   * Get user's saved payment methods
+   */
+  async getSavedPaymentMethods(userId: string): Promise<any[]> {
+    if (!this.hasApiKey()) {
+      // Return demo payment methods for development
+      return [
+        {
+          id: 'demo_visa',
+          type: 'card',
+          last4: '4242',
+          brand: 'visa',
+          expiryMonth: 12,
+          expiryYear: 2025
+        },
+        {
+          id: 'demo_mastercard',
+          type: 'card',
+          last4: '5555',
+          brand: 'mastercard',
+          expiryMonth: 8,
+          expiryYear: 2026
+        }
+      ];
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/users/${userId}/payment-methods`, {
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch payment methods: ${response.status} ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching payment methods:', error);
+      // Return empty array if API fails
+      return [];
+    }
+  }
 }
 
 // Add access object to the SDK

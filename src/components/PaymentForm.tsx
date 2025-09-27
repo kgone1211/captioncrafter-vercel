@@ -29,29 +29,63 @@ export default function PaymentForm({ planId, planName, price, interval, userId,
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
-  // Load saved payment methods (in real app, these would come from Whop API)
+  // Load saved payment methods from Whop API
   useEffect(() => {
-    // For now, show demo payment methods
-    // In production, this would fetch real saved payment methods from Whop
-    setSavedMethods([
-      {
-        id: 'demo_visa',
-        type: 'card',
-        last4: '4242',
-        brand: 'visa',
-        expiryMonth: 12,
-        expiryYear: 2025
-      },
-      {
-        id: 'demo_mastercard',
-        type: 'card',
-        last4: '5555',
-        brand: 'mastercard',
-        expiryMonth: 8,
-        expiryYear: 2026
+    const loadPaymentMethods = async () => {
+      try {
+        const response = await fetch(`/api/payment-methods?userId=${userId}`);
+        if (response.ok) {
+          const methods = await response.json();
+          setSavedMethods(methods);
+          console.log('Loaded payment methods:', methods);
+        } else {
+          console.error('Failed to load payment methods');
+          // Fallback to demo methods
+          setSavedMethods([
+            {
+              id: 'demo_visa',
+              type: 'card',
+              last4: '4242',
+              brand: 'visa',
+              expiryMonth: 12,
+              expiryYear: 2025
+            },
+            {
+              id: 'demo_mastercard',
+              type: 'card',
+              last4: '5555',
+              brand: 'mastercard',
+              expiryMonth: 8,
+              expiryYear: 2026
+            }
+          ]);
+        }
+      } catch (error) {
+        console.error('Error loading payment methods:', error);
+        // Fallback to demo methods
+        setSavedMethods([
+          {
+            id: 'demo_visa',
+            type: 'card',
+            last4: '4242',
+            brand: 'visa',
+            expiryMonth: 12,
+            expiryYear: 2025
+          },
+          {
+            id: 'demo_mastercard',
+            type: 'card',
+            last4: '5555',
+            brand: 'mastercard',
+            expiryMonth: 8,
+            expiryYear: 2026
+          }
+        ]);
       }
-    ]);
-  }, []);
+    };
+
+    loadPaymentMethods();
+  }, [userId]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
