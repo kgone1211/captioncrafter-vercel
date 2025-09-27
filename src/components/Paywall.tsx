@@ -134,13 +134,13 @@ export default function Paywall({ whopUser, dbUserId, onUpgrade }: PaywallProps)
               <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-gray-600">Captions Used</span>
                 <span className="text-sm font-medium text-gray-900">
-                  {usage.freeCaptionsUsed} / 10
+                  {usage.freeCaptionsUsed} / 3
                 </span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
                 <div 
                   className="bg-blue-500 h-2 rounded-full transition-all duration-300"
-                  style={{ width: `${Math.min((usage.freeCaptionsUsed / 10) * 100, 100)}%` }}
+                  style={{ width: `${Math.min((usage.freeCaptionsUsed / 3) * 100, 100)}%` }}
                 ></div>
               </div>
             </div>
@@ -154,7 +154,7 @@ export default function Paywall({ whopUser, dbUserId, onUpgrade }: PaywallProps)
               <p className="text-red-800 font-medium">Free Trial Complete</p>
             </div>
             <p className="text-red-700 text-sm mt-1">
-              You've used all 10 free captions. Upgrade to continue generating unlimited captions.
+              You've used all 3 free captions. Upgrade to continue generating unlimited captions.
             </p>
           </div>
         </div>

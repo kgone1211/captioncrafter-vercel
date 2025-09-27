@@ -315,10 +315,10 @@ export class Database {
       
       // For now, implement freemium model for ALL users
       // TODO: In the future, check for actual paid subscription status
-      // For now, everyone gets 10 free captions regardless of Whop subscription status
+      // For now, everyone gets 3 free captions regardless of Whop subscription status
       
-      // If user has used less than 10 free captions, they can generate more
-      return usage.freeCaptionsUsed < 10;
+      // If user has used less than 3 free captions, they can generate more
+      return usage.freeCaptionsUsed < 3;
     } catch (error) {
       console.error('Error checking caption generation permission:', error);
       return false;
