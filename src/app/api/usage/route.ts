@@ -88,6 +88,7 @@ export async function POST(request: NextRequest) {
         usage, 
         canGenerate: true 
       });
+    }
   } catch (error) {
     console.error('Usage increment error:', error);
     return NextResponse.json(
