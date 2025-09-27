@@ -430,3 +430,4 @@ class WhopSDKWithAccess extends WhopSDK {
 
 // Export singleton instance with access methods
 export const whopSdk = new WhopSDKWithAccess();
+

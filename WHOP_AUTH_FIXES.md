@@ -144,3 +144,4 @@ async function verifyWhopJWT(token: string): Promise<boolean> {
 4. **Headers**: Use Whop's official headers in the correct priority order
 
 Your authentication setup needs these fixes to be secure and follow Whop's best practices!
+

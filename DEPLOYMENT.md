@@ -198,3 +198,4 @@ The application includes:
 - TypeScript for type safety
 
 Deploy and start generating amazing social media captions! 🚀
+

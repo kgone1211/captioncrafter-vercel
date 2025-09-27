@@ -79,3 +79,4 @@ Set `NEXT_PUBLIC_WHOP_COMPANY_URL` to your Whop company page
 - **Onboarding** - Guide new subscribers
 
 Your paywall is now ready to start generating revenue! 🎉
+

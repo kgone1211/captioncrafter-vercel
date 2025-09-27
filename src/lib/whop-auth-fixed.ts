@@ -161,3 +161,4 @@ export async function isWhopRequest(): Promise<boolean> {
     referer?.includes('whop.io')
   );
 }
+
