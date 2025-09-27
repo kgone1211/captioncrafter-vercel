@@ -44,6 +44,28 @@ export interface WhopAccessPassResult {
   userId: string;
 }
 
+export interface WhopCheckoutSession {
+  id: string;
+  url: string;
+  status: 'open' | 'complete' | 'expired';
+  payment_status: 'unpaid' | 'paid' | 'no_payment_required';
+  customer_email: string;
+  amount_total: number;
+  currency: string;
+  metadata?: Record<string, any>;
+}
+
+export interface WhopSubscriptionPlan {
+  id: string;
+  name: string;
+  description: string;
+  price: number;
+  currency: string;
+  interval: 'month' | 'year' | 'one_time';
+  features: string[];
+  access_passes: string[];
+}
+
 /**
  * Proper Whop SDK implementation following official documentation
  * Based on Context7 search results and Whop best practices
@@ -417,6 +439,144 @@ class WhopSDK {
         accessPassId,
         userId
       };
+    }
+  }
+
+  /**
+   * Create a checkout session for a subscription plan
+   */
+  async createCheckoutSession({
+    planId,
+    userId,
+    successUrl,
+    cancelUrl,
+    metadata = {}
+  }: {
+    planId: string;
+    userId: string;
+    successUrl?: string;
+    cancelUrl?: string;
+    metadata?: Record<string, any>;
+  }): Promise<WhopCheckoutSession> {
+    if (!this.apiKey) {
+      throw new Error('Whop API key not configured');
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/checkout/sessions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          plan_id: planId,
+          customer_id: userId,
+          success_url: successUrl || `${process.env.NEXT_PUBLIC_APP_URL}/success`,
+          cancel_url: cancelUrl || `${process.env.NEXT_PUBLIC_APP_URL}/cancel`,
+          metadata: {
+            ...metadata,
+            app_name: 'Caption Crafter',
+            user_id: userId
+          }
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to create checkout session: ${response.status} ${response.statusText}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get available subscription plans
+   */
+  async getSubscriptionPlans(): Promise<WhopSubscriptionPlan[]> {
+    if (!this.apiKey) {
+      // Return mock plans for development
+      return [
+        {
+          id: 'prod_OAeju0utHppI2',
+          name: 'Basic Plan',
+          description: 'Perfect for getting started',
+          price: 9.99,
+          currency: 'usd',
+          interval: 'month',
+          features: ['100 captions per month', 'Basic AI generation', '3 platforms', 'Email support'],
+          access_passes: ['basic_access']
+        },
+        {
+          id: 'prod_Premium123',
+          name: 'Premium Plan',
+          description: 'For growing creators',
+          price: 19.99,
+          currency: 'usd',
+          interval: 'month',
+          features: ['500 captions per month', 'Advanced AI generation', 'All platforms', 'Priority support', 'Content calendar'],
+          access_passes: ['premium_access']
+        }
+      ];
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/plans`, {
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch plans: ${response.status} ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      return data.plans || [];
+    } catch (error) {
+      console.error('Error fetching subscription plans:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Update user's subscription status after successful payment
+   */
+  async updateUserSubscription({
+    userId,
+    planId,
+    status = 'active'
+  }: {
+    userId: string;
+    planId: string;
+    status?: 'active' | 'inactive' | 'cancelled';
+  }): Promise<boolean> {
+    if (!this.apiKey) {
+      console.log('Mock: User subscription updated');
+      return true;
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/users/${userId}/subscription`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          plan_id: planId,
+          status: status
+        })
+      });
+
+      return response.ok;
+    } catch (error) {
+      console.error('Error updating user subscription:', error);
+      return false;
     }
   }
 }

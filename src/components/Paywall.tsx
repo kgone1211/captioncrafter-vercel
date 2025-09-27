@@ -15,6 +15,7 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
   const [isLoading, setIsLoading] = useState<string | null>(null);
   const [usage, setUsage] = useState<{ freeCaptionsUsed: number; subscriptionStatus: string } | null>(null);
   const [showSubscriptionForm, setShowSubscriptionForm] = useState(false);
+  const [plans, setPlans] = useState<any[]>([]);
   const [formData, setFormData] = useState({
     name: whopUser?.username || 'User',
     email: whopUser?.email || 'user@example.com',
@@ -27,7 +28,20 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
 
   useEffect(() => {
     loadUsage();
+    loadPlans();
   }, [userId, dbUserId]);
+
+  const loadPlans = async () => {
+    try {
+      const response = await fetch('/api/plans');
+      if (response.ok) {
+        const plansData = await response.json();
+        setPlans(plansData);
+      }
+    } catch (error) {
+      console.error('Error loading plans:', error);
+    }
+  };
 
   // Update form data when whopUser changes
   useEffect(() => {
@@ -58,20 +72,39 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
   const handleUpgrade = async (planId: string, planName: string) => {
     setIsLoading(planId);
     try {
-      // Create Whop checkout URL with the specific plan
-      const whopCompanyUrl = process.env.NEXT_PUBLIC_WHOP_COMPANY_URL || 'https://whop.com/your-company';
-      const checkoutUrl = `${whopCompanyUrl}/checkout/${planId}`;
+      // Get the target user ID
+      const targetUserId = userId || dbUserId;
+      if (!targetUserId) {
+        throw new Error('User ID not available');
+      }
+
+      // Create checkout session via API
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          planId,
+          userId: targetUserId
+        })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create checkout session');
+      }
+
+      const { checkoutUrl } = await response.json();
       
       console.log(`Redirecting to ${planName} checkout:`, checkoutUrl);
       
-      // Open in same window for better UX
+      // Redirect to Whop checkout
       window.location.href = checkoutUrl;
       
-      if (onUpgrade) {
-        onUpgrade();
-      }
     } catch (error) {
-      console.error('Error redirecting to upgrade:', error);
+      console.error('Error creating checkout session:', error);
+      alert(`Error: ${error instanceof Error ? error.message : 'Failed to start checkout'}`);
     } finally {
       setIsLoading(null);
     }
@@ -262,70 +295,59 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
 
           {!showSubscriptionForm ? (
             <div className="grid md:grid-cols-2 gap-4">
-            {/* Basic Plan */}
-            <div className="border border-gray-200 rounded-lg p-4">
-              <h3 className="font-semibold text-gray-900 mb-2">Basic Plan</h3>
-              <div className="text-2xl font-bold text-gray-900 mb-2">$19/month</div>
-              <ul className="text-sm text-gray-600 space-y-1 mb-4">
-                <li>• 100 captions per month</li>
-                <li>• Basic AI generation</li>
-                <li>• 3 platforms</li>
-                <li>• Email support</li>
-                <li>• Upgrade from 3 free captions</li>
-              </ul>
-              <button
-                onClick={() => handleUpgrade('prod_OAeju0utHppI2', 'Basic Plan')}
-                disabled={isLoading === 'prod_OAeju0utHppI2'}
-                className="w-full bg-gray-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-gray-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading === 'prod_OAeju0utHppI2' ? (
-                  <div className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Redirecting...
+              {plans.length > 0 ? (
+                plans.map((plan, index) => (
+                  <div 
+                    key={plan.id} 
+                    className={`border rounded-lg p-4 ${
+                      index === 1 ? 'border-blue-500 bg-blue-50' : 'border-gray-200'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <h3 className="font-semibold text-gray-900">{plan.name}</h3>
+                      {index === 1 && (
+                        <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">Popular</span>
+                      )}
+                    </div>
+                    <div className="text-2xl font-bold text-gray-900 mb-2">
+                      ${plan.price}/{plan.interval === 'month' ? 'month' : plan.interval === 'year' ? 'year' : 'one-time'}
+                    </div>
+                    <p className="text-sm text-gray-600 mb-4">{plan.description}</p>
+                    <ul className="text-sm text-gray-600 space-y-1 mb-4">
+                      {plan.features.map((feature: string, featureIndex: number) => (
+                        <li key={featureIndex}>• {feature}</li>
+                      ))}
+                    </ul>
+                    <button
+                      onClick={() => handleUpgrade(plan.id, plan.name)}
+                      disabled={isLoading === plan.id}
+                      className={`w-full px-4 py-2 rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${
+                        index === 1 
+                          ? 'bg-blue-600 text-white hover:bg-blue-700' 
+                          : 'bg-gray-600 text-white hover:bg-gray-700'
+                      }`}
+                    >
+                      {isLoading === plan.id ? (
+                        <div className="flex items-center justify-center">
+                          <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                          </svg>
+                          Redirecting...
+                        </div>
+                      ) : (
+                        `Choose ${plan.name}`
+                      )}
+                    </button>
                   </div>
-                ) : (
-                  'Choose Basic'
-                )}
-              </button>
+                ))
+              ) : (
+                <div className="col-span-2 text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                  <p className="text-gray-600">Loading subscription plans...</p>
+                </div>
+              )}
             </div>
-            
-            {/* Premium Plan */}
-            <div className="border border-blue-500 rounded-lg p-4 bg-blue-50">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold text-gray-900">Premium Plan</h3>
-                <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full">Popular</span>
-              </div>
-              <div className="text-2xl font-bold text-gray-900 mb-2">$39/month</div>
-              <ul className="text-sm text-gray-600 space-y-1 mb-4">
-                <li>• Unlimited captions</li>
-                <li>• Advanced AI features</li>
-                <li>• All platforms</li>
-                <li>• Priority support</li>
-                <li>• Content calendar</li>
-                <li>• Upgrade from 3 free captions</li>
-              </ul>
-              <button
-                onClick={() => handleUpgrade('prod_xcU9zERSGgyNK', 'Premium Plan')}
-                disabled={isLoading === 'prod_xcU9zERSGgyNK'}
-                className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading === 'prod_xcU9zERSGgyNK' ? (
-                  <div className="flex items-center justify-center">
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Redirecting...
-                  </div>
-                ) : (
-                  'Choose Premium'
-                )}
-              </button>
-            </div>
-          </div>
           ) : null}
         </div>
 
