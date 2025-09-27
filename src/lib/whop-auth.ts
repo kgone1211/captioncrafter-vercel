@@ -5,7 +5,7 @@ export interface WhopAuthResult {
   companyId?: string;
   token?: string;
   isAuthenticated: boolean;
-  source: 'whop-headers' | 'bearer-token' | 'development' | 'none';
+  source: 'whop-headers' | 'bearer-token' | 'development' | 'direct-access' | 'none';
 }
 
 /**
