@@ -366,9 +366,13 @@ export class Database {
   }
 
   async getUserUsage(userId: number): Promise<{ freeCaptionsUsed: number; subscriptionStatus: string }> {
+    console.log('getUserUsage called with userId:', userId, 'isLocalDev:', isLocalDev);
     if (isLocalDev) {
+      console.log('Using local database for getUserUsage');
       return this.localDb.getUserUsage(userId);
     }
+    
+    console.log('Using Vercel Postgres for getUserUsage');
 
     try {
       const result = await sql`
