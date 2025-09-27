@@ -124,7 +124,7 @@ export async function getWhopAuth(): Promise<WhopAuthResult> {
   };
   
   // Method 5: Check if accessed through Whop iframe
-  if (referer && (referer.includes('whop.com') || referer.includes('whop.io'))) {
+  if (referer && (referer?.includes('whop.com') || referer?.includes('whop.io'))) {
     // If accessed through Whop but no auth headers, try to extract from URL or use session
     console.log('Accessed through Whop but no auth headers found');
     return {
