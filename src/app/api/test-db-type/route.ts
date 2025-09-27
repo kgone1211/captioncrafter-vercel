@@ -6,13 +6,24 @@ import { db } from '@/lib/db';
 export async function GET(request: NextRequest) {
   try {
     const isLocalDev = !process.env.DATABASE_URL || process.env.DATABASE_URL.includes('localhost');
+    const hasSupabase = !!(process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL);
+    
+    let message = 'Using local database';
+    if (hasSupabase) {
+      message = 'Using Supabase';
+    } else if (!isLocalDev) {
+      message = 'Using Vercel Postgres';
+    }
     
     return NextResponse.json({
       isLocalDev,
+      hasSupabase,
       hasDatabaseUrl: !!process.env.DATABASE_URL,
+      hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
       databaseUrl: process.env.DATABASE_URL ? 'present' : 'missing',
+      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'present' : 'missing',
       nodeEnv: process.env.NODE_ENV,
-      message: isLocalDev ? 'Using local database' : 'Using Supabase'
+      message
     });
   } catch (error) {
     console.error('Database type test error:', error);

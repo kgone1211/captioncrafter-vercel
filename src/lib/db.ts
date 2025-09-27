@@ -3,9 +3,13 @@
 import { sql } from '@vercel/postgres';
 import { Caption, ScheduledPost, UserStats } from '@/types';
 import { Database as LocalDatabase } from './db-local';
+import { supabaseDb } from './supabase';
 
 // Check if we're in local development mode (no database URL)
 const isLocalDev = !process.env.DATABASE_URL || process.env.DATABASE_URL.includes('localhost');
+
+// Check if Supabase is available
+const hasSupabase = !!(process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL);
 
 // Use local database for development - create singleton
 let localDbInstance: LocalDatabase | null = null;
@@ -45,7 +49,13 @@ export class Database {
   }
 
   async initDatabase(): Promise<void> {
-    console.log('Database init called. isLocalDev:', isLocalDev, 'DATABASE_URL:', process.env.DATABASE_URL ? 'present' : 'missing');
+    console.log('Database init called. isLocalDev:', isLocalDev, 'hasSupabase:', hasSupabase, 'DATABASE_URL:', process.env.DATABASE_URL ? 'present' : 'missing');
+    
+    if (hasSupabase) {
+      console.log('Using Supabase database');
+      return supabaseDb.initDatabase();
+    }
+    
     if (isLocalDev) {
       console.log('Using local database');
       return this.localDb.initDatabase();
@@ -104,7 +114,13 @@ export class Database {
   }
 
   async upsertUser(email: string, whopUserId?: string, subscriptionStatus?: string): Promise<number> {
-    console.log('upsertUser called with:', { email, whopUserId, subscriptionStatus, isLocalDev });
+    console.log('upsertUser called with:', { email, whopUserId, subscriptionStatus, isLocalDev, hasSupabase });
+    
+    if (hasSupabase) {
+      console.log('Using Supabase for upsertUser');
+      return supabaseDb.upsertUser(email, whopUserId, subscriptionStatus);
+    }
+    
     if (isLocalDev) {
       console.log('Using local database for upsertUser');
       return this.localDb.upsertUser(email, whopUserId, subscriptionStatus);
@@ -366,7 +382,13 @@ export class Database {
   }
 
   async getUserUsage(userId: number): Promise<{ freeCaptionsUsed: number; subscriptionStatus: string }> {
-    console.log('getUserUsage called with userId:', userId, 'isLocalDev:', isLocalDev);
+    console.log('getUserUsage called with userId:', userId, 'isLocalDev:', isLocalDev, 'hasSupabase:', hasSupabase);
+    
+    if (hasSupabase) {
+      console.log('Using Supabase for getUserUsage');
+      return supabaseDb.getUserUsage(userId);
+    }
+    
     if (isLocalDev) {
       console.log('Using local database for getUserUsage');
       return this.localDb.getUserUsage(userId);
