@@ -4,6 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { CaptionGenerator } from '@/lib/ai';
 import { CaptionGenerationRequest } from '@/types';
 import { db } from '@/lib/db';
+import { fallbackCounter } from '@/lib/fallback-counter';
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,11 +26,13 @@ export async function POST(request: NextRequest) {
       let canGenerate = true; // Default to true for fallback
       try {
         canGenerate = await db.canGenerateCaption(body.userId);
-        console.log('Can generate captions:', canGenerate);
+        console.log('Database canGenerateCaption:', canGenerate);
       } catch (error) {
         console.error('Error checking canGenerateCaption:', error);
-        // Use fallback logic - allow generation if database fails
-        canGenerate = true;
+        // Use fallback counter if database fails
+        console.log('Using fallback counter for canGenerateCaption check');
+        canGenerate = fallbackCounter.canGenerateCaption(body.userId);
+        console.log('Fallback canGenerateCaption:', canGenerate);
       }
       
       if (!canGenerate) {
@@ -55,11 +58,13 @@ export async function POST(request: NextRequest) {
       console.log(`Incrementing usage for userId: ${body.userId}`);
       try {
         await db.incrementUsage(body.userId);
-        console.log(`Usage incremented for userId: ${body.userId}`);
+        console.log(`Database usage incremented for userId: ${body.userId}`);
       } catch (error) {
-        console.error('Error incrementing usage:', error);
-        // Continue even if usage increment fails
-        console.log('Usage increment failed, but continuing...');
+        console.error('Error incrementing usage in database:', error);
+        // Use fallback counter if database fails
+        console.log('Using fallback counter for usage increment');
+        fallbackCounter.incrementUsage(body.userId);
+        console.log(`Fallback usage incremented for userId: ${body.userId}`);
       }
     }
 
