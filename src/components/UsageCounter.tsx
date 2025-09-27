@@ -20,51 +20,52 @@ export default function UsageCounter({ userId, className = '', refreshTrigger }:
   const loadUsage = async () => {
     try {
       console.log('UsageCounter loading usage for userId:', userId);
-      const response = await fetch(`/api/usage?userId=${userId}`);
-      console.log('UsageCounter response status:', response.status);
-      if (response.ok) {
-        const data = await response.json();
-        console.log('UsageCounter received data:', data);
-        setUsage(data);
+      
+      // Always try both APIs and use the higher count
+      const [dbResponse, fallbackResponse] = await Promise.allSettled([
+        fetch(`/api/usage?userId=${userId}`),
+        fetch(`/api/fallback-usage?userId=${userId}`)
+      ]);
+      
+      let dbUsage = null;
+      let fallbackUsage = null;
+      
+      // Process database response
+      if (dbResponse.status === 'fulfilled' && dbResponse.value.ok) {
+        dbUsage = await dbResponse.value.json();
+        console.log('Database usage:', dbUsage);
       } else {
-        console.error('UsageCounter API error:', response.status, response.statusText);
-        // Try fallback counter if main API fails
-        console.log('Trying fallback counter due to API error');
-        try {
-          const fallbackResponse = await fetch(`/api/fallback-usage?userId=${userId}`);
-          console.log('Fallback response status:', fallbackResponse.status);
-          if (fallbackResponse.ok) {
-            const fallbackData = await fallbackResponse.json();
-            console.log('Fallback usage data:', fallbackData);
-            setUsage(fallbackData);
-          } else {
-            console.log('Fallback counter also failed, using default');
-            setUsage({ freeCaptionsUsed: 0, subscriptionStatus: 'active' });
-          }
-        } catch (fallbackError) {
-          console.error('Fallback counter error:', fallbackError);
-          setUsage({ freeCaptionsUsed: 0, subscriptionStatus: 'active' });
-        }
+        console.log('Database API failed or not available');
       }
-    } catch (error) {
-      console.error('Error loading usage:', error);
-      // Try fallback counter if request fails
-      console.log('Trying fallback counter due to request error');
-      try {
-        const fallbackResponse = await fetch(`/api/fallback-usage?userId=${userId}`);
-        console.log('Fallback response status (catch):', fallbackResponse.status);
-        if (fallbackResponse.ok) {
-          const fallbackData = await fallbackResponse.json();
-          console.log('Fallback usage data (catch):', fallbackData);
-          setUsage(fallbackData);
-        } else {
-          console.log('Fallback counter also failed, using default');
-          setUsage({ freeCaptionsUsed: 0, subscriptionStatus: 'active' });
-        }
-      } catch (fallbackError) {
-        console.error('Fallback counter error:', fallbackError);
+      
+      // Process fallback response
+      if (fallbackResponse.status === 'fulfilled' && fallbackResponse.value.ok) {
+        fallbackUsage = await fallbackResponse.value.json();
+        console.log('Fallback usage:', fallbackUsage);
+      } else {
+        console.log('Fallback API failed or not available');
+      }
+      
+      // Use the higher count between database and fallback
+      if (dbUsage && fallbackUsage) {
+        const higherCount = Math.max(dbUsage.freeCaptionsUsed, fallbackUsage.freeCaptionsUsed);
+        const finalUsage = higherCount === fallbackUsage.freeCaptionsUsed ? fallbackUsage : dbUsage;
+        console.log('Using higher count:', finalUsage);
+        setUsage(finalUsage);
+      } else if (fallbackUsage) {
+        console.log('Using fallback counter (database unavailable)');
+        setUsage(fallbackUsage);
+      } else if (dbUsage) {
+        console.log('Using database counter (fallback unavailable)');
+        setUsage(dbUsage);
+      } else {
+        console.log('Both APIs failed, using default');
         setUsage({ freeCaptionsUsed: 0, subscriptionStatus: 'active' });
       }
+      
+    } catch (error) {
+      console.error('Error loading usage:', error);
+      setUsage({ freeCaptionsUsed: 0, subscriptionStatus: 'active' });
     } finally {
       setLoading(false);
     }
