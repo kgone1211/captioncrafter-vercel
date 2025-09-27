@@ -49,7 +49,7 @@ export class Database {
       console.log('upsertUser called with:', { email, whopUserId, subscriptionStatus });
       
       // Check if user already exists by email or whop_user_id
-      const existingUser = users.find(user => 
+      const existingUser = users.find((user: any) => 
         user.email === email || (whopUserId && user.whop_user_id === whopUserId)
       );
       
@@ -138,7 +138,7 @@ export class Database {
 
   async toggleFavorite(captionId: number): Promise<boolean> {
     try {
-      const caption = captions.find(c => c.id === captionId);
+      const caption = captions.find((c: any) => c.id === captionId);
       if (caption) {
         caption.is_favorite = !caption.is_favorite;
         return true;
@@ -158,7 +158,7 @@ export class Database {
     notifyVia: 'None' | 'Email' = 'None'
   ): Promise<number> {
     try {
-      const caption = captions.find(c => c.id === captionId);
+      const caption = captions.find((c: any) => c.id === captionId);
       if (!caption) {
         throw new Error('Caption not found');
       }
@@ -198,7 +198,7 @@ export class Database {
       
       // Join with caption data
       const postsWithCaptions = filteredPosts.map(post => {
-        const caption = captions.find(c => c.id === post.caption_id);
+        const caption = captions.find((c: any) => c.id === post.caption_id);
         return {
           ...post,
           text: caption?.text,
@@ -217,7 +217,7 @@ export class Database {
 
   async markPostSent(postId: number): Promise<boolean> {
     try {
-      const post = scheduledPosts.find(p => p.id === postId);
+      const post = scheduledPosts.find((p: any) => p.id === postId);
       if (post) {
         post.status = 'SENT';
         return true;
@@ -231,7 +231,7 @@ export class Database {
 
   async deleteScheduledPost(postId: number): Promise<boolean> {
     try {
-      const index = scheduledPosts.findIndex(p => p.id === postId);
+      const index = scheduledPosts.findIndex((p: any) => p.id === postId);
       if (index !== -1) {
         scheduledPosts.splice(index, 1);
         return true;
@@ -264,7 +264,7 @@ export class Database {
     try {
       console.log('getUserUsage called with userId:', userId);
       console.log('All users in getUserUsage:', users);
-      const user = users.find(u => u.id === userId);
+      const user = users.find((u: any) => u.id === userId);
       console.log('Found user:', user);
       if (!user) {
         console.log('User not found, returning default');
@@ -285,7 +285,7 @@ export class Database {
 
   async incrementUsage(userId: number): Promise<void> {
     try {
-      const user = users.find(u => u.id === userId);
+      const user = users.find((u: any) => u.id === userId);
       if (user) {
         user.free_captions_used++;
         console.log(`User ${userId} usage incremented to: ${user.free_captions_used}`);
