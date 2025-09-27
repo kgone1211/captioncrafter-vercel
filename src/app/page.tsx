@@ -9,6 +9,8 @@ export const dynamic = 'force-dynamic';
 
 export default async function Home() {
   try {
+    console.log('Home page called');
+    
     // Get Whop authentication
     const auth = await getWhopAuth();
     
@@ -59,20 +61,24 @@ export default async function Home() {
     }
 
     const userId = auth.userId;
+    console.log('User ID from auth:', userId);
 
     // Load the user's public profile information
+    console.log('Calling whopSdk.getUser...');
     const whopUser = await whopSdk.getUser({ userId: userId });
-
     console.log('Whop User:', whopUser);
 
     // Create/update user in our database
+    console.log('Initializing database...');
     await db.initDatabase();
+    console.log('Database initialized, creating/updating user...');
     const dbUserId = await db.upsertUser(
       whopUser.email, 
       whopUser.id, 
       whopUser.subscription_status,
       whopUser.username
     );
+    console.log('User created/updated with ID:', dbUserId);
 
     // Check if user can generate captions (freemium model)
     const canGenerate = await db.canGenerateCaption(dbUserId);
