@@ -42,11 +42,13 @@ export async function getWhopAuth(): Promise<WhopAuthResult> {
     nodeEnv: process.env.NODE_ENV
   });
   
-  // Method 1: Direct Whop user ID header
-  if (whopUserId) {
+  // Method 1: Direct Whop user ID header (most reliable)
+  if (whopUserId && whopUserId !== 'undefined' && whopUserId !== 'null') {
+    console.log('Found valid Whop user ID:', whopUserId);
     return {
       userId: whopUserId,
       companyId: whopCompanyId || undefined,
+      token: whopToken || undefined,
       isAuthenticated: true,
       source: 'whop-headers'
     };
@@ -112,11 +114,10 @@ export async function getWhopAuth(): Promise<WhopAuthResult> {
     }
   }
   
-  // Only use test user in development mode or if TEST_USERNAME is explicitly set
-  if (process.env.NODE_ENV === 'development' || process.env.TEST_USERNAME) {
+  // Only use test user in development mode for local testing
+  if (process.env.NODE_ENV === 'development' && process.env.WHOP_DEV_MODE === 'true') {
     const testUsername = process.env.TEST_USERNAME || 'Krista';
-    const testEmail = process.env.TEST_EMAIL || 'krista@example.com';
-    console.log('Using test user:', testUsername, 'NODE_ENV:', process.env.NODE_ENV);
+    console.log('Development mode: Using test user:', testUsername);
     return {
       userId: `dev_user_${testUsername.toLowerCase()}`,
       isAuthenticated: true,
@@ -135,13 +136,12 @@ export async function getWhopAuth(): Promise<WhopAuthResult> {
     };
   }
   
-  // For direct access (not through Whop), provide a fallback user
-  // This allows the app to work when accessed directly for testing/demo purposes
-  console.log('No Whop headers found, using fallback user for direct access');
+  // No valid authentication found - this should fail in production
+  console.log('No valid Whop authentication found');
   return {
-    userId: 'direct_access_user',
-    isAuthenticated: true,
-    source: 'direct-access'
+    userId: '',
+    isAuthenticated: false,
+    source: 'none'
   };
 }
 

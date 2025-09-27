@@ -11,6 +11,12 @@ export default async function WhopPage() {
     const auth = await getWhopAuth();
     
     console.log('Whop Page Auth:', auth);
+    console.log('Environment check:', {
+      NODE_ENV: process.env.NODE_ENV,
+      WHOP_API_KEY: process.env.WHOP_API_KEY ? 'set' : 'missing',
+      WHOP_DEV_MODE: process.env.WHOP_DEV_MODE,
+      TEST_USERNAME: process.env.TEST_USERNAME
+    });
     
     if (!auth.isAuthenticated) {
       return (
@@ -28,15 +34,32 @@ export default async function WhopPage() {
             <p className="text-sm text-gray-500">
               Auth source: {auth.source}
             </p>
+            <div className="mt-4 p-4 bg-gray-100 rounded text-left text-xs">
+              <p><strong>Production Debug Info:</strong></p>
+              <p>User ID: {auth.userId || 'Not provided'}</p>
+              <p>Authenticated: {auth.isAuthenticated ? 'Yes' : 'No'}</p>
+              <p>Source: {auth.source}</p>
+              <p>Environment: {process.env.NODE_ENV}</p>
+              <div className="mt-2">
+                <p><strong>Troubleshooting:</strong></p>
+                <ul className="list-disc list-inside text-xs">
+                  <li>Ensure you're accessing this app through Whop's iframe</li>
+                  <li>Check that your app is properly configured in Whop dashboard</li>
+                  <li>Verify your app has the correct permissions</li>
+                  <li>Make sure you're logged into Whop</li>
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
       );
     }
 
     // Load the user's public profile information
+    console.log('Attempting to get user with ID:', auth.userId);
     const whopUser = await whopSdk.getUser({ userId: auth.userId });
 
-    console.log('Whop User:', whopUser);
+    console.log('Whop User Result:', whopUser);
 
     return <WhopClientPage whopUser={whopUser} />;
   } catch (error) {
