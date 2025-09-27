@@ -129,8 +129,11 @@ class WhopSDK {
       const testUsername = process.env.TEST_USERNAME || 'Krista';
       const testEmail = process.env.TEST_EMAIL || 'krista@example.com';
       
+      // Use a consistent test user ID instead of the variable userId
+      const testUserId = 'dev_user_krista';
+      
       return {
-        id: userId,
+        id: testUserId,
         email: testEmail,
         username: testUsername,
         created_at: new Date().toISOString(),

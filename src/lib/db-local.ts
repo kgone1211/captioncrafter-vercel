@@ -35,13 +35,18 @@ export class Database {
     return databaseInstance;
   }
 
+  // Ensure we always use the same global data
+  private get globalData() {
+    return globalData;
+  }
+
   async initDatabase(): Promise<void> {
     // No-op for local development
     console.log('Using in-memory database for local development');
   }
 
   async getAllUsers(): Promise<any[]> {
-    return users;
+    return this.globalData.__captionCrafterDb.users;
   }
 
   async upsertUser(email: string, whopUserId?: string, subscriptionStatus?: string): Promise<number> {
@@ -49,7 +54,7 @@ export class Database {
       console.log('upsertUser called with:', { email, whopUserId, subscriptionStatus });
       
       // Check if user already exists by email or whop_user_id
-      const existingUser = users.find((user: any) => 
+      const existingUser = this.globalData.__captionCrafterDb.users.find((user: any) => 
         user.email === email || (whopUserId && user.whop_user_id === whopUserId)
       );
       
@@ -64,7 +69,7 @@ export class Database {
 
       // Create new user
       const newUser = {
-        id: globalData.__captionCrafterDb.nextUserId++,
+        id: this.globalData.__captionCrafterDb.nextUserId++,
         email,
         whop_user_id: whopUserId,
         subscription_status: subscriptionStatus || 'inactive',
@@ -73,8 +78,8 @@ export class Database {
       };
       
       console.log('Creating new user:', newUser);
-      users.push(newUser);
-      console.log('All users:', users);
+      this.globalData.__captionCrafterDb.users.push(newUser);
+      console.log('All users:', this.globalData.__captionCrafterDb.users);
       return newUser.id;
     } catch (error) {
       console.error('Error upserting user:', error);
@@ -263,8 +268,8 @@ export class Database {
   async getUserUsage(userId: number): Promise<{ freeCaptionsUsed: number; subscriptionStatus: string }> {
     try {
       console.log('getUserUsage called with userId:', userId);
-      console.log('All users in getUserUsage:', users);
-      const user = users.find((u: any) => u.id === userId);
+      console.log('All users in getUserUsage:', this.globalData.__captionCrafterDb.users);
+      const user = this.globalData.__captionCrafterDb.users.find((u: any) => u.id === userId);
       console.log('Found user:', user);
       if (!user) {
         console.log('User not found, returning default');
@@ -285,7 +290,7 @@ export class Database {
 
   async incrementUsage(userId: number): Promise<void> {
     try {
-      const user = users.find((u: any) => u.id === userId);
+      const user = this.globalData.__captionCrafterDb.users.find((u: any) => u.id === userId);
       if (user) {
         user.free_captions_used++;
         console.log(`User ${userId} usage incremented to: ${user.free_captions_used}`);
