@@ -8,6 +8,8 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const userId = url.searchParams.get('userId');
     
+    console.log('Usage API GET called with userId:', userId);
+    
     if (!userId) {
       return NextResponse.json(
         { error: 'User ID is required' },
@@ -16,7 +18,10 @@ export async function GET(request: NextRequest) {
     }
 
     await db.initDatabase();
+    console.log('Database initialized for usage fetch');
+    
     const usage = await db.getUserUsage(parseInt(userId));
+    console.log('Usage result:', usage);
 
     return NextResponse.json(usage);
   } catch (error) {
