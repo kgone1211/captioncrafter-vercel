@@ -119,14 +119,14 @@ export class Database {
     favoriteOnly?: boolean
   ): Promise<Caption[]> {
     try {
-      let filteredCaptions = captions.filter(caption => caption.user_id === userId);
+      let filteredCaptions = captions.filter((caption: any) => caption.user_id === userId);
       
       if (platform) {
-        filteredCaptions = filteredCaptions.filter(caption => caption.platform === platform);
+        filteredCaptions = filteredCaptions.filter((caption: any) => caption.platform === platform);
       }
       
       if (favoriteOnly) {
-        filteredCaptions = filteredCaptions.filter(caption => caption.is_favorite);
+        filteredCaptions = filteredCaptions.filter((caption: any) => caption.is_favorite);
       }
       
       return filteredCaptions.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
@@ -190,14 +190,14 @@ export class Database {
 
   async listScheduledPosts(userId: number, status?: string): Promise<ScheduledPost[]> {
     try {
-      let filteredPosts = scheduledPosts.filter(post => post.user_id === userId);
+      let filteredPosts = scheduledPosts.filter((post: any) => post.user_id === userId);
       
       if (status) {
-        filteredPosts = filteredPosts.filter(post => post.status === status);
+        filteredPosts = filteredPosts.filter((post: any) => post.status === status);
       }
       
       // Join with caption data
-      const postsWithCaptions = filteredPosts.map(post => {
+      const postsWithCaptions = filteredPosts.map((post: any) => {
         const caption = captions.find((c: any) => c.id === post.caption_id);
         return {
           ...post,
@@ -245,14 +245,14 @@ export class Database {
 
   async getUserStats(userId: number): Promise<UserStats> {
     try {
-      const userCaptions = captions.filter(c => c.user_id === userId);
-      const userScheduledPosts = scheduledPosts.filter(p => p.user_id === userId);
+      const userCaptions = captions.filter((c: any) => c.user_id === userId);
+      const userScheduledPosts = scheduledPosts.filter((p: any) => p.user_id === userId);
       
       return {
         total_captions: userCaptions.length,
-        scheduled_posts: userScheduledPosts.filter(p => p.status === 'SCHEDULED').length,
-        sent_posts: userScheduledPosts.filter(p => p.status === 'SENT').length,
-        favorite_captions: userCaptions.filter(c => c.is_favorite).length
+        scheduled_posts: userScheduledPosts.filter((p: any) => p.status === 'SCHEDULED').length,
+        sent_posts: userScheduledPosts.filter((p: any) => p.status === 'SENT').length,
+        favorite_captions: userCaptions.filter((c: any) => c.is_favorite).length
       };
     } catch (error) {
       console.error('Error getting user stats:', error);
