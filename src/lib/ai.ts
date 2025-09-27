@@ -165,7 +165,15 @@ export class CaptionGenerator {
   }
 
   private buildSystemPrompt(platform: string, config: PlatformConfig): string {
-    return `You are a professional social media copywriter specializing in ${platform} content.
+    return `You are an expert social media content creator specializing in ${platform} captions.
+
+Your task is to generate engaging, platform-optimized captions that:
+- Match the specified tone and style
+- Stay within character limits (${config.char_limit} max, ${config.optimal_chars[0]}-${config.optimal_chars[1]} optimal)
+- Include relevant hashtags (${config.hashtag_range[0]}-${config.hashtag_range[1]} hashtags)
+- Are authentic and engaging
+- Follow ${platform} best practices
+- Incorporate any additional context provided by the user
 
 Platform Rules:
 - Character limit: ${config.char_limit} characters
@@ -189,22 +197,6 @@ Always return valid JSON in this exact format:
 Do not include markdown code fences or any other formatting.`;
   }
 
-  private buildUserPrompt(request: CaptionGenerationRequest): string {
-    let prompt = `Create ${request.num_variants} ${request.tone} social media captions for ${request.platform} about: ${request.topic}
-
-Length: ${request.length}
-Include emojis: ${request.include_emojis}`;
-
-    if (request.keywords) {
-      prompt += `\nKeywords to include: ${request.keywords}`;
-    }
-
-    if (request.cta) {
-      prompt += `\nCall-to-action: ${request.cta}`;
-    }
-
-    return prompt;
-  }
 
   private parseOpenAIResponse(content: string, numVariants: number): CaptionGenerationResponse[] {
     try {
@@ -368,27 +360,6 @@ Include emojis: ${request.include_emojis}`;
     return shortened;
   }
 
-  private buildSystemPrompt(platform: string, config: PlatformConfig): string {
-    return `You are an expert social media content creator specializing in ${platform} captions. 
-
-Your task is to generate engaging, platform-optimized captions that:
-- Match the specified tone and style
-- Stay within character limits (${config.char_limit} max, ${config.optimal_chars[0]}-${config.optimal_chars[1]} optimal)
-- Include relevant hashtags (${config.hashtag_range[0]}-${config.hashtag_range[1]} hashtags)
-- Are authentic and engaging
-- Follow ${platform} best practices
-
-Return your response as JSON in this format:
-{
-  "captions": [
-    {
-      "caption": "Your caption text here",
-      "hashtags": ["hashtag1", "hashtag2", "hashtag3"],
-      "char_count": 150
-    }
-  ]
-}`;
-  }
 
   private buildUserPrompt(request: CaptionGenerationRequest): string {
     let prompt = `Create ${request.num_variants} ${request.tone.toLowerCase()} captions for ${request.platform} about "${request.topic}".`;
