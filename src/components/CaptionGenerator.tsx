@@ -20,6 +20,7 @@ export default function CaptionGenerator({ userId, onStatsUpdate }: CaptionGener
     num_variants: 5,
     keywords: '',
     cta: '',
+    description: '',
     include_emojis: true,
   });
 
@@ -350,6 +351,22 @@ export default function CaptionGenerator({ userId, onStatsUpdate }: CaptionGener
                 placeholder="fitness, cooking, travel..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Description (optional)
+              </label>
+              <textarea
+                value={formData.description}
+                onChange={(e) => handleInputChange('description', e.target.value)}
+                placeholder="Provide additional context, details, or specific points you want included in your captions..."
+                rows={4}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                Add context, specific details, or instructions to help generate more personalized captions
+              </p>
             </div>
 
             <div>

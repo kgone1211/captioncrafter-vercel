@@ -56,6 +56,7 @@ export class CaptionGenerator {
     const tone = request.tone;
     const platform = request.platform;
     const length = request.length;
+    const description = request.description || '';
 
     // Get target character count based on length and platform
     const targetLength = this.getTargetLength(length, platform);
@@ -141,7 +142,15 @@ export class CaptionGenerator {
     const templateList = templates[tone] || templates['Casual'];
 
     for (let i = 0; i < request.num_variants; i++) {
-      const baseTemplate = templateList[i % templateList.length];
+      let baseTemplate = templateList[i % templateList.length];
+      
+      // Incorporate description if provided
+      if (description.trim()) {
+        // Add description context to the template
+        const descriptionContext = this.getDescriptionContext(description, tone);
+        baseTemplate = baseTemplate.replace(topic, `${topic}${descriptionContext}`);
+      }
+      
       const caption = this.adjustCaptionLength(baseTemplate, topic, targetLength, request.include_emojis);
       const hashtags = this.generateHashtags(topic, platform);
 
@@ -357,5 +366,89 @@ Include emojis: ${request.include_emojis}`;
     }
 
     return shortened;
+  }
+
+  private buildSystemPrompt(platform: string, config: PlatformConfig): string {
+    return `You are an expert social media content creator specializing in ${platform} captions. 
+
+Your task is to generate engaging, platform-optimized captions that:
+- Match the specified tone and style
+- Stay within character limits (${config.char_limit} max, ${config.optimal_chars[0]}-${config.optimal_chars[1]} optimal)
+- Include relevant hashtags (${config.hashtag_range[0]}-${config.hashtag_range[1]} hashtags)
+- Are authentic and engaging
+- Follow ${platform} best practices
+
+Return your response as JSON in this format:
+{
+  "captions": [
+    {
+      "caption": "Your caption text here",
+      "hashtags": ["hashtag1", "hashtag2", "hashtag3"],
+      "char_count": 150
+    }
+  ]
+}`;
+  }
+
+  private buildUserPrompt(request: CaptionGenerationRequest): string {
+    let prompt = `Create ${request.num_variants} ${request.tone.toLowerCase()} captions for ${request.platform} about "${request.topic}".`;
+    
+    if (request.description && request.description.trim()) {
+      prompt += `\n\nAdditional context and details:\n${request.description}`;
+    }
+    
+    if (request.keywords && request.keywords.trim()) {
+      prompt += `\n\nInclude these keywords: ${request.keywords}`;
+    }
+    
+    if (request.cta && request.cta.trim()) {
+      prompt += `\n\nInclude this call-to-action: ${request.cta}`;
+    }
+    
+    prompt += `\n\nLength: ${request.length}`;
+    prompt += `\nInclude emojis: ${request.include_emojis ? 'Yes' : 'No'}`;
+    
+    return prompt;
+  }
+
+  private getDescriptionContext(description: string, tone: string): string {
+    // Extract key points from description and format them based on tone
+    const sentences = description.split(/[.!?]+/).filter(s => s.trim().length > 0);
+    const keyPoints = sentences.slice(0, 2); // Take first 2 sentences as key points
+    
+    if (keyPoints.length === 0) return '';
+    
+    const contextPhrases: Record<string, string[]> = {
+      'Casual': [
+        ` - specifically ${keyPoints[0].toLowerCase()}`,
+        `, and here's the thing: ${keyPoints[0].toLowerCase()}`,
+        ` (${keyPoints[0].toLowerCase()})`
+      ],
+      'Professional': [
+        `, particularly ${keyPoints[0].toLowerCase()}`,
+        `, with focus on ${keyPoints[0].toLowerCase()}`,
+        `, emphasizing ${keyPoints[0].toLowerCase()}`
+      ],
+      'Friendly': [
+        ` - and what's really cool is ${keyPoints[0].toLowerCase()}`,
+        `, especially ${keyPoints[0].toLowerCase()}`,
+        `! Here's what I love: ${keyPoints[0].toLowerCase()}`
+      ],
+      'Motivational': [
+        ` - and remember, ${keyPoints[0].toLowerCase()}`,
+        `, because ${keyPoints[0].toLowerCase()}`,
+        `! The key is ${keyPoints[0].toLowerCase()}`
+      ],
+      'Educational': [
+        `, specifically ${keyPoints[0].toLowerCase()}`,
+        `, and it's important to note that ${keyPoints[0].toLowerCase()}`,
+        `, with the key point being ${keyPoints[0].toLowerCase()}`
+      ]
+    };
+    
+    const phrases = contextPhrases[tone] || contextPhrases['Casual'];
+    const randomPhrase = phrases[Math.floor(Math.random() * phrases.length)];
+    
+    return randomPhrase;
   }
 }
