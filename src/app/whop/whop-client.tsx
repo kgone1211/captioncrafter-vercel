@@ -15,7 +15,7 @@ interface WhopClientPageProps {
 
 export default function WhopClientPage({ whopUser }: WhopClientPageProps) {
   const [activeTab, setActiveTab] = useState<'generate' | 'calendar' | 'library'>('generate');
-  const [user, setUser] = useState<{ id: number; email: string } | null>(null);
+  const [user, setUser] = useState<{ id: number; email: string; username?: string } | null>(null);
   const [stats, setStats] = useState<UserStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,14 +46,22 @@ export default function WhopClientPage({ whopUser }: WhopClientPageProps) {
       const localUserResponse = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: whopUser.email }),
+        body: JSON.stringify({ 
+          email: whopUser.email,
+          whopUserId: whopUser.id,
+          subscriptionStatus: whopUser.subscription_status
+        }),
       });
 
       if (localUserResponse.ok) {
         const { userId } = await localUserResponse.json();
-        setUser({ id: userId, email: whopUser.email });
+        setUser({ 
+          id: userId, 
+          email: whopUser.email,
+          username: whopUser.username 
+        });
         await loadUserStats(userId);
-        showSuccess('Welcome!', `Logged in as ${whopUser.email}`);
+        showSuccess('Welcome!', `Logged in as ${whopUser.username || whopUser.email}`);
       } else {
         setError('Failed to create local user account');
       }
@@ -134,7 +142,7 @@ export default function WhopClientPage({ whopUser }: WhopClientPageProps) {
               </div>
               <div>
                 <h1 className="text-xl font-bold text-gray-900">Caption Crafter</h1>
-                <p className="text-sm text-gray-500">Welcome back, {user.email}</p>
+                <p className="text-sm text-gray-500">Welcome back, {user.username || user.email}</p>
               </div>
             </div>
 

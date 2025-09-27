@@ -318,4 +318,14 @@ export class Database {
       return false;
     }
   }
+
+  async getAllUsers(): Promise<any[]> {
+    try {
+      console.log('getAllUsers called, returning all users:', this.globalData.__captionCrafterDb.users);
+      return this.globalData.__captionCrafterDb.users;
+    } catch (error) {
+      console.error('Error getting all users:', error);
+      return [];
+    }
+  }
 }
