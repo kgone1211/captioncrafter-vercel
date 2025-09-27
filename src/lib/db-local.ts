@@ -173,7 +173,7 @@ export class Database {
         notify_via: notifyVia,
         created_at: new Date().toISOString(),
         caption: caption, // Include caption data
-        email: users.find(u => u.id === userId)?.email,
+        email: users.find((u: any) => u.id === userId)?.email,
         text: caption.text,
         hashtags: caption.hashtags,
         topic: caption.topic,
