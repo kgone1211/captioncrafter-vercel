@@ -31,11 +31,13 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
 
   // Update form data when whopUser changes
   useEffect(() => {
-    setFormData({
-      name: whopUser.username || whopUser.email || '',
-      email: whopUser.email || '',
-      plan: 'premium'
-    });
+    if (whopUser) {
+      setFormData({
+        name: whopUser.username || whopUser.email || '',
+        email: whopUser.email || '',
+        plan: 'premium'
+      });
+    }
   }, [whopUser]);
 
   const loadUsage = async () => {
