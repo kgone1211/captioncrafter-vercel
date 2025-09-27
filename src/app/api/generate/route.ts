@@ -24,6 +24,8 @@ export async function POST(request: NextRequest) {
     // Check if user can generate captions (usage limit)
     if (body.userId) {
       let canGenerate = true; // Default to true for fallback
+      let useFallbackCounter = false;
+      
       try {
         canGenerate = await db.canGenerateCaption(body.userId);
         console.log('Database canGenerateCaption:', canGenerate);
@@ -31,6 +33,7 @@ export async function POST(request: NextRequest) {
         console.error('Error checking canGenerateCaption:', error);
         // Use fallback counter if database fails
         console.log('Using fallback counter for canGenerateCaption check');
+        useFallbackCounter = true;
         canGenerate = fallbackCounter.canGenerateCaption(body.userId);
         console.log('Fallback canGenerateCaption:', canGenerate);
       }
@@ -45,6 +48,27 @@ export async function POST(request: NextRequest) {
           { status: 403 }
         );
       }
+      
+      // If we're using fallback counter for canGenerate, use it for increment too
+      if (useFallbackCounter) {
+        console.log('Using fallback counter for usage increment (consistent with canGenerate check)');
+        fallbackCounter.incrementUsage(body.userId);
+        console.log('Fallback usage incremented for userId:', body.userId);
+      } else {
+        // Use database for increment
+        try {
+          await db.incrementUsage(body.userId);
+          console.log(`Database usage incremented for userId: ${body.userId}`);
+        } catch (error) {
+          console.error('Error incrementing usage in database:', error);
+          // Use fallback counter if database fails
+          console.log('Using fallback counter for usage increment');
+          console.log('Before increment - fallback usage:', fallbackCounter.getUsage(body.userId));
+          fallbackCounter.incrementUsage(body.userId);
+          console.log('After increment - fallback usage:', fallbackCounter.getUsage(body.userId));
+          console.log(`Fallback usage incremented for userId: ${body.userId}`);
+        }
+      }
     }
 
     console.log('Starting caption generation...');
@@ -52,23 +76,6 @@ export async function POST(request: NextRequest) {
     console.log('CaptionGenerator created, calling generateCaptions...');
     const captions = await generator.generateCaptions(body);
     console.log('Captions generated successfully:', captions.length, 'captions');
-
-    // Increment usage after successful generation
-    if (body.userId) {
-      console.log(`Incrementing usage for userId: ${body.userId}`);
-      try {
-        await db.incrementUsage(body.userId);
-        console.log(`Database usage incremented for userId: ${body.userId}`);
-      } catch (error) {
-        console.error('Error incrementing usage in database:', error);
-        // Use fallback counter if database fails
-        console.log('Using fallback counter for usage increment');
-        console.log('Before increment - fallback usage:', fallbackCounter.getUsage(body.userId));
-        fallbackCounter.incrementUsage(body.userId);
-        console.log('After increment - fallback usage:', fallbackCounter.getUsage(body.userId));
-        console.log(`Fallback usage incremented for userId: ${body.userId}`);
-      }
-    }
 
     return NextResponse.json({ captions });
   } catch (error) {
