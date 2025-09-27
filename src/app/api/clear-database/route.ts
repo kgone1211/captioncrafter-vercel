@@ -1,0 +1,100 @@
+// API route to clear the database (for development only)
+
+import { NextRequest, NextResponse } from 'next/server';
+import { db } from '@/lib/db';
+import { supabaseDb, supabase } from '@/lib/supabase';
+
+export async function POST(request: NextRequest) {
+  try {
+    console.log('Clear database API called');
+    
+    // Only allow in development or with special key
+    const authKey = request.headers.get('x-clear-key');
+    const isDev = process.env.NODE_ENV === 'development';
+    
+    if (!isDev && authKey !== 'clear-db-2024') {
+      return NextResponse.json(
+        { error: 'Unauthorized - only allowed in development or with proper key' },
+        { status: 401 }
+      );
+    }
+
+    // Initialize database
+    await db.initDatabase();
+    console.log('Database initialized');
+
+    // Check which database we're using
+    const isLocalDev = !process.env.DATABASE_URL || process.env.DATABASE_URL.includes('localhost');
+    const hasSupabase = !!(process.env.NEXT_PUBLIC_SUPABASE_URL || process.env.SUPABASE_URL);
+    
+    console.log('Database type check:', { isLocalDev, hasSupabase });
+
+    let result = {};
+
+    if (hasSupabase) {
+      console.log('Clearing Supabase database...');
+      
+      // Clear all tables in order (respecting foreign key constraints)
+      const { error: captionsError } = await supabase
+        .from('captions')
+        .delete()
+        .neq('id', 0); // Delete all rows
+      
+      if (captionsError) {
+        console.log('Error clearing captions (might not exist):', captionsError.message);
+      } else {
+        console.log('Captions table cleared');
+      }
+
+      const { error: scheduledError } = await supabase
+        .from('scheduled_posts')
+        .delete()
+        .neq('id', 0); // Delete all rows
+      
+      if (scheduledError) {
+        console.log('Error clearing scheduled_posts (might not exist):', scheduledError.message);
+      } else {
+        console.log('Scheduled posts table cleared');
+      }
+
+      const { error: usersError } = await supabase
+        .from('users')
+        .delete()
+        .neq('id', 0); // Delete all rows
+      
+      if (usersError) {
+        console.log('Error clearing users:', usersError.message);
+        result = { error: 'Failed to clear users table', details: usersError.message };
+      } else {
+        console.log('Users table cleared');
+        result = { message: 'Supabase database cleared successfully' };
+      }
+    } else if (isLocalDev) {
+      console.log('Clearing local database...');
+      // For local database, we can't easily clear it, but we can reset the counter
+      result = { message: 'Local database - cannot clear in-memory data' };
+    } else {
+      result = { message: 'Using Vercel Postgres - not clearing' };
+    }
+
+    return NextResponse.json({
+      success: true,
+      databaseType: { isLocalDev, hasSupabase },
+      result
+    });
+  } catch (error) {
+    console.error('Clear database error:', error);
+    return NextResponse.json(
+      { 
+        error: 'Failed to clear database', 
+        details: error instanceof Error ? error.message : 'Unknown error' 
+      },
+      { status: 500 }
+    );
+  }
+}
+
+// Also allow GET for easy testing
+export async function GET(request: NextRequest) {
+  return POST(request);
+}

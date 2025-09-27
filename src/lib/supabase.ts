@@ -220,3 +220,6 @@ export class SupabaseDatabase {
 }
 
 export const supabaseDb = new SupabaseDatabase();
+
+// Export the supabase client for direct access
+export { supabase };
