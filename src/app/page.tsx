@@ -79,7 +79,7 @@ export default async function Home() {
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         company_id: 'biz_test_company',
-        subscription_status: 'active'
+        subscription_status: 'active' as const
       };
       console.log('Using fallback user:', whopUser);
     }
