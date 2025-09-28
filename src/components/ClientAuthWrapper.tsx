@@ -34,61 +34,146 @@ export default function ClientAuthWrapper({
       console.log('Client-side: Found different user ID from URL params:', clientAuth.userId);
       setLoading(true);
       
-      // Fetch user data from Whop API via server endpoint
-      fetch(`/api/user/get?userId=${clientAuth.userId}`)
+      // Check if this is an OAuth authorization code
+      const urlParams = new URLSearchParams(window.location.search);
+      const authCode = urlParams.get('code');
+      
+      if (authCode) {
+        console.log('Client-side: Processing OAuth authorization code:', authCode);
+        
+        // Exchange authorization code for user data
+        fetch('/api/oauth/callback', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            code: authCode,
+            clientId: process.env.NEXT_PUBLIC_WHOP_CLIENT_ID,
+            clientSecret: process.env.WHOP_CLIENT_SECRET,
+            redirectUri: window.location.origin
+          })
+        })
         .then(response => response.json())
-        .then(async (user) => {
-          console.log('Client-side: Fetched user from API:', user);
-          setWhopUser(user);
-          setAuth(clientAuth);
-          
-          // Update database with new user via API call
-          try {
-            const response = await fetch('/api/user/upsert', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                email: user.email,
-                whopUserId: user.id,
-                subscriptionStatus: user.subscription_status,
-                username: user.username
-              })
+        .then(async (result) => {
+          if (result.user) {
+            console.log('Client-side: OAuth exchange successful:', result);
+            setWhopUser(result.user);
+            setAuth({
+              userId: result.user.id,
+              isAuthenticated: true,
+              source: 'url-params'
             });
             
-            if (response.ok) {
-              const result = await response.json();
-              const newDbUserId = result.userId;
-              setDbUserId(newDbUserId);
+            // Update database with new user via API call
+            try {
+              const dbResponse = await fetch('/api/user/upsert', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  email: result.user.email,
+                  whopUserId: result.user.id,
+                  subscriptionStatus: result.user.subscription_status || 'inactive',
+                  username: result.user.username
+                })
+              });
               
-              // Check if user can generate captions via API call
-              const canGenResponse = await fetch(`/api/user/can-generate?userId=${newDbUserId}`);
-              if (canGenResponse.ok) {
-                const canGenResult = await canGenResponse.json();
-                setCanGenerate(canGenResult.canGenerate);
+              if (dbResponse.ok) {
+                const dbResult = await dbResponse.json();
+                const newDbUserId = dbResult.userId;
+                setDbUserId(newDbUserId);
+                
+                // Check if user can generate captions via API call
+                const canGenResponse = await fetch(`/api/user/can-generate?userId=${newDbUserId}`);
+                if (canGenResponse.ok) {
+                  const canGenResult = await canGenResponse.json();
+                  setCanGenerate(canGenResult.canGenerate);
+                } else {
+                  setCanGenerate(fallbackCanGenerate);
+                }
               } else {
+                setDbUserId(fallbackDbUserId);
                 setCanGenerate(fallbackCanGenerate);
               }
-            } else {
-              // Use fallback values if API fails
+            } catch (dbError) {
+              console.error('Client-side: Database error:', dbError);
               setDbUserId(fallbackDbUserId);
               setCanGenerate(fallbackCanGenerate);
             }
-          } catch (dbError) {
-            console.error('Client-side: API error:', dbError);
-            // Use fallback values
-            setDbUserId(fallbackDbUserId);
-            setCanGenerate(fallbackCanGenerate);
+          } else {
+            console.error('Client-side: OAuth exchange failed:', result);
+            // Keep fallback values
           }
         })
         .catch((error) => {
-          console.error('Client-side: Error fetching user:', error);
+          console.error('Client-side: OAuth error:', error);
           // Keep fallback values
         })
         .finally(() => {
           setLoading(false);
         });
+      } else {
+        // Regular user ID from URL params
+        console.log('Client-side: Found user ID from URL params:', clientAuth.userId);
+        
+        // Fetch user data from Whop API via server endpoint
+        fetch(`/api/user/get?userId=${clientAuth.userId}`)
+          .then(response => response.json())
+          .then(async (user) => {
+            console.log('Client-side: Fetched user from API:', user);
+            setWhopUser(user);
+            setAuth(clientAuth);
+            
+            // Update database with new user via API call
+            try {
+              const response = await fetch('/api/user/upsert', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  email: user.email,
+                  whopUserId: user.id,
+                  subscriptionStatus: user.subscription_status,
+                  username: user.username
+                })
+              });
+              
+              if (response.ok) {
+                const result = await response.json();
+                const newDbUserId = result.userId;
+                setDbUserId(newDbUserId);
+                
+                // Check if user can generate captions via API call
+                const canGenResponse = await fetch(`/api/user/can-generate?userId=${newDbUserId}`);
+                if (canGenResponse.ok) {
+                  const canGenResult = await canGenResponse.json();
+                  setCanGenerate(canGenResult.canGenerate);
+                } else {
+                  setCanGenerate(fallbackCanGenerate);
+                }
+              } else {
+                // Use fallback values if API fails
+                setDbUserId(fallbackDbUserId);
+                setCanGenerate(fallbackCanGenerate);
+              }
+            } catch (dbError) {
+              console.error('Client-side: API error:', dbError);
+              // Use fallback values
+              setDbUserId(fallbackDbUserId);
+              setCanGenerate(fallbackCanGenerate);
+            }
+          })
+          .catch((error) => {
+            console.error('Client-side: Error fetching user:', error);
+            // Keep fallback values
+          })
+          .finally(() => {
+            setLoading(false);
+          });
+      }
     }
   }, [fallbackAuth, fallbackWhopUser, fallbackDbUserId, fallbackCanGenerate]);
 
