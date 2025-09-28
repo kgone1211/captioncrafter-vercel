@@ -78,8 +78,8 @@ export function getWhopAuthClient(): WhopAuthResult {
   }
 
   // Check if accessed through Whop iframe by looking at referrer
-  if (typeof window !== 'undefined' && window.location.referrer) {
-    const referrer = window.location.referrer;
+  if (typeof window !== 'undefined' && typeof document !== 'undefined' && document.referrer) {
+    const referrer = document.referrer;
     if (referrer.includes('whop.com') || referrer.includes('whop.io')) {
       console.log('Client-side: Accessed through Whop but no URL params found');
       return {
