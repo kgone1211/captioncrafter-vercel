@@ -26,6 +26,52 @@ export default function ClientAuthWrapper({
   const [loading, setLoading] = useState<boolean>(false);
 
   useEffect(() => {
+    // Check for stored OAuth user data first
+    const storedUserData = localStorage.getItem('whop_user_data');
+    if (storedUserData) {
+      try {
+        const userData = JSON.parse(storedUserData);
+        console.log('Client-side: Found stored OAuth user data:', userData);
+        setWhopUser(userData);
+        setAuth({
+          userId: userData.id,
+          isAuthenticated: true,
+          source: 'url-params'
+        });
+        
+        // Update database with stored user
+        fetch('/api/user/upsert', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            email: userData.email,
+            whopUserId: userData.id,
+            subscriptionStatus: userData.subscription_status || 'inactive',
+            username: userData.username
+          })
+        })
+        .then(response => response.json())
+        .then(async (result) => {
+          if (result.userId) {
+            setDbUserId(result.userId);
+            const canGenResponse = await fetch(`/api/user/can-generate?userId=${result.userId}`);
+            if (canGenResponse.ok) {
+              const canGenResult = await canGenResponse.json();
+              setCanGenerate(canGenResult.canGenerate);
+            }
+          }
+        })
+        .catch(error => console.error('Error updating database:', error));
+        
+        return; // Don't process other auth methods
+      } catch (error) {
+        console.error('Error parsing stored user data:', error);
+        localStorage.removeItem('whop_user_data');
+      }
+    }
+
     // Check for URL parameters on client side
     const clientAuth = getWhopAuthClient();
     
