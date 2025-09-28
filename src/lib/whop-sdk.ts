@@ -225,7 +225,7 @@ class WhopSDK {
       return {
         id: userId,
         email: 'whop@example.com',
-        username: 'Whop User',
+        username: 'Real Whop User', // Temporary: Change this to your real name
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         company_id: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID || 'biz_whop',

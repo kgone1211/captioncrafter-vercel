@@ -59,24 +59,27 @@ export async function getWhopAuth(): Promise<WhopAuthResult> {
   
   console.log('Referer check:', { referer, isFromWhop });
   
-  if (isFromWhop) {
-    // If accessed through Whop but no auth headers, this could be:
-    // 1. OAuth flow (will be handled by client-side)
-    // 2. App configuration issue
-    // 3. User not properly authenticated in Whop
-    
-    console.log('Accessed through Whop - checking for OAuth flow or using fallback');
-    
-    // For now, allow fallback to demo user when accessed through Whop
-    // This prevents the "Authentication Error" and allows the app to work
-    // The client-side component will handle OAuth codes if present
-    console.log('Using fallback user for Whop access');
-    return {
-      userId: 'whop_fallback_user',
-      isAuthenticated: true,
-      source: 'direct-access'
-    };
-  }
+      if (isFromWhop) {
+        // If accessed through Whop but no auth headers, this could be:
+        // 1. OAuth flow (will be handled by client-side)
+        // 2. App configuration issue
+        // 3. User not properly authenticated in Whop
+        
+        console.log('Accessed through Whop - checking for OAuth flow or using fallback');
+        
+        // OAuth parameters will be handled by client-side component
+        // Server-side can't access URL parameters in this context
+        
+        // For now, allow fallback to demo user when accessed through Whop
+        // This prevents the "Authentication Error" and allows the app to work
+        // The client-side component will handle OAuth codes if present
+        console.log('Using fallback user for Whop access');
+        return {
+          userId: 'whop_fallback_user',
+          isAuthenticated: true,
+          source: 'direct-access'
+        };
+      }
   
   // Fallback: Check URL parameters for user ID (production method)
   const urlUserId = getUserIdFromUrl();
