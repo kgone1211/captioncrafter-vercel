@@ -55,6 +55,17 @@ function getUserIdFromUrl(): string | null {
  * Checks URL parameters for user authentication
  */
 export function getWhopAuthClient(): WhopAuthResult {
+  // Check URL parameters for authorization code (OAuth flow)
+  const authCode = getAuthorizationCodeFromUrl();
+  if (authCode) {
+    console.log('Client-side: Found OAuth authorization code:', authCode);
+    return {
+      userId: authCode, // Use code as temporary ID
+      isAuthenticated: true,
+      source: 'url-params'
+    };
+  }
+
   // Check URL parameters for user ID (production method)
   const urlUserId = getUserIdFromUrl();
   if (urlUserId) {
@@ -95,4 +106,28 @@ export function getWhopAuthClient(): WhopAuthResult {
  */
 export function getUserIdFromUrlParams(): string | null {
   return getUserIdFromUrl();
+}
+
+/**
+ * Extract authorization code from URL parameters (OAuth flow)
+ */
+function getAuthorizationCodeFromUrl(): string | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get('code');
+    
+    if (code && code.trim()) {
+      console.log('Found OAuth authorization code:', code);
+      return code.trim();
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error extracting authorization code from URL:', error);
+    return null;
+  }
 }

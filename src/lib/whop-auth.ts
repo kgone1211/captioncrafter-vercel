@@ -34,7 +34,7 @@ export async function getWhopAuth(): Promise<WhopAuthResult> {
   });
   
   try {
-    // Use Whop SDK's official authentication method
+    // Use Whop SDK's official authentication method (for iframe apps)
     const { userId } = await whopSdk.verifyUserToken(headersList);
     
     if (userId) {
@@ -53,15 +53,19 @@ export async function getWhopAuth(): Promise<WhopAuthResult> {
     });
   }
   
-  // Check if accessed through Whop iframe
+  // Check if this is a Whop OAuth redirect (Webapp experience)
   const referer = headersList.get('referer');
   const isFromWhop = referer && (referer.includes('whop.com') || referer.includes('whop.io'));
   
   console.log('Referer check:', { referer, isFromWhop });
   
   if (isFromWhop) {
-    // If accessed through Whop but no auth headers, this suggests a configuration issue
-    console.log('Accessed through Whop but no auth headers found - configuration issue');
+    // If accessed through Whop but no auth headers, this is likely OAuth flow
+    // The user will be redirected with authorization code in URL params
+    console.log('Accessed through Whop - likely OAuth flow, checking URL params');
+    
+    // For OAuth flow, we need to check URL parameters for authorization code
+    // This will be handled by the client-side component
     return {
       userId: '',
       isAuthenticated: false,
