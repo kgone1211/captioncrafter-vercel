@@ -23,9 +23,7 @@ export async function POST(request: NextRequest) {
         // Handle subscription cancellation
         if (data.user_id) {
           // Downgrade user back to free plan
-          const usage = fallbackCounter.getUsage(parseInt(data.user_id));
-          usage.subscriptionStatus = 'inactive';
-          fallbackCounter.counters.set(parseInt(data.user_id), usage);
+          fallbackCounter.downgradeToFree(parseInt(data.user_id));
         }
         break;
 

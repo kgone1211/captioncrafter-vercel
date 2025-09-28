@@ -69,6 +69,14 @@ class FallbackCounter {
     this.counters.clear();
     console.log('Reset all fallback counters');
   }
+
+  downgradeToFree(userId: number): void {
+    console.log(`Downgrading user ${userId} to free plan`);
+    const usage = this.getUsage(userId);
+    usage.subscriptionStatus = 'inactive';
+    this.counters.set(userId, usage);
+    console.log(`User ${userId} downgraded to free plan`);
+  }
 }
 
 export const fallbackCounter = FallbackCounter.getInstance();
