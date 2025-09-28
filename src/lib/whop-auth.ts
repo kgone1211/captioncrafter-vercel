@@ -43,8 +43,8 @@ export async function getWhopAuth(): Promise<WhopAuthResult> {
   });
   
   // Method 1: Direct Whop user ID header (most reliable)
-  if (whopUserId && whopUserId !== 'undefined' && whopUserId !== 'null') {
-    console.log('Found valid Whop user ID:', whopUserId);
+  if (whopUserId) {
+    console.log('Found Whop user ID:', whopUserId);
     return {
       userId: whopUserId,
       companyId: whopCompanyId || undefined,
@@ -127,21 +127,22 @@ export async function getWhopAuth(): Promise<WhopAuthResult> {
   
   // Method 5: Check if accessed through Whop iframe
   if (referer && (referer?.includes('whop.com') || referer?.includes('whop.io'))) {
-    // If accessed through Whop but no auth headers, try to extract from URL or use session
-    console.log('Accessed through Whop but no auth headers found');
+    // If accessed through Whop but no auth headers, this is an error
+    console.log('Accessed through Whop but no auth headers found - this should not happen');
     return {
-      userId: 'whop_user_fallback',
+      userId: '',
       isAuthenticated: false,
       source: 'none'
     };
   }
   
-  // No valid authentication found - this should fail in production
-  console.log('No valid Whop authentication found');
+  // For direct access (not through Whop), provide a fallback user
+  // This allows the app to work when accessed directly for testing/demo purposes
+  console.log('No Whop headers found, using fallback user for direct access');
   return {
-    userId: '',
-    isAuthenticated: false,
-    source: 'none'
+    userId: 'direct_access_user',
+    isAuthenticated: true,
+    source: 'direct-access'
   };
 }
 
