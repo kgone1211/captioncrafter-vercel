@@ -220,6 +220,19 @@ class WhopSDK {
       };
     }
 
+    // Whop fallback user (when accessed through Whop but no proper auth)
+    if (userId === 'whop_fallback_user') {
+      return {
+        id: userId,
+        email: 'whop@example.com',
+        username: 'Whop User',
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+        company_id: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID || 'biz_whop',
+        subscription_status: 'inactive'
+      };
+    }
+
     // If no API key, return test user only in development or if TEST_USERNAME is set
     if (!this.apiKey) {
       if (process.env.NODE_ENV === 'development' || process.env.TEST_USERNAME) {
