@@ -159,3 +159,6 @@ export function PlanComparison({ currentPlan, onUpgrade }: PlanComparisonProps) 
 
 // Import the PLAN_FEATURES from the plan-features file
 import { PLAN_FEATURES } from '@/lib/plan-features';
+
+// Re-export the utility functions
+export { getAvailablePlatforms, getPlanFeatures, canAccessFeature } from '@/lib/plan-features';
