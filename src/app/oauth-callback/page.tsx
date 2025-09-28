@@ -30,7 +30,7 @@ export default function OAuthCallback() {
         console.log('OAuth callback processing code:', code);
 
         // Exchange authorization code for user data
-        const response = await fetch('/api/oauth/callback', {
+        const response = await fetch(`/api/oauth/callback?code=${encodeURIComponent(code)}`, {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
