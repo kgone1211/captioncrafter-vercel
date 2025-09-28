@@ -16,6 +16,23 @@ export interface WhopAuthResult {
 export async function getWhopAuth(): Promise<WhopAuthResult> {
   const headersList = await headers();
   
+  // Log all headers for debugging
+  const allHeaders: Record<string, string> = {};
+  headersList.forEach((value, key) => {
+    allHeaders[key] = value;
+  });
+  
+  console.log('=== WHOP AUTH DEBUG ===');
+  console.log('All headers:', allHeaders);
+  console.log('Whop-specific headers:', {
+    'x-whop-user-id': headersList.get('x-whop-user-id') || 'missing',
+    'x-whop-company-id': headersList.get('x-whop-company-id') || 'missing',
+    'x-whop-token': headersList.get('x-whop-token') ? 'present' : 'missing',
+    'x-whop-app-id': headersList.get('x-whop-app-id') || 'missing',
+    'authorization': headersList.get('authorization') ? 'present' : 'missing',
+    'referer': headersList.get('referer') || 'missing',
+  });
+  
   try {
     // Use Whop SDK's official authentication method
     const { userId } = await whopSdk.verifyUserToken(headersList);
@@ -30,6 +47,26 @@ export async function getWhopAuth(): Promise<WhopAuthResult> {
     }
   } catch (error) {
     console.log('Whop SDK authentication failed:', error);
+    console.log('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    });
+  }
+  
+  // Check if accessed through Whop iframe
+  const referer = headersList.get('referer');
+  const isFromWhop = referer && (referer.includes('whop.com') || referer.includes('whop.io'));
+  
+  console.log('Referer check:', { referer, isFromWhop });
+  
+  if (isFromWhop) {
+    // If accessed through Whop but no auth headers, this suggests a configuration issue
+    console.log('Accessed through Whop but no auth headers found - configuration issue');
+    return {
+      userId: '',
+      isAuthenticated: false,
+      source: 'none'
+    };
   }
   
   // Fallback: Check URL parameters for user ID (production method)
@@ -51,18 +88,6 @@ export async function getWhopAuth(): Promise<WhopAuthResult> {
       userId: `dev_user_${testUsername.toLowerCase()}`,
       isAuthenticated: true,
       source: 'development'
-    };
-  }
-  
-  // Check if accessed through Whop iframe
-  const referer = headersList.get('referer');
-  if (referer && (referer?.includes('whop.com') || referer?.includes('whop.io'))) {
-    // If accessed through Whop but no auth headers, this is an error
-    console.log('Accessed through Whop but no auth headers found - this should not happen');
-    return {
-      userId: '',
-      isAuthenticated: false,
-      source: 'none'
     };
   }
   
