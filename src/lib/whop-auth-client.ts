@@ -66,16 +66,7 @@ export function getWhopAuthClient(): WhopAuthResult {
     };
   }
 
-  // Check if we're in development mode
-  if (process.env.NODE_ENV === 'development' && process.env.WHOP_DEV_MODE === 'true') {
-    const testUsername = process.env.TEST_USERNAME || 'Krista';
-    console.log('Client-side: Development mode: Using test user:', testUsername);
-    return {
-      userId: `dev_user_${testUsername.toLowerCase()}`,
-      isAuthenticated: true,
-      source: 'development'
-    };
-  }
+  // Skip development mode check in client-side - rely on server-side fallback
 
   // Check if accessed through Whop iframe by looking at referrer
   if (typeof window !== 'undefined' && typeof document !== 'undefined' && document.referrer) {
