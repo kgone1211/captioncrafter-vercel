@@ -1,6 +1,6 @@
 import { whopSdk, WhopUser } from "@/lib/whop-sdk";
 import { getWhopAuth, isWhopRequest } from "@/lib/whop-auth";
-import HomeClientPage from './home-client';
+import ClientAuthWrapper from '@/components/ClientAuthWrapper';
 import Paywall from '@/components/Paywall';
 import { db } from '@/lib/db';
 
@@ -130,15 +130,16 @@ export default async function Home() {
       canGenerate = true;
     }
     
-    // If user can't generate captions (hit limit), show paywall
-    if (!canGenerate) {
-      console.log('Showing paywall for user:', whopUser);
-      return <Paywall whopUser={whopUser} dbUserId={dbUserId} />;
-    }
-
-    // If user can generate captions, show the app
-    console.log('Showing main app for user:', whopUser);
-    return <HomeClientPage whopUser={whopUser} dbUserId={dbUserId} />;
+    // Use ClientAuthWrapper to handle both server-side and client-side authentication
+    console.log('Using ClientAuthWrapper with server-side auth:', auth);
+    return (
+      <ClientAuthWrapper 
+        fallbackAuth={auth}
+        fallbackWhopUser={whopUser}
+        fallbackDbUserId={dbUserId}
+        fallbackCanGenerate={canGenerate}
+      />
+    );
   } catch (error) {
     console.error('Error loading user:', error);
     console.error('Error details:', {

@@ -5,7 +5,47 @@ export interface WhopAuthResult {
   companyId?: string;
   token?: string;
   isAuthenticated: boolean;
-  source: 'whop-headers' | 'bearer-token' | 'development' | 'direct-access' | 'none';
+  source: 'whop-headers' | 'bearer-token' | 'development' | 'direct-access' | 'url-params' | 'none';
+}
+
+/**
+ * Extract user ID from URL parameters
+ * This is used when Whop passes user info via URL params instead of headers
+ */
+function getUserIdFromUrl(): string | null {
+  if (typeof window === 'undefined') {
+    // Server-side: we can't access URL params here, return null
+    return null;
+  }
+  
+  try {
+    const urlParams = new URLSearchParams(window.location.search);
+    
+    // Check various possible parameter names that Whop might use
+    const possibleParams = [
+      'user_id',
+      'whop_user_id', 
+      'userId',
+      'whopUserId',
+      'user',
+      'whop_user',
+      'uid',
+      'whop_uid'
+    ];
+    
+    for (const param of possibleParams) {
+      const value = urlParams.get(param);
+      if (value && value.trim()) {
+        console.log(`Found user ID from URL param '${param}':`, value);
+        return value.trim();
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Error extracting user ID from URL:', error);
+    return null;
+  }
 }
 
 /**
@@ -114,6 +154,18 @@ export async function getWhopAuth(): Promise<WhopAuthResult> {
     }
   }
   
+  // Method 5: Check URL parameters for user ID (production fallback)
+  // This is useful when Whop passes user info via URL params instead of headers
+  const urlUserId = getUserIdFromUrl();
+  if (urlUserId) {
+    console.log('Found user ID from URL parameters:', urlUserId);
+    return {
+      userId: urlUserId,
+      isAuthenticated: true,
+      source: 'url-params'
+    };
+  }
+
   // Only use test user in development mode for local testing
   if (process.env.NODE_ENV === 'development' && process.env.WHOP_DEV_MODE === 'true') {
     const testUsername = process.env.TEST_USERNAME || 'Krista';
@@ -125,7 +177,7 @@ export async function getWhopAuth(): Promise<WhopAuthResult> {
     };
   }
   
-  // Method 5: Check if accessed through Whop iframe
+  // Method 6: Check if accessed through Whop iframe
   if (referer && (referer?.includes('whop.com') || referer?.includes('whop.io'))) {
     // If accessed through Whop but no auth headers, this is an error
     console.log('Accessed through Whop but no auth headers found - this should not happen');
