@@ -5,7 +5,6 @@ import { whopSdk, WhopUser } from "@/lib/whop-sdk";
 import { getWhopAuthClient, WhopAuthResult } from "@/lib/whop-auth-client";
 import HomeClientPage from '../app/home-client';
 import Paywall from '@/components/Paywall';
-import { db } from '@/lib/db';
 
 interface ClientAuthWrapperProps {
   fallbackAuth: WhopAuthResult;
@@ -42,22 +41,41 @@ export default function ClientAuthWrapper({
           setWhopUser(user);
           setAuth(clientAuth);
           
-          // Update database with new user
+          // Update database with new user via API call
           try {
-            await db.initDatabase();
-            const newDbUserId = await db.upsertUser(
-              user.email, 
-              user.id, 
-              user.subscription_status,
-              user.username
-            );
-            setDbUserId(newDbUserId);
+            const response = await fetch('/api/user/upsert', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                email: user.email,
+                whopUserId: user.id,
+                subscriptionStatus: user.subscription_status,
+                username: user.username
+              })
+            });
             
-            // Check if user can generate captions
-            const canGen = await db.canGenerateCaption(newDbUserId);
-            setCanGenerate(canGen);
+            if (response.ok) {
+              const result = await response.json();
+              const newDbUserId = result.userId;
+              setDbUserId(newDbUserId);
+              
+              // Check if user can generate captions via API call
+              const canGenResponse = await fetch(`/api/user/can-generate?userId=${newDbUserId}`);
+              if (canGenResponse.ok) {
+                const canGenResult = await canGenResponse.json();
+                setCanGenerate(canGenResult.canGenerate);
+              } else {
+                setCanGenerate(fallbackCanGenerate);
+              }
+            } else {
+              // Use fallback values if API fails
+              setDbUserId(fallbackDbUserId);
+              setCanGenerate(fallbackCanGenerate);
+            }
           } catch (dbError) {
-            console.error('Client-side: Database error:', dbError);
+            console.error('Client-side: API error:', dbError);
             // Use fallback values
             setDbUserId(fallbackDbUserId);
             setCanGenerate(fallbackCanGenerate);
