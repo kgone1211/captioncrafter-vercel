@@ -18,10 +18,11 @@ export async function POST(request: NextRequest) {
     // Verify the session with Whop (if API key is available)
     if (whopSdk.hasApiKey()) {
       try {
-        // In a real implementation, you would verify the session with Whop's API
-        // For now, we'll assume successful verification for non-mock sessions
         if (!sessionId.startsWith('mock_')) {
-          console.log('Real Whop session verified:', sessionId);
+          console.log('Verifying real Whop session:', sessionId);
+          // TODO: Implement real Whop session verification
+          // const session = await whopSdk.getCheckoutSession(sessionId);
+          // userId = session.metadata.user_id;
         }
       } catch (error) {
         console.error('Error verifying with Whop:', error);

@@ -7,6 +7,7 @@ import { PLATFORM_LIMITS, TONE_PRESETS, getLengthPresets } from '@/lib/presets';
 import UsageCounter from './UsageCounter';
 import Paywall from './Paywall';
 import { WhopUser } from '@/lib/whop-sdk';
+import { PlanAwareFeature, PlanBadge, getAvailablePlatforms } from './PlanAwareComponents';
 
 interface CaptionGeneratorProps {
   userId: number;
@@ -342,18 +343,36 @@ export default function CaptionGenerator({ userId, onStatsUpdate, whopUser }: Ca
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Platform
+                <PlanBadge 
+                  subscriptionStatus={whopUser?.subscription_status || 'inactive'} 
+                  planId={whopUser?.subscription_status === 'active' ? 'premium' : undefined}
+                />
               </label>
-              <select
-                value={formData.platform}
-                onChange={(e) => handleInputChange('platform', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              <PlanAwareFeature
+                subscriptionStatus={whopUser?.subscription_status || 'inactive'}
+                planId={whopUser?.subscription_status === 'active' ? 'premium' : undefined}
+                feature="platforms"
+                fallback={
+                  <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
+                    Limited platforms - Upgrade to unlock all platforms
+                  </div>
+                }
               >
-                {Object.keys(PLATFORM_LIMITS).map(platform => (
-                  <option key={platform} value={platform}>
-                    {platform.charAt(0).toUpperCase() + platform.slice(1)}
-                  </option>
-                ))}
-              </select>
+                <select
+                  value={formData.platform}
+                  onChange={(e) => handleInputChange('platform', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  {getAvailablePlatforms(
+                    whopUser?.subscription_status || 'inactive',
+                    whopUser?.subscription_status === 'active' ? 'premium' : undefined
+                  ).map((platform) => (
+                    <option key={platform.toLowerCase()} value={platform.toLowerCase()}>
+                      {platform}
+                    </option>
+                  ))}
+                </select>
+              </PlanAwareFeature>
             </div>
 
             <div>

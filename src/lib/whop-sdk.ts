@@ -225,7 +225,7 @@ class WhopSDK {
       return {
         id: userId,
         email: 'whop@example.com',
-        username: 'Real Whop User', // Temporary: Change this to your real name
+        username: 'Krista', // Your real name
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         company_id: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID || 'biz_whop',
@@ -506,22 +506,8 @@ class WhopSDK {
     metadata?: Record<string, any>;
   }): Promise<WhopCheckoutSession> {
     if (!this.apiKey) {
-      // Return mock checkout session for development
-      const mockCheckoutUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/success?session_id=mock_${Date.now()}`;
-      return {
-        id: `mock_${Date.now()}`,
-        url: mockCheckoutUrl,
-        status: 'open',
-        payment_status: 'unpaid',
-        customer_email: 'user@example.com',
-        amount_total: 999,
-        currency: 'usd',
-        metadata: {
-          ...metadata,
-          plan_id: planId,
-          user_id: userId
-        }
-      };
+      // In production without API key, throw error
+      throw new Error('WHOP_API_KEY is required for checkout sessions');
     }
 
     try {
@@ -559,30 +545,73 @@ class WhopSDK {
    * Get available subscription plans
    */
   async getSubscriptionPlans(): Promise<WhopSubscriptionPlan[]> {
-    // Always return mock plans for now since we don't have Whop API configured
-    console.log('Returning mock subscription plans');
-    return [
-      {
-        id: 'prod_OAeju0utHppI2',
-        name: 'Basic Plan',
-        description: 'Perfect for getting started',
-        price: 9.99,
-        currency: 'usd',
-        interval: 'month',
-        features: ['100 captions per month', 'Basic AI generation', '3 platforms', 'Email support', 'Upgrade from 3 free captions'],
-        access_passes: ['basic_access']
-      },
-      {
-        id: 'prod_Premium123',
-        name: 'Premium Plan',
-        description: 'For growing creators',
-        price: 19.99,
-        currency: 'usd',
-        interval: 'month',
-        features: ['500 captions per month', 'Advanced AI generation', 'All platforms', 'Priority support', 'Content calendar', 'Upgrade from 3 free captions'],
-        access_passes: ['premium_access']
+    if (!this.apiKey) {
+      // Return fallback plans if no API key
+      console.log('No API key, returning fallback subscription plans');
+      return [
+        {
+          id: 'prod_OAeju0utHppI2',
+          name: 'Basic Plan',
+          description: 'Perfect for getting started',
+          price: 9.99,
+          currency: 'usd',
+          interval: 'month',
+          features: ['100 captions per month', 'Basic AI generation', '3 platforms', 'Email support', 'Upgrade from 3 free captions'],
+          access_passes: ['basic_access']
+        },
+        {
+          id: 'prod_Premium123',
+          name: 'Premium Plan',
+          description: 'For growing creators',
+          price: 19.99,
+          currency: 'usd',
+          interval: 'month',
+          features: ['500 captions per month', 'Advanced AI generation', 'All platforms', 'Priority support', 'Content calendar', 'Upgrade from 3 free captions'],
+          access_passes: ['premium_access']
+        }
+      ];
+    }
+
+    try {
+      const response = await fetch(`${this.baseUrl}/plans`, {
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to fetch plans: ${response.status} ${response.statusText}`);
       }
-    ];
+
+      const plans = await response.json();
+      return plans.data || plans;
+    } catch (error) {
+      console.error('Error fetching subscription plans:', error);
+      // Return fallback plans if API fails
+      return [
+        {
+          id: 'prod_OAeju0utHppI2',
+          name: 'Basic Plan',
+          description: 'Perfect for getting started',
+          price: 9.99,
+          currency: 'usd',
+          interval: 'month',
+          features: ['100 captions per month', 'Basic AI generation', '3 platforms', 'Email support', 'Upgrade from 3 free captions'],
+          access_passes: ['basic_access']
+        },
+        {
+          id: 'prod_Premium123',
+          name: 'Premium Plan',
+          description: 'For growing creators',
+          price: 19.99,
+          currency: 'usd',
+          interval: 'month',
+          features: ['500 captions per month', 'Advanced AI generation', 'All platforms', 'Priority support', 'Content calendar', 'Upgrade from 3 free captions'],
+          access_passes: ['premium_access']
+        }
+      ];
+    }
   }
 
   /**

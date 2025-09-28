@@ -153,13 +153,13 @@ export default function PaymentForm({ planId, planName, price, interval, userId,
           </button>
         </div>
 
-        {/* Demo Notice */}
-        <div className="px-6 py-3 bg-blue-50 border-b">
-          <p className="text-sm text-blue-800">
-            <strong>Demo Mode:</strong> This shows how the payment form would work. 
-            In production, you would see your real saved payment methods from Whop.
-          </p>
-        </div>
+            {/* Demo Notice */}
+            <div className="px-6 py-3 bg-blue-50 border-b">
+              <p className="text-sm text-blue-800">
+                <strong>Demo Mode:</strong> Showing demo payment methods. 
+                Once your Whop app is approved, you'll see your real saved payment methods here.
+              </p>
+            </div>
 
         {/* Payment Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">

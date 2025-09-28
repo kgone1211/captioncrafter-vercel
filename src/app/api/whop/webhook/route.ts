@@ -1,84 +1,60 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { Database } from '@/lib/db';
-import { sql } from '@vercel/postgres';
+import { fallbackCounter } from '@/lib/fallback-counter';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    
     console.log('Whop webhook received:', body);
-    
-    // Verify webhook signature if needed (optional but recommended)
-    const signature = request.headers.get('x-whop-signature');
-    if (signature) {
-      // Add signature verification logic here if needed
-      console.log('Webhook signature:', signature);
-    }
-    
-    // Handle different webhook events
-    switch (body.type) {
+
+    const { type, data } = body;
+
+    switch (type) {
       case 'subscription.created':
       case 'subscription.updated':
-        await handleSubscriptionUpdate(body.data);
+        console.log('Subscription created/updated:', data);
+        // Handle subscription activation
+        if (data.user_id) {
+          fallbackCounter.upgradeToSubscription(parseInt(data.user_id), data.plan_id);
+        }
         break;
+
       case 'subscription.cancelled':
-        await handleSubscriptionCancellation(body.data);
+        console.log('Subscription cancelled:', data);
+        // Handle subscription cancellation
+        if (data.user_id) {
+          // Downgrade user back to free plan
+          const usage = fallbackCounter.getUsage(parseInt(data.user_id));
+          usage.subscriptionStatus = 'inactive';
+          fallbackCounter.counters.set(parseInt(data.user_id), usage);
+        }
         break;
+
       case 'payment.succeeded':
-        await handlePaymentSuccess(body.data);
+        console.log('Payment succeeded:', data);
+        // Handle successful payment
+        if (data.subscription?.user_id) {
+          fallbackCounter.upgradeToSubscription(
+            parseInt(data.subscription.user_id), 
+            data.subscription.plan_id
+          );
+        }
         break;
+
+      case 'payment.failed':
+        console.log('Payment failed:', data);
+        // Handle failed payment - could send notification or retry logic
+        break;
+
       default:
-        console.log('Unhandled webhook type:', body.type);
+        console.log('Unhandled webhook type:', type);
     }
-    
-    return NextResponse.json({ success: true });
+
+    return NextResponse.json({ received: true });
   } catch (error) {
     console.error('Webhook error:', error);
-    return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 });
-  }
-}
-
-async function handleSubscriptionUpdate(subscriptionData: any) {
-  try {
-    // Update user's subscription status
-    await sql`
-      UPDATE users 
-      SET subscription_status = 'active'
-      WHERE whop_user_id = ${subscriptionData.user_id}
-    `;
-    
-    console.log('Updated subscription status for user:', subscriptionData.user_id);
-  } catch (error) {
-    console.error('Error updating subscription:', error);
-  }
-}
-
-async function handleSubscriptionCancellation(subscriptionData: any) {
-  try {
-    // Update user's subscription status to inactive
-    await sql`
-      UPDATE users 
-      SET subscription_status = 'inactive'
-      WHERE whop_user_id = ${subscriptionData.user_id}
-    `;
-    
-    console.log('Cancelled subscription for user:', subscriptionData.user_id);
-  } catch (error) {
-    console.error('Error cancelling subscription:', error);
-  }
-}
-
-async function handlePaymentSuccess(paymentData: any) {
-  try {
-    // Update user's subscription status to active
-    await sql`
-      UPDATE users 
-      SET subscription_status = 'active'
-      WHERE whop_user_id = ${paymentData.user_id}
-    `;
-    
-    console.log('Payment succeeded for user:', paymentData.user_id);
-  } catch (error) {
-    console.error('Error processing payment success:', error);
+    return NextResponse.json(
+      { error: 'Webhook processing failed' },
+      { status: 500 }
+    );
   }
 }
