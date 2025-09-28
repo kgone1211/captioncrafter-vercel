@@ -1,5 +1,3 @@
-import { headers } from "next/headers";
-
 export interface WhopUser {
   id: string;
   email: string;

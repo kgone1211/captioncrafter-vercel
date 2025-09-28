@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react';
 import { whopSdk, WhopUser } from "@/lib/whop-sdk";
 import { getWhopAuthClient, WhopAuthResult } from "@/lib/whop-auth-client";
-import HomeClientPage from './home-client';
+import HomeClientPage from '../app/home-client';
 import Paywall from '@/components/Paywall';
 import { db } from '@/lib/db';
 
