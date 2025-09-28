@@ -1,4 +1,5 @@
 import { headers } from "next/headers";
+import { whopSdk } from "@/lib/whop-sdk";
 
 export interface WhopAuthResult {
   userId: string;
@@ -9,153 +10,29 @@ export interface WhopAuthResult {
 }
 
 /**
- * Extract user ID from URL parameters
- * This is used when Whop passes user info via URL params instead of headers
- */
-function getUserIdFromUrl(): string | null {
-  if (typeof window === 'undefined') {
-    // Server-side: we can't access URL params here, return null
-    return null;
-  }
-  
-  try {
-    const urlParams = new URLSearchParams(window.location.search);
-    
-    // Check various possible parameter names that Whop might use
-    const possibleParams = [
-      'user_id',
-      'whop_user_id', 
-      'userId',
-      'whopUserId',
-      'user',
-      'whop_user',
-      'uid',
-      'whop_uid'
-    ];
-    
-    for (const param of possibleParams) {
-      const value = urlParams.get(param);
-      if (value && value.trim()) {
-        console.log(`Found user ID from URL param '${param}':`, value);
-        return value.trim();
-      }
-    }
-    
-    return null;
-  } catch (error) {
-    console.error('Error extracting user ID from URL:', error);
-    return null;
-  }
-}
-
-/**
  * Enhanced Whop authentication handler
- * Handles multiple authentication methods that Whop might use
+ * Uses Whop SDK's verifyUserToken method for proper authentication
  */
 export async function getWhopAuth(): Promise<WhopAuthResult> {
   const headersList = await headers();
   
-  // Get all possible authentication headers
-  const authorization = headersList.get('authorization');
-  const whopUserId = headersList.get('x-whop-user-id');
-  const whopCompanyId = headersList.get('x-whop-company-id');
-  const whopToken = headersList.get('x-whop-token');
-  const whopAppId = headersList.get('x-whop-app-id');
-  const referer = headersList.get('referer');
-  const userAgent = headersList.get('user-agent');
-  
-  // Log all headers for debugging
-  const allHeaders: Record<string, string> = {};
-  headersList.forEach((value, key) => {
-    allHeaders[key] = value;
-  });
-  
-  console.log('All Headers:', allHeaders);
-  console.log('Whop Auth Debug:', {
-    authorization: authorization ? 'present' : 'missing',
-    whopUserId: whopUserId || 'missing',
-    whopCompanyId: whopCompanyId || 'missing',
-    whopToken: whopToken ? 'present' : 'missing',
-    whopAppId: whopAppId || 'missing',
-    referer: referer || 'missing',
-    userAgent: userAgent ? 'present' : 'missing',
-    nodeEnv: process.env.NODE_ENV
-  });
-  
-  // Method 1: Direct Whop user ID header (most reliable)
-  if (whopUserId) {
-    console.log('Found Whop user ID:', whopUserId);
-    return {
-      userId: whopUserId,
-      companyId: whopCompanyId || undefined,
-      token: whopToken || undefined,
-      isAuthenticated: true,
-      source: 'whop-headers'
-    };
-  }
-  
-  // Method 2: Bearer token in authorization header
-  if (authorization && authorization.startsWith('Bearer ')) {
-    const token = authorization.replace('Bearer ', '');
-    return {
-      userId: token, // Use token as user ID for now
-      token: token,
-      isAuthenticated: true,
-      source: 'bearer-token'
-    };
-  }
-  
-  // Method 3: Whop token header
-  if (whopToken) {
-    return {
-      userId: whopToken,
-      token: whopToken,
-      isAuthenticated: true,
-      source: 'whop-headers'
-    };
-  }
-  
-  // Method 4: Check for any Whop-related headers (exclude common browser headers)
-  const whopRelatedHeaders = Object.keys(allHeaders).filter(key => {
-    const lowerKey = key.toLowerCase();
-    return (lowerKey.startsWith('x-whop') || lowerKey.startsWith('whop-')) && 
-           lowerKey !== 'user-agent' &&
-           lowerKey !== 'accept' &&
-           lowerKey !== 'host' &&
-           lowerKey !== 'connection' &&
-           lowerKey !== 'forwarded' &&
-           lowerKey !== 'cache' &&
-           lowerKey !== 'upgrade';
-  });
-  
-  if (whopRelatedHeaders.length > 0) {
-    console.log('Found Whop-related headers:', whopRelatedHeaders);
-    // If we have any Whop-related headers, try to extract user info
-    // But exclude common browser headers that might contain 'user' in their name
-    const userIdFromHeaders = whopRelatedHeaders.find(key => {
-      const lowerKey = key.toLowerCase();
-      return lowerKey.includes('user') && 
-             lowerKey !== 'user-agent' &&
-             lowerKey !== 'accept' &&
-             lowerKey !== 'host' &&
-             lowerKey !== 'connection' &&
-             lowerKey !== 'forwarded' &&
-             lowerKey !== 'cache' &&
-             lowerKey !== 'upgrade' &&
-             allHeaders[key];
-    });
+  try {
+    // Use Whop SDK's official authentication method
+    const { userId } = await whopSdk.verifyUserToken(headersList);
     
-    if (userIdFromHeaders) {
+    if (userId) {
+      console.log('Whop SDK authentication successful:', userId);
       return {
-        userId: allHeaders[userIdFromHeaders],
+        userId: userId,
         isAuthenticated: true,
         source: 'whop-headers'
       };
     }
+  } catch (error) {
+    console.log('Whop SDK authentication failed:', error);
   }
   
-  // Method 5: Check URL parameters for user ID (production fallback)
-  // This is useful when Whop passes user info via URL params instead of headers
+  // Fallback: Check URL parameters for user ID (production method)
   const urlUserId = getUserIdFromUrl();
   if (urlUserId) {
     console.log('Found user ID from URL parameters:', urlUserId);
@@ -177,7 +54,8 @@ export async function getWhopAuth(): Promise<WhopAuthResult> {
     };
   }
   
-  // Method 6: Check if accessed through Whop iframe
+  // Check if accessed through Whop iframe
+  const referer = headersList.get('referer');
   if (referer && (referer?.includes('whop.com') || referer?.includes('whop.io'))) {
     // If accessed through Whop but no auth headers, this is an error
     console.log('Accessed through Whop but no auth headers found - this should not happen');
@@ -189,13 +67,21 @@ export async function getWhopAuth(): Promise<WhopAuthResult> {
   }
   
   // For direct access (not through Whop), provide a fallback user
-  // This allows the app to work when accessed directly for testing/demo purposes
   console.log('No Whop headers found, using fallback user for direct access');
   return {
     userId: 'direct_access_user',
     isAuthenticated: true,
     source: 'direct-access'
   };
+}
+
+/**
+ * Extract user ID from URL parameters (server-side)
+ */
+function getUserIdFromUrl(): string | null {
+  // This would need to be implemented differently on server-side
+  // For now, return null and rely on client-side detection
+  return null;
 }
 
 /**
