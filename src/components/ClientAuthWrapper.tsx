@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { whopSdk, WhopUser } from "@/lib/whop-sdk";
+import { WhopUser } from "@/lib/whop-sdk";
 import { getWhopAuthClient, WhopAuthResult } from "@/lib/whop-auth-client";
 import HomeClientPage from '../app/home-client';
 import Paywall from '@/components/Paywall';
@@ -34,10 +34,11 @@ export default function ClientAuthWrapper({
       console.log('Client-side: Found different user ID from URL params:', clientAuth.userId);
       setLoading(true);
       
-      // Fetch user data from Whop API
-      whopSdk.getUser({ userId: clientAuth.userId })
+      // Fetch user data from Whop API via server endpoint
+      fetch(`/api/user/get?userId=${clientAuth.userId}`)
+        .then(response => response.json())
         .then(async (user) => {
-          console.log('Client-side: Fetched user from Whop API:', user);
+          console.log('Client-side: Fetched user from API:', user);
           setWhopUser(user);
           setAuth(clientAuth);
           
