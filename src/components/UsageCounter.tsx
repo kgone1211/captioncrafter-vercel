@@ -28,22 +28,30 @@ export default function UsageCounter({ userId, className = '', refreshTrigger }:
     try {
       console.log('UsageCounter loading usage for userId:', userId);
       
-      // Always use fallback counter for consistency
-      const response = await fetch(`/api/fallback-usage?userId=${userId}`);
-      console.log('Fallback response status:', response.status);
+      // Use main usage API for consistency with the rest of the app
+      const response = await fetch(`/api/usage?userId=${userId}`);
+      console.log('Usage API response status:', response.status);
       
       if (response.ok) {
         const data = await response.json();
-        console.log('Fallback usage data:', data);
+        console.log('Usage data:', data);
         setUsage(data);
       } else {
-        console.error('Fallback API error:', response.status, response.statusText);
-        setUsage({ freeCaptionsUsed: 0, subscriptionStatus: 'active' });
+        console.error('Usage API error:', response.status, response.statusText);
+        // Fallback to fallback API if main API fails
+        const fallbackResponse = await fetch(`/api/fallback-usage?userId=${userId}`);
+        if (fallbackResponse.ok) {
+          const fallbackData = await fallbackResponse.json();
+          console.log('Fallback usage data:', fallbackData);
+          setUsage(fallbackData);
+        } else {
+          setUsage({ freeCaptionsUsed: 0, subscriptionStatus: 'inactive' });
+        }
       }
       
     } catch (error) {
       console.error('Error loading usage:', error);
-      setUsage({ freeCaptionsUsed: 0, subscriptionStatus: 'active' });
+      setUsage({ freeCaptionsUsed: 0, subscriptionStatus: 'inactive' });
     } finally {
       setLoading(false);
     }

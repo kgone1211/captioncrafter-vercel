@@ -118,8 +118,10 @@ export default async function Home() {
     // Check if user can generate captions (freemium model)
     let canGenerate;
     try {
-      canGenerate = await db.canGenerateCaption(dbUserId);
-      console.log('Can generate captions:', canGenerate);
+      // Use fallback counter for consistency with the rest of the app
+      const { fallbackCounter } = await import('@/lib/fallback-counter');
+      canGenerate = fallbackCounter.canGenerateCaption(dbUserId);
+      console.log('Can generate captions (fallback):', canGenerate);
     } catch (canGenerateError) {
       console.error('Can generate error:', canGenerateError);
       console.error('Can generate error details:', {

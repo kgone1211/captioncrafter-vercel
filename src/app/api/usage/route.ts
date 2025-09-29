@@ -21,22 +21,27 @@ export async function GET(request: NextRequest) {
 
     const userIdNum = parseInt(userId);
     
-    // Get usage from database (includes billing info)
-    const dbUsage = await db.getUserUsage(userIdNum);
-    console.log('Database usage result:', dbUsage);
+    // Use fallback counter for consistency with the rest of the app
+    const fallbackUsage = fallbackCounter.getUsage(userIdNum);
+    console.log('Fallback usage result:', fallbackUsage);
     
-    // Get subscription status with expiry info
-    const subscriptionStatus = await subscriptionManager.getSubscriptionStatus(userIdNum);
-    console.log('Subscription status:', subscriptionStatus);
-    
-    // Combine usage and subscription info
-    const combinedUsage = {
-      ...dbUsage,
-      daysUntilExpiry: subscriptionStatus.daysUntilExpiry
-    };
-    
-    console.log('Combined usage result:', combinedUsage);
-    return NextResponse.json(combinedUsage);
+    // Also get subscription status for additional info
+    try {
+      const subscriptionStatus = await subscriptionManager.getSubscriptionStatus(userIdNum);
+      console.log('Subscription status:', subscriptionStatus);
+      
+      // Combine fallback usage with subscription info
+      const combinedUsage = {
+        ...fallbackUsage,
+        daysUntilExpiry: subscriptionStatus.daysUntilExpiry
+      };
+      
+      console.log('Combined usage result:', combinedUsage);
+      return NextResponse.json(combinedUsage);
+    } catch (subError) {
+      console.log('Subscription status error, using fallback only:', subError);
+      return NextResponse.json(fallbackUsage);
+    }
   } catch (error) {
     console.error('Usage fetch error:', error);
     return NextResponse.json(
