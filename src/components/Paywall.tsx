@@ -22,7 +22,7 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
   const [formData, setFormData] = useState({
     name: whopUser?.username || 'User',
     email: whopUser?.email || 'user@example.com',
-    plan: 'premium'
+    plan: 'basic' // Default to basic plan, not premium
   });
 
   // Debug logging
@@ -52,7 +52,7 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
       setFormData({
         name: whopUser.username || whopUser.email || '',
         email: whopUser.email || '',
-        plan: 'premium'
+        plan: 'basic' // Default to basic plan, not premium
       });
     }
   }, [whopUser]);
