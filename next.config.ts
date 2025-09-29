@@ -1,3 +1,4 @@
+import { withWhopAppConfig } from "@whop/react/next.config";
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
@@ -6,6 +7,9 @@ const nextConfig: NextConfig = {
     // your project has ESLint errors.
     ignoreDuringBuilds: true,
   },
+  images: {
+    remotePatterns: [{ hostname: "**" }],
+  },
 };
 
-export default nextConfig;
+export default withWhopAppConfig(nextConfig);
