@@ -47,10 +47,10 @@ export default async function ExperiencePage({
 		try {
 			await db.initDatabase();
 			dbUserId = await db.upsertUser(
-				user.email || `user-${userId}@example.com`,
+				`user-${userId}@example.com`,
 				userId,
 				result.hasAccess ? 'active' : 'inactive',
-				user.username || user.name
+				user.username || user.name || 'User'
 			);
 		} catch (dbError) {
 			console.error('Database error:', dbError);
@@ -70,11 +70,11 @@ export default async function ExperiencePage({
 		// Convert Whop user to our format
 		const whopUser = {
 			id: userId,
-			email: user.email || `user-${userId}@example.com`,
+			email: `user-${userId}@example.com`,
 			username: user.username || user.name || 'User',
 			created_at: new Date().toISOString(),
 			updated_at: new Date().toISOString(),
-			company_id: experience.company_id,
+			company_id: experience.company.id,
 			subscription_status: result.hasAccess ? 'active' as const : 'inactive' as const
 		};
 

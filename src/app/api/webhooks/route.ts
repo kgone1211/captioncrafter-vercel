@@ -36,25 +36,14 @@ export async function POST(request: NextRequest): Promise<Response> {
 		);
 	}
 
-	// Handle subscription events
-	if (webhookData.action === "subscription.created" || webhookData.action === "subscription.updated") {
+	// Handle membership events (Whop uses "membership" instead of "subscription")
+	if (webhookData.action === "membership.went_valid" || webhookData.action === "membership.went_invalid") {
 		const { user_id, plan_id, status } = webhookData.data;
 		
-		console.log(`Subscription ${webhookData.action} for user ${user_id}, plan ${plan_id}, status ${status}`);
+		console.log(`Membership ${webhookData.action} for user ${user_id}, plan ${plan_id}, status ${status}`);
 		
 		waitUntil(
-			handleSubscriptionUpdate(user_id, plan_id, status)
-		);
-	}
-
-	// Handle subscription cancellation
-	if (webhookData.action === "subscription.cancelled") {
-		const { user_id } = webhookData.data;
-		
-		console.log(`Subscription cancelled for user ${user_id}`);
-		
-		waitUntil(
-			handleSubscriptionCancellation(user_id)
+			handleMembershipUpdate(user_id, plan_id, status)
 		);
 	}
 
@@ -97,13 +86,13 @@ async function handlePaymentSuccess(
 	}
 }
 
-async function handleSubscriptionUpdate(
+async function handleMembershipUpdate(
 	user_id: string | null | undefined,
 	plan_id: string | null | undefined,
 	status: string | null | undefined,
 ) {
 	if (!user_id) {
-		console.error('No user_id provided in subscription webhook');
+		console.error('No user_id provided in membership webhook');
 		return;
 	}
 
@@ -114,38 +103,15 @@ async function handleSubscriptionUpdate(
 			return;
 		}
 
-		if (status === 'active') {
+		if (status === 'active' || status === 'valid') {
 			fallbackCounter.upgradeToSubscription(userIdNum, plan_id || 'premium');
-			console.log(`User ${userIdNum} subscription activated`);
+			console.log(`User ${userIdNum} membership activated`);
 		} else {
 			fallbackCounter.downgradeToFree(userIdNum);
-			console.log(`User ${userIdNum} subscription deactivated`);
+			console.log(`User ${userIdNum} membership deactivated`);
 		}
 		
 	} catch (error) {
-		console.error('Error handling subscription update:', error);
-	}
-}
-
-async function handleSubscriptionCancellation(
-	user_id: string | null | undefined,
-) {
-	if (!user_id) {
-		console.error('No user_id provided in subscription cancellation webhook');
-		return;
-	}
-
-	try {
-		const userIdNum = parseInt(user_id);
-		if (isNaN(userIdNum)) {
-			console.error('Invalid user_id format:', user_id);
-			return;
-		}
-
-		fallbackCounter.downgradeToFree(userIdNum);
-		console.log(`User ${userIdNum} subscription cancelled`);
-		
-	} catch (error) {
-		console.error('Error handling subscription cancellation:', error);
+		console.error('Error handling membership update:', error);
 	}
 }

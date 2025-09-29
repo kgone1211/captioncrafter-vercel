@@ -35,7 +35,7 @@ export default async function DashboardPage({
 			hasAccess: result.hasAccess,
 			accessLevel,
 			userName: user.name,
-			companyName: company.title || company.name
+			companyName: company.title
 		});
 
 		return (
@@ -58,9 +58,8 @@ export default async function DashboardPage({
 									User Information
 								</h2>
 								<div className="space-y-2">
-									<p><strong>Name:</strong> {user.name}</p>
+									<p><strong>Name:</strong> {user.name || 'N/A'}</p>
 									<p><strong>Username:</strong> @{user.username}</p>
-									<p><strong>Email:</strong> {user.email}</p>
 									<p><strong>User ID:</strong> {userId}</p>
 									<p><strong>Access Level:</strong> 
 										<span className={`ml-2 px-2 py-1 rounded text-sm ${
@@ -80,7 +79,7 @@ export default async function DashboardPage({
 									Company Information
 								</h2>
 								<div className="space-y-2">
-									<p><strong>Company:</strong> {company.title || company.name}</p>
+									<p><strong>Company:</strong> {company.title}</p>
 									<p><strong>Company ID:</strong> {companyId}</p>
 									<p><strong>Access Status:</strong> 
 										<span className={`ml-2 px-2 py-1 rounded text-sm ${
