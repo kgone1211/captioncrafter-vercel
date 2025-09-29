@@ -6,6 +6,7 @@ import CaptionGenerator from '@/components/CaptionGenerator';
 import ContentCalendar from '@/components/ContentCalendar';
 import CaptionLibrary from '@/components/CaptionLibrary';
 import NotificationToast, { useNotifications } from '@/components/NotificationToast';
+import UserDebug from '@/components/UserDebug';
 import { UserStats } from '@/types';
 import { WhopUser } from '@/lib/whop-sdk';
 
@@ -214,6 +215,9 @@ export default function WhopClientPage({ whopUser }: WhopClientPageProps) {
           onClose={removeNotification}
         />
       ))}
+
+      {/* User Debug Component */}
+      <UserDebug whopUser={whopUser} />
     </div>
   );
 }

@@ -211,7 +211,7 @@ class WhopSDK {
     if (userId === 'direct_access_user') {
       return {
         id: userId,
-        email: process.env.TEST_EMAIL || `direct-${Date.now()}@example.com`,
+        email: process.env.TEST_EMAIL || `demo-user@captioncrafter.com`,
         username: process.env.TEST_USERNAME || 'Demo User',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -224,7 +224,7 @@ class WhopSDK {
     if (userId === 'whop_fallback_user') {
       return {
         id: userId,
-        email: process.env.TEST_EMAIL || `whop-${Date.now()}@example.com`,
+        email: process.env.TEST_EMAIL || `whop-user@captioncrafter.com`,
         username: process.env.TEST_USERNAME || 'Whop User',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
@@ -249,17 +249,34 @@ class WhopSDK {
           subscription_status: 'active'
         };
       } else {
-        // In production without API key, return minimal user data
-        console.log('No API key in production, returning minimal user data');
-        return {
-          id: userId,
-          email: process.env.TEST_EMAIL || `user-${Date.now()}@example.com`,
-          username: process.env.TEST_USERNAME || 'User',
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          company_id: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID || 'biz_production',
-          subscription_status: 'inactive'
-        };
+        // In production without API key, try to extract real email from userId if it's a Whop user ID
+        console.log('No API key in production, attempting to extract real user data from userId');
+        
+        // Check if userId looks like a real Whop user ID (starts with 'user_')
+        if (userId.startsWith('user_') && userId.length > 10) {
+          // This looks like a real Whop user ID, but we can't fetch their data without API key
+          // Return a placeholder that indicates we need the real user data
+          return {
+            id: userId,
+            email: `whop-user-${userId}@whop.com`, // Indicate this is a Whop user
+            username: `Whop User ${userId.slice(-4)}`, // Use last 4 chars of user ID
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            company_id: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID || 'biz_production',
+            subscription_status: 'active' // Assume active if they can access the app
+          };
+        } else {
+          // Fallback for non-Whop user IDs
+          return {
+            id: userId,
+            email: process.env.TEST_EMAIL || `user-${Date.now()}@example.com`,
+            username: process.env.TEST_USERNAME || 'User',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            company_id: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID || 'biz_production',
+            subscription_status: 'inactive'
+          };
+        }
       }
     }
 
@@ -294,7 +311,7 @@ class WhopSDK {
       console.error('Error fetching Whop user:', error);
       // Fallback user data if API fails
       const fallbackUsername = process.env.TEST_USERNAME || 'User';
-      const fallbackEmail = process.env.TEST_EMAIL || 'user@example.com';
+      const fallbackEmail = process.env.TEST_EMAIL || `user-${userId.slice(-4)}@captioncrafter.com`;
       return {
         id: userId,
         email: fallbackEmail,
