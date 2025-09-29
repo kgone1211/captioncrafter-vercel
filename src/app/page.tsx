@@ -71,15 +71,18 @@ export default async function Home() {
       console.log('Whop User:', whopUser);
     } catch (sdkError) {
       console.error('Whop SDK error, using fallback user:', sdkError);
-      // Fallback user if SDK fails
+      // Fallback user if SDK fails - use dynamic data from environment or auth
+      const fallbackEmail = process.env.TEST_EMAIL || `user-${userId}@example.com`;
+      const fallbackUsername = process.env.TEST_USERNAME || `User-${userId}`;
+      
       whopUser = {
         id: userId,
-        email: 'krista@example.com',
-        username: 'Krista',
+        email: fallbackEmail,
+        username: fallbackUsername,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
-        company_id: 'biz_test_company',
-        subscription_status: 'active' as const
+        company_id: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID || 'biz_fallback',
+        subscription_status: 'inactive' as const
       };
       console.log('Using fallback user:', whopUser);
     }
@@ -108,7 +111,8 @@ export default async function Home() {
       // For now, let's use a fallback user ID and continue
       // This will help us get past the database issue
       console.log('Using fallback user ID due to database error');
-      dbUserId = 1; // Fallback user ID
+      // Generate a dynamic fallback user ID based on the Whop user ID
+      dbUserId = Math.abs(userId.split('').reduce((a, b) => a + b.charCodeAt(0), 0)) || 1;
     }
 
     // Check if user can generate captions (freemium model)

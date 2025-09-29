@@ -135,7 +135,7 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
           planName={selectedPlan.name}
           price={selectedPlan.price}
           interval={selectedPlan.interval}
-          userId={userId || dbUserId || 1}
+          userId={userId || dbUserId || (whopUser?.id ? parseInt(whopUser.id.toString()) : 1)}
           onSuccess={handlePaymentSuccess}
           onCancel={handlePaymentCancel}
         />

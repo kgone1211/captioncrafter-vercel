@@ -36,12 +36,17 @@ export async function POST(request: NextRequest) {
     let userId: number;
     
     if (sessionId.startsWith('mock_')) {
-      // For mock sessions, we'll use a default user ID
-      // In production, you'd get this from the session metadata
-      userId = 1; // This should be the actual user ID from the session
+      // For mock sessions, extract user ID from session ID
+      // Format: mock_userId_sessionId
+      const userIdMatch = sessionId.match(/mock_(\d+)_/);
+      userId = userIdMatch ? parseInt(userIdMatch[1]) : 1;
     } else {
       // For real sessions, extract from Whop session data
-      userId = 1; // This should be extracted from the actual session
+      // TODO: Implement real Whop session verification to get actual user ID
+      // For now, we'll need to get this from the request headers or session data
+      const headersList = request.headers;
+      const whopUserId = headersList.get('x-whop-user-id');
+      userId = whopUserId ? parseInt(whopUserId) : 1;
     }
 
     // Upgrade user to subscription

@@ -3,7 +3,15 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function GET(request: NextRequest) {
   try {
     const url = new URL(request.url);
-    const userId = url.searchParams.get('userId') || '1';
+    const userId = url.searchParams.get('userId');
+    
+    // If no userId provided, try to get it from headers (for Whop requests)
+    let actualUserId = userId;
+    if (!actualUserId) {
+      const headersList = request.headers;
+      const whopUserId = headersList.get('x-whop-user-id');
+      actualUserId = whopUserId || '1'; // Fallback to 1 only if no other option
+    }
     
     // Test the generate API to see if it triggers the paywall
     const testResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'https://captioncrafter-vercel.vercel.app'}/api/generate`, {
@@ -19,7 +27,7 @@ export async function GET(request: NextRequest) {
         cta: '',
         description: '',
         include_emojis: true,
-        userId: parseInt(userId)
+        userId: parseInt(actualUserId)
       })
     });
     
@@ -27,7 +35,7 @@ export async function GET(request: NextRequest) {
     
     return NextResponse.json({
       success: true,
-      userId: parseInt(userId),
+      userId: parseInt(actualUserId),
       generateApiStatus: testResponse.status,
       generateApiResponse: testResult,
       shouldShowPaywall: testResponse.status === 403 && testResult.canGenerate === false,

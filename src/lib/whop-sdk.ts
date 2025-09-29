@@ -211,8 +211,8 @@ class WhopSDK {
     if (userId === 'direct_access_user') {
       return {
         id: userId,
-        email: 'user@example.com',
-        username: 'Demo User',
+        email: process.env.TEST_EMAIL || `direct-${Date.now()}@example.com`,
+        username: process.env.TEST_USERNAME || 'Demo User',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         company_id: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID || 'biz_demo',
@@ -224,8 +224,8 @@ class WhopSDK {
     if (userId === 'whop_fallback_user') {
       return {
         id: userId,
-        email: 'whop@example.com',
-        username: 'Krista', // Your real name
+        email: process.env.TEST_EMAIL || `whop-${Date.now()}@example.com`,
+        username: process.env.TEST_USERNAME || 'Whop User',
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
         company_id: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID || 'biz_whop',
@@ -236,8 +236,8 @@ class WhopSDK {
     // If no API key, return test user only in development or if TEST_USERNAME is set
     if (!this.apiKey) {
       if (process.env.NODE_ENV === 'development' || process.env.TEST_USERNAME) {
-        const testUsername = process.env.TEST_USERNAME || 'Krista';
-        const testEmail = process.env.TEST_EMAIL || 'krista@example.com';
+        const testUsername = process.env.TEST_USERNAME || 'Test User';
+        const testEmail = process.env.TEST_EMAIL || `test-${Date.now()}@example.com`;
         console.log('No API key, returning test user:', testUsername);
         return {
           id: userId,
@@ -253,8 +253,8 @@ class WhopSDK {
         console.log('No API key in production, returning minimal user data');
         return {
           id: userId,
-          email: 'user@example.com',
-          username: 'User',
+          email: process.env.TEST_EMAIL || `user-${Date.now()}@example.com`,
+          username: process.env.TEST_USERNAME || 'User',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
           company_id: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID || 'biz_production',
