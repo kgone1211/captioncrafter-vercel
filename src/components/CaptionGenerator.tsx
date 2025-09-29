@@ -345,12 +345,12 @@ export default function CaptionGenerator({ userId, onStatsUpdate, whopUser }: Ca
                 Platform
                 <PlanBadge 
                   subscriptionStatus={whopUser?.subscription_status || 'inactive'} 
-                  planId={whopUser?.subscription_status === 'active' ? 'premium' : undefined}
+                  planId={undefined}
                 />
               </label>
               <PlanAwareFeature
                 subscriptionStatus={whopUser?.subscription_status || 'inactive'}
-                planId={whopUser?.subscription_status === 'active' ? 'premium' : undefined}
+                planId={undefined}
                 feature="platforms"
                 fallback={
                   <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
@@ -365,7 +365,7 @@ export default function CaptionGenerator({ userId, onStatsUpdate, whopUser }: Ca
                 >
                   {getAvailablePlatforms(
                     whopUser?.subscription_status || 'inactive',
-                    whopUser?.subscription_status === 'active' ? 'premium' : undefined
+                    undefined
                   ).map((platform) => (
                     <option key={platform.toLowerCase()} value={platform.toLowerCase()}>
                       {platform}
