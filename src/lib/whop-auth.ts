@@ -65,20 +65,8 @@ export async function getWhopAuth(): Promise<WhopAuthResult> {
         // 2. App configuration issue
         // 3. User not properly authenticated in Whop
         
-        console.log('Accessed through Whop - checking for OAuth flow or using fallback');
-        
-        // OAuth parameters will be handled by client-side component
-        // Server-side can't access URL parameters in this context
-        
-        // For now, allow fallback to demo user when accessed through Whop
-        // This prevents the "Authentication Error" and allows the app to work
-        // The client-side component will handle OAuth codes if present
-        console.log('Using fallback user for Whop access');
-        return {
-          userId: 'whop_fallback_user',
-          isAuthenticated: true,
-          source: 'direct-access'
-        };
+        console.log('Accessed through Whop but no valid authentication found');
+        // Don't provide fallback - require proper authentication
       }
   
   // Fallback: Check URL parameters for user ID (production method)
@@ -92,23 +80,12 @@ export async function getWhopAuth(): Promise<WhopAuthResult> {
     };
   }
 
-  // Only use test user in development mode for local testing
-  if (process.env.NODE_ENV === 'development' && process.env.WHOP_DEV_MODE === 'true') {
-    const testUsername = process.env.TEST_USERNAME || 'Krista';
-    console.log('Development mode: Using test user:', testUsername);
-    return {
-      userId: `dev_user_${testUsername.toLowerCase()}`,
-      isAuthenticated: true,
-      source: 'development'
-    };
-  }
-  
-  // For direct access (not through Whop), provide a fallback user
-  console.log('No Whop headers found, using fallback user for direct access');
+  // No valid authentication found
+  console.log('No valid Whop authentication found');
   return {
-    userId: 'direct_access_user',
-    isAuthenticated: true,
-    source: 'direct-access'
+    userId: '',
+    isAuthenticated: false,
+    source: 'none'
   };
 }
 

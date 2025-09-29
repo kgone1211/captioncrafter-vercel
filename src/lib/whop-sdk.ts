@@ -7,6 +7,8 @@ export interface WhopUser {
   updated_at: string;
   company_id?: string;
   subscription_status?: 'active' | 'inactive' | 'cancelled';
+  plan_id?: string;
+  subscription_plan_id?: string;
 }
 
 export interface WhopCompany {
@@ -65,8 +67,8 @@ export interface WhopSubscriptionPlan {
 }
 
 /**
- * Proper Whop SDK implementation following official documentation
- * Based on Context7 search results and Whop best practices
+ * Production Whop SDK implementation - no demo/mock modes
+ * Requires valid WHOP_API_KEY for all operations
  */
 class WhopSDK {
   private apiKey: string;
@@ -74,8 +76,8 @@ class WhopSDK {
 
   constructor() {
     this.apiKey = process.env.WHOP_API_KEY || '';
-    if (!this.apiKey && process.env.NODE_ENV === 'production') {
-      throw new Error('WHOP_API_KEY environment variable is required in production');
+    if (!this.apiKey) {
+      throw new Error('WHOP_API_KEY environment variable is required');
     }
   }
 
@@ -138,12 +140,6 @@ class WhopSDK {
       }
     }
     
-    // Development mode fallback (only if explicitly enabled)
-    if (process.env.NODE_ENV === 'development' && process.env.WHOP_DEV_MODE === 'true') {
-      console.log('Development mode: Using test user');
-      return { userId: 'dev_user_123' };
-    }
-    
     // No valid authentication found
     throw new Error('No valid Whop authentication found. Please access this app through Whop.');
   }
@@ -191,95 +187,9 @@ class WhopSDK {
   }
 
   /**
-   * Get user information from Whop API
+   * Get user information from Whop API - Production only
    */
   async getUser({ userId }: { userId: string }): Promise<WhopUser> {
-    // Development mode fallback
-    if (process.env.NODE_ENV === 'development' && userId.startsWith('dev_')) {
-      return {
-        id: userId,
-        email: 'dev@example.com',
-        username: 'devuser',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        company_id: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID || 'biz_dev_company',
-        subscription_status: 'active'
-      };
-    }
-
-    // Direct access user (when accessing app directly, not through Whop)
-    if (userId === 'direct_access_user') {
-      return {
-        id: userId,
-        email: process.env.TEST_EMAIL || `demo-user@captioncrafter.com`,
-        username: process.env.TEST_USERNAME || 'Demo User',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        company_id: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID || 'biz_demo',
-        subscription_status: 'inactive'
-      };
-    }
-
-    // Whop fallback user (when accessed through Whop but no proper auth)
-    if (userId === 'whop_fallback_user') {
-      return {
-        id: userId,
-        email: process.env.TEST_EMAIL || `whop-user@captioncrafter.com`,
-        username: process.env.TEST_USERNAME || 'Whop User',
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        company_id: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID || 'biz_whop',
-        subscription_status: 'inactive'
-      };
-    }
-
-    // If no API key, return test user only in development or if TEST_USERNAME is set
-    if (!this.apiKey) {
-      if (process.env.NODE_ENV === 'development' || process.env.TEST_USERNAME) {
-        const testUsername = process.env.TEST_USERNAME || 'Test User';
-        const testEmail = process.env.TEST_EMAIL || `test-${Date.now()}@example.com`;
-        console.log('No API key, returning test user:', testUsername);
-        return {
-          id: userId,
-          email: testEmail,
-          username: testUsername,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-          company_id: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID || 'biz_test_company',
-          subscription_status: 'active'
-        };
-      } else {
-        // In production without API key, try to extract real email from userId if it's a Whop user ID
-        console.log('No API key in production, attempting to extract real user data from userId');
-        
-        // Check if userId looks like a real Whop user ID (starts with 'user_')
-        if (userId.startsWith('user_') && userId.length > 10) {
-          // This looks like a real Whop user ID, but we can't fetch their data without API key
-          // Return a placeholder that indicates we need the real user data
-          return {
-            id: userId,
-            email: `whop-user-${userId}@whop.com`, // Indicate this is a Whop user
-            username: `Whop User ${userId.slice(-4)}`, // Use last 4 chars of user ID
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            company_id: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID || 'biz_production',
-            subscription_status: 'active' // Assume active if they can access the app
-          };
-        } else {
-          // Fallback for non-Whop user IDs
-          return {
-            id: userId,
-            email: process.env.TEST_EMAIL || `user-${Date.now()}@example.com`,
-            username: process.env.TEST_USERNAME || 'User',
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-            company_id: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID || 'biz_production',
-            subscription_status: 'inactive'
-          };
-        }
-      }
-    }
-
     try {
       const response = await fetch(`${this.baseUrl}/users/${userId}`, {
         headers: {
@@ -294,8 +204,9 @@ class WhopSDK {
 
       const userData = await response.json();
       
-      // Get subscription status
+      // Get subscription status and plan info
       const subscriptionStatus = await this.getUserSubscriptionStatus(userId);
+      const planInfo = await this.getUserSubscriptionPlan(userId);
       
       return {
         id: userData.id,
@@ -305,22 +216,13 @@ class WhopSDK {
         created_at: userData.created_at,
         updated_at: userData.updated_at,
         company_id: userData.company_id,
-        subscription_status: subscriptionStatus
+        subscription_status: subscriptionStatus,
+        plan_id: planInfo?.plan_id,
+        subscription_plan_id: planInfo?.plan_id
       };
     } catch (error) {
       console.error('Error fetching Whop user:', error);
-      // Fallback user data if API fails
-      const fallbackUsername = process.env.TEST_USERNAME || 'User';
-      const fallbackEmail = process.env.TEST_EMAIL || `user-${userId.slice(-4)}@captioncrafter.com`;
-      return {
-        id: userId,
-        email: fallbackEmail,
-        username: fallbackUsername,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        company_id: process.env.NEXT_PUBLIC_WHOP_COMPANY_ID || 'biz_fallback',
-        subscription_status: 'inactive'
-      };
+      throw error;
     }
   }
 
@@ -328,10 +230,6 @@ class WhopSDK {
    * Get user's subscription status
    */
   async getUserSubscriptionStatus(userId: string): Promise<'active' | 'inactive' | 'cancelled'> {
-    if (!this.apiKey) {
-      return 'active'; // Default for development
-    }
-
     try {
       const response = await fetch(`${this.baseUrl}/users/${userId}/subscriptions`, {
         headers: {
@@ -358,18 +256,43 @@ class WhopSDK {
   }
 
   /**
+   * Get user's subscription plan information
+   */
+  async getUserSubscriptionPlan(userId: string): Promise<{ plan_id: string } | null> {
+    try {
+      const response = await fetch(`${this.baseUrl}/users/${userId}/subscriptions`, {
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        return null;
+      }
+
+      const data = await response.json();
+      const subscriptions = data.data || [];
+      
+      // Find the active subscription
+      const activeSubscription = subscriptions.find((sub: WhopSubscription) => sub.status === 'active');
+      
+      if (activeSubscription) {
+        return { plan_id: activeSubscription.plan_id };
+      }
+      
+      return null;
+    } catch (error) {
+      console.error('Error fetching subscription plan:', error);
+      return null;
+    }
+  }
+
+  /**
    * Check if user has access to a specific experience
    */
   async checkIfUserHasAccessToExperience({ userId, experienceId }: { userId: string; experienceId: string }): Promise<WhopAccessResult> {
     try {
-      // Development mode
-      if (process.env.NODE_ENV === 'development' && userId.startsWith('dev_')) {
-        return {
-          hasAccess: true,
-          accessLevel: 'customer'
-        };
-      }
-
       // Check user's subscription status first
       const subscriptionStatus = await this.getUserSubscriptionStatus(userId);
       
@@ -401,18 +324,6 @@ class WhopSDK {
    */
   async checkIfUserHasAccessToCompany({ userId, companyId }: { userId: string; companyId: string }): Promise<WhopCompanyAccessResult> {
     try {
-      // Development mode
-      if (process.env.NODE_ENV === 'development' && userId.startsWith('dev_')) {
-        return {
-          hasAccess: true,
-          role: 'admin'
-        };
-      }
-
-      if (!this.apiKey) {
-        return { hasAccess: false };
-      }
-
       // Get user's companies
       const response = await fetch(`${this.baseUrl}/users/${userId}/companies`, {
         headers: {
@@ -452,23 +363,6 @@ class WhopSDK {
    */
   async checkIfUserHasAccessToAccessPass({ accessPassId, userId }: { accessPassId: string; userId: string }): Promise<WhopAccessPassResult> {
     try {
-      // Development mode
-      if (process.env.NODE_ENV === 'development' && userId.startsWith('dev_')) {
-        return {
-          hasAccess: true,
-          accessPassId,
-          userId
-        };
-      }
-
-      if (!this.apiKey) {
-        return {
-          hasAccess: false,
-          accessPassId,
-          userId
-        };
-      }
-
       // Check if user has access to the specific access pass
       const response = await fetch(`${this.baseUrl}/access-passes/${accessPassId}/users/${userId}`, {
         headers: {
@@ -522,11 +416,6 @@ class WhopSDK {
     cancelUrl?: string;
     metadata?: Record<string, any>;
   }): Promise<WhopCheckoutSession> {
-    if (!this.apiKey) {
-      // In production without API key, throw error
-      throw new Error('WHOP_API_KEY is required for checkout sessions');
-    }
-
     try {
       const response = await fetch(`${this.baseUrl}/checkout/sessions`, {
         method: 'POST',
@@ -562,33 +451,6 @@ class WhopSDK {
    * Get available subscription plans
    */
   async getSubscriptionPlans(): Promise<WhopSubscriptionPlan[]> {
-    if (!this.apiKey) {
-      // Return fallback plans if no API key
-      console.log('No API key, returning fallback subscription plans');
-      return [
-        {
-          id: 'prod_OAeju0utHppI2',
-          name: 'Basic Plan',
-          description: 'Perfect for getting started',
-          price: 9.99,
-          currency: 'usd',
-          interval: 'month',
-          features: ['100 captions per month', 'Basic AI generation', '3 platforms', 'Email support', 'Upgrade from 3 free captions'],
-          access_passes: ['basic_access']
-        },
-        {
-          id: 'prod_Premium123',
-          name: 'Premium Plan',
-          description: 'For growing creators',
-          price: 19.99,
-          currency: 'usd',
-          interval: 'month',
-          features: ['500 captions per month', 'Advanced AI generation', 'All platforms', 'Priority support', 'Content calendar', 'Upgrade from 3 free captions'],
-          access_passes: ['premium_access']
-        }
-      ];
-    }
-
     try {
       const response = await fetch(`${this.baseUrl}/plans`, {
         headers: {
@@ -605,29 +467,7 @@ class WhopSDK {
       return plans.data || plans;
     } catch (error) {
       console.error('Error fetching subscription plans:', error);
-      // Return fallback plans if API fails
-      return [
-        {
-          id: 'prod_OAeju0utHppI2',
-          name: 'Basic Plan',
-          description: 'Perfect for getting started',
-          price: 9.99,
-          currency: 'usd',
-          interval: 'month',
-          features: ['100 captions per month', 'Basic AI generation', '3 platforms', 'Email support', 'Upgrade from 3 free captions'],
-          access_passes: ['basic_access']
-        },
-        {
-          id: 'prod_Premium123',
-          name: 'Premium Plan',
-          description: 'For growing creators',
-          price: 19.99,
-          currency: 'usd',
-          interval: 'month',
-          features: ['500 captions per month', 'Advanced AI generation', 'All platforms', 'Priority support', 'Content calendar', 'Upgrade from 3 free captions'],
-          access_passes: ['premium_access']
-        }
-      ];
+      throw error;
     }
   }
 
@@ -643,37 +483,34 @@ class WhopSDK {
     planId: string;
     status?: 'active' | 'inactive' | 'cancelled';
   }): Promise<boolean> {
-    // Always return true for mock mode
-    console.log(`Mock: User ${userId} subscription updated to ${status} for plan ${planId}`);
-    return true;
+    try {
+      const response = await fetch(`${this.baseUrl}/users/${userId}/subscriptions`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          plan_id: planId,
+          status: status
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to update subscription: ${response.status} ${response.statusText}`);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error updating subscription:', error);
+      throw error;
+    }
   }
 
   /**
    * Get user's saved payment methods
    */
   async getSavedPaymentMethods(userId: string): Promise<any[]> {
-    if (!this.hasApiKey()) {
-      // Return demo payment methods for development
-      return [
-        {
-          id: 'demo_visa',
-          type: 'card',
-          last4: '4242',
-          brand: 'visa',
-          expiryMonth: 12,
-          expiryYear: 2025
-        },
-        {
-          id: 'demo_mastercard',
-          type: 'card',
-          last4: '5555',
-          brand: 'mastercard',
-          expiryMonth: 8,
-          expiryYear: 2026
-        }
-      ];
-    }
-
     try {
       const response = await fetch(`${this.baseUrl}/users/${userId}/payment-methods`, {
         headers: {
@@ -689,8 +526,7 @@ class WhopSDK {
       return await response.json();
     } catch (error) {
       console.error('Error fetching payment methods:', error);
-      // Return empty array if API fails
-      return [];
+      throw error;
     }
   }
 }

@@ -314,7 +314,7 @@ export default function CaptionGenerator({ userId, onStatsUpdate, whopUser }: Ca
     });
   };
 
-  const platformConfig = PLATFORM_LIMITS[formData.platform];
+  const platformConfig = PLATFORM_LIMITS[formData.platform] || PLATFORM_LIMITS.instagram;
 
   return (
     <div className="space-y-8">
@@ -345,12 +345,12 @@ export default function CaptionGenerator({ userId, onStatsUpdate, whopUser }: Ca
                 Platform
                 <PlanBadge 
                   subscriptionStatus={whopUser?.subscription_status || 'inactive'} 
-                  planId={undefined}
+                  planId={whopUser?.plan_id || whopUser?.subscription_plan_id}
                 />
               </label>
               <PlanAwareFeature
                 subscriptionStatus={whopUser?.subscription_status || 'inactive'}
-                planId={undefined}
+                planId={whopUser?.plan_id || whopUser?.subscription_plan_id}
                 feature="platforms"
                 fallback={
                   <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
@@ -365,10 +365,10 @@ export default function CaptionGenerator({ userId, onStatsUpdate, whopUser }: Ca
                 >
                   {getAvailablePlatforms(
                     whopUser?.subscription_status || 'inactive',
-                    undefined
+                    whopUser?.plan_id || whopUser?.subscription_plan_id
                   ).map((platform) => (
                     <option key={platform.toLowerCase()} value={platform.toLowerCase()}>
-                      {platform}
+                      {platform === 'x' ? 'X (Twitter)' : platform.charAt(0).toUpperCase() + platform.slice(1)}
                     </option>
                   ))}
                 </select>
@@ -501,7 +501,7 @@ export default function CaptionGenerator({ userId, onStatsUpdate, whopUser }: Ca
           <div className="flex items-center space-x-2 text-blue-800">
             <Hash className="h-5 w-5" />
             <span className="font-medium">
-              {formData.platform.charAt(0).toUpperCase() + formData.platform.slice(1)}:
+              {formData.platform === 'x' ? 'X (Twitter)' : formData.platform.charAt(0).toUpperCase() + formData.platform.slice(1)}:
             </span>
             <span>
               {platformConfig.char_limit} char limit, {platformConfig.hashtag_range[0]}-{platformConfig.hashtag_range[1]} hashtags

@@ -40,47 +40,11 @@ export default function PaymentForm({ planId, planName, price, interval, userId,
           console.log('Loaded payment methods:', methods);
         } else {
           console.error('Failed to load payment methods');
-          // Fallback to demo methods
-          setSavedMethods([
-            {
-              id: 'demo_visa',
-              type: 'card',
-              last4: '4242',
-              brand: 'visa',
-              expiryMonth: 12,
-              expiryYear: 2025
-            },
-            {
-              id: 'demo_mastercard',
-              type: 'card',
-              last4: '5555',
-              brand: 'mastercard',
-              expiryMonth: 8,
-              expiryYear: 2026
-            }
-          ]);
+          setSavedMethods([]);
         }
       } catch (error) {
         console.error('Error loading payment methods:', error);
-        // Fallback to demo methods
-        setSavedMethods([
-          {
-            id: 'demo_visa',
-            type: 'card',
-            last4: '4242',
-            brand: 'visa',
-            expiryMonth: 12,
-            expiryYear: 2025
-          },
-          {
-            id: 'demo_mastercard',
-            type: 'card',
-            last4: '5555',
-            brand: 'mastercard',
-            expiryMonth: 8,
-            expiryYear: 2026
-          }
-        ]);
+        setSavedMethods([]);
       }
     };
 
@@ -152,14 +116,6 @@ export default function PaymentForm({ planId, planName, price, interval, userId,
             </svg>
           </button>
         </div>
-
-            {/* Demo Notice */}
-            <div className="px-6 py-3 bg-blue-50 border-b">
-              <p className="text-sm text-blue-800">
-                <strong>Demo Mode:</strong> Showing demo payment methods. 
-                Once your Whop app is approved, you'll see your real saved payment methods here.
-              </p>
-            </div>
 
         {/* Payment Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">

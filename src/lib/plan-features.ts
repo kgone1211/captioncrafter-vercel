@@ -24,7 +24,7 @@ export const PLAN_FEATURES: Record<string, PlanFeatures> = {
     interval: 'month',
     features: {
       captionLimit: 3,
-      platforms: ['Instagram', 'TikTok', 'Twitter'],
+      platforms: ['instagram', 'tiktok', 'x'],
       aiLevel: 'basic',
       support: 'email',
       calendar: false,
@@ -39,7 +39,7 @@ export const PLAN_FEATURES: Record<string, PlanFeatures> = {
     interval: 'month',
     features: {
       captionLimit: 100,
-      platforms: ['Instagram', 'TikTok', 'Twitter', 'Facebook'],
+      platforms: ['instagram', 'tiktok', 'x', 'facebook'],
       aiLevel: 'basic',
       support: 'email',
       calendar: false,
@@ -54,7 +54,7 @@ export const PLAN_FEATURES: Record<string, PlanFeatures> = {
     interval: 'month',
     features: {
       captionLimit: 'unlimited',
-      platforms: ['Instagram', 'TikTok', 'Twitter', 'Facebook', 'LinkedIn', 'YouTube'],
+      platforms: ['instagram', 'tiktok', 'x', 'facebook', 'linkedin', 'youtube', 'threads', 'telegram'],
       aiLevel: 'advanced',
       support: 'priority',
       calendar: true,
@@ -66,8 +66,18 @@ export const PLAN_FEATURES: Record<string, PlanFeatures> = {
 
 export function getPlanFeatures(subscriptionStatus: string, planId?: string): PlanFeatures {
   if (subscriptionStatus === 'active' && planId) {
-    return PLAN_FEATURES[planId] || PLAN_FEATURES.premium;
+    // Map Whop plan IDs to our internal plan features
+    const planMapping: Record<string, string> = {
+      'prod_OAeju0utHppI2': 'basic',  // Basic Plan
+      'prod_xcU9zERSGgyNK': 'premium', // Premium Plan
+      'prod_Premium123': 'premium',    // Fallback Premium Plan
+    };
+    
+    const mappedPlanId = planMapping[planId] || 'premium'; // Default to premium for unknown active plans
+    return PLAN_FEATURES[mappedPlanId] || PLAN_FEATURES.premium;
   }
+  
+  // For inactive subscriptions or no plan ID, return free plan
   return PLAN_FEATURES.free;
 }
 

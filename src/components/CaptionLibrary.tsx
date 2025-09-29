@@ -339,7 +339,7 @@ export default function CaptionLibrary({ userId }: CaptionLibraryProps) {
                     <div className="flex items-center space-x-2">
                       {getPlatformIcon(caption.platform)}
                       <span className="text-lg font-semibold text-gray-900">
-                        {caption.platform.charAt(0).toUpperCase() + caption.platform.slice(1)}
+                        {caption.platform === 'x' ? 'X (Twitter)' : caption.platform.charAt(0).toUpperCase() + caption.platform.slice(1)}
                       </span>
                     </div>
                     <span className="text-sm text-gray-500">•</span>
