@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
         const renewed = await subscriptionManager.renewSubscription(userIdNum);
         result = { 
           message: renewed ? 'Subscription renewed successfully' : 'Failed to renew subscription',
-          success: renewed
+          renewed: renewed
         };
         break;
 
