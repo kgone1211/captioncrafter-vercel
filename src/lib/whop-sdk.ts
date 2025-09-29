@@ -416,6 +416,10 @@ class WhopSDK {
     cancelUrl?: string;
     metadata?: Record<string, any>;
   }): Promise<WhopCheckoutSession> {
+    if (!this.hasApiKey()) {
+      throw new Error('WHOP_API_KEY is required for checkout sessions');
+    }
+    
     try {
       const response = await fetch(`${this.baseUrl}/checkout/sessions`, {
         method: 'POST',
@@ -437,7 +441,13 @@ class WhopSDK {
       });
 
       if (!response.ok) {
-        throw new Error(`Failed to create checkout session: ${response.status} ${response.statusText}`);
+        const errorText = await response.text();
+        console.error('Whop API Error:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: errorText
+        });
+        throw new Error(`Failed to create checkout session: ${response.status} ${response.statusText} - ${errorText}`);
       }
 
       return await response.json();

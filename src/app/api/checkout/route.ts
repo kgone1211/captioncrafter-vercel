@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { whopSdk } from '@/lib/whop-sdk';
+import { whopSdk } from '@/lib/whop-sdk-official';
 
 export async function POST(request: NextRequest) {
   try {
@@ -15,24 +15,40 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create checkout session with Whop
-    console.log('Creating checkout session with Whop SDK...');
-    const checkoutSession = await whopSdk.createCheckoutSession({
-      planId,
+    // For now, use hardcoded plan prices
+    const planPrices: Record<string, number> = {
+      'prod_OAeju0utHppI2': 9.99, // Basic Plan
+      'prod_xcU9zERSGgyNK': 19.99, // Premium Plan
+      'prod_Premium123': 19.99, // Premium Plan fallback
+    };
+    
+    const planPrice = planPrices[planId] || 9.99;
+
+    // Create charge using Whop's chargeUser method
+    console.log('Creating charge with Whop SDK...');
+    const result = await whopSdk.payments.chargeUser({
+      amount: planPrice * 100, // Convert to cents
+      currency: "usd",
       userId: userId.toString(),
-      successUrl: successUrl || `${process.env.NEXT_PUBLIC_APP_URL || 'https://captioncrafter-vercel.vercel.app'}/success`,
-      cancelUrl: cancelUrl || `${process.env.NEXT_PUBLIC_APP_URL || 'https://captioncrafter-vercel.vercel.app'}/cancel`,
       metadata: {
+        planId: planId,
+        planName: planId.includes('Basic') ? 'Basic Plan' : 'Premium Plan',
         app_name: 'Caption Crafter',
         user_id: userId.toString()
       }
     });
-    
-    console.log('Checkout session created:', checkoutSession);
+
+    if (!result?.inAppPurchase) {
+      throw new Error("Failed to create charge");
+    }
+
+    console.log('Charge created:', result.inAppPurchase);
     
     return NextResponse.json({
-      checkoutUrl: checkoutSession.url,
-      sessionId: checkoutSession.id
+      inAppPurchase: result.inAppPurchase,
+      planId: planId,
+      amount: planPrice,
+      currency: "usd"
     });
 
   } catch (error) {
@@ -42,7 +58,7 @@ export async function POST(request: NextRequest) {
       stack: error instanceof Error ? error.stack : undefined
     });
     return NextResponse.json(
-      { error: 'Failed to create checkout session' },
+      { error: 'Failed to create checkout session', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

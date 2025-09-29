@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { CreditCard, Lock, CheckCircle, AlertCircle } from 'lucide-react';
+import { useIframeSdk } from '@whop/react';
 import { fallbackCounter } from '@/lib/fallback-counter';
 
 interface PaymentFormProps {
@@ -24,10 +25,12 @@ interface SavedPaymentMethod {
 }
 
 export default function PaymentForm({ planId, planName, price, interval, userId, onSuccess, onCancel }: PaymentFormProps) {
+  const iframeSdk = useIframeSdk();
   const [savedMethods, setSavedMethods] = useState<SavedPaymentMethod[]>([]);
   const [selectedMethod, setSelectedMethod] = useState<string>('new');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [receiptId, setReceiptId] = useState<string>();
   
   // Load saved payment methods from Whop API
   useEffect(() => {
@@ -73,13 +76,22 @@ export default function PaymentForm({ planId, planName, price, interval, userId,
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create checkout session');
+        throw new Error(errorData.error || 'Failed to create charge');
       }
 
-      const { checkoutUrl } = await response.json();
+      const { inAppPurchase } = await response.json();
       
-      // Redirect to Whop checkout
-      window.location.href = checkoutUrl;
+      // 2. Open payment modal using Whop iframe SDK
+      const res = await iframeSdk.inAppPurchase(inAppPurchase);
+      
+      if (res.status === "ok") {
+        setReceiptId(res.data.receiptId);
+        setError(null);
+        onSuccess();
+      } else {
+        setReceiptId(undefined);
+        setError(res.error || 'Payment failed');
+      }
       
     } catch (err) {
       console.error('Payment error:', err);
