@@ -175,8 +175,8 @@ export class Database {
             subscription_status = COALESCE(${subscriptionStatus}, subscription_status),
             plan_id = COALESCE(${planId}, plan_id),
             billing_cycle = COALESCE(${billingCycle}, billing_cycle),
-            next_billing_date = COALESCE(${nextBillingDate}, next_billing_date),
-            subscription_start_date = COALESCE(${subscriptionStartDate}, subscription_start_date),
+            next_billing_date = COALESCE(${nextBillingDate?.toISOString()}, next_billing_date),
+            subscription_start_date = COALESCE(${subscriptionStartDate?.toISOString()}, subscription_start_date),
             payment_method_id = COALESCE(${paymentMethodId}, payment_method_id),
             whop_subscription_id = COALESCE(${whopSubscriptionId}, whop_subscription_id),
             updated_at = CURRENT_TIMESTAMP
@@ -198,8 +198,8 @@ export class Database {
           ${subscriptionStatus || 'inactive'},
           ${planId || null},
           ${billingCycle || 'monthly'},
-          ${nextBillingDate || null},
-          ${subscriptionStartDate || null},
+          ${nextBillingDate?.toISOString() || null},
+          ${subscriptionStartDate?.toISOString() || null},
           ${paymentMethodId || null},
           ${whopSubscriptionId || null}
         ) 
