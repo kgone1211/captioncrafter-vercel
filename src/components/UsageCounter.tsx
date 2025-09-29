@@ -75,11 +75,11 @@ export default function UsageCounter({ userId, className = '', refreshTrigger }:
   // Check if user has active subscription
   const hasActiveSubscription = usage.subscriptionStatus === 'active';
   
-  // Check if subscription is expired
-  const isExpired = usage.daysUntilExpiry !== undefined && usage.daysUntilExpiry <= 0;
+  // Check if subscription is expired (only for users who had an active subscription)
+  const isExpired = hasActiveSubscription && usage.daysUntilExpiry !== undefined && usage.daysUntilExpiry <= 0;
   
   // Check if subscription needs renewal soon
-  const needsRenewalSoon = usage.daysUntilExpiry !== undefined && usage.daysUntilExpiry <= 7;
+  const needsRenewalSoon = hasActiveSubscription && usage.daysUntilExpiry !== undefined && usage.daysUntilExpiry <= 7;
 
   if (hasActiveSubscription && !isExpired) {
     return (

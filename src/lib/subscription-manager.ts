@@ -137,9 +137,9 @@ export class SubscriptionManager {
     try {
       const usage = await db.getUserUsage(userId);
       
-      if (!usage.nextBillingDate) {
+      if (!usage.nextBillingDate || usage.subscriptionStatus !== 'active') {
         return {
-          isExpired: true,
+          isExpired: false,
           daysUntilExpiry: 0,
           needsRenewal: false
         };
