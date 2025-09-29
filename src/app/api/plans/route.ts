@@ -3,13 +3,12 @@ import { whopSdk } from '@/lib/whop-sdk-official';
 
 export async function GET() {
   try {
-    // For now, return fallback plans since the official SDK doesn't have getSubscriptionPlans
-    // In a real implementation, you'd fetch plans from Whop's API
-    const fallbackPlans = [
+    // Return your actual Whop access pass plans
+    const plans = [
       {
-        id: 'basic',
+        id: 'prod_OAeju0utHppI2', // Basic Plan Access Pass ID
         name: 'Basic Plan',
-        price: 9.99,
+        price: 19.99,
         interval: 'month',
         description: 'Perfect for individuals getting started',
         features: [
@@ -20,9 +19,9 @@ export async function GET() {
         ]
       },
       {
-        id: 'premium',
+        id: 'prod_xcU9zERSGgyNK', // Premium Plan Access Pass ID
         name: 'Premium Plan',
-        price: 19.99,
+        price: 39.99,
         interval: 'month',
         description: 'Advanced features for power users',
         features: [
@@ -36,7 +35,7 @@ export async function GET() {
       }
     ];
     
-    return NextResponse.json(fallbackPlans);
+    return NextResponse.json(plans);
   } catch (error) {
     console.error('Error fetching plans:', error);
     return NextResponse.json(

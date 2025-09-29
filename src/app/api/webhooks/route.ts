@@ -2,6 +2,8 @@ import { waitUntil } from "@vercel/functions";
 import { makeWebhookValidator } from "@whop/api";
 import type { NextRequest } from "next/server";
 import { fallbackCounter } from "@/lib/fallback-counter";
+import { subscriptionManager } from "@/lib/subscription-manager";
+import { db } from "@/lib/db";
 
 const validateWebhook = makeWebhookValidator({
 	webhookSecret: process.env.WHOP_WEBHOOK_SECRET ?? "fallback",
@@ -70,13 +72,21 @@ async function handlePaymentSuccess(
 			return;
 		}
 
-		// Upgrade user to subscription
+		// Create proper subscription with billing cycle
+		await subscriptionManager.createSubscription(
+			userIdNum,
+			'premium', // Default plan
+			'monthly', // Default billing cycle
+			undefined, // paymentMethodId - would come from Whop
+			undefined  // whopSubscriptionId - would come from Whop
+		);
+
+		// Also update fallback counter for immediate access
 		fallbackCounter.upgradeToSubscription(userIdNum, 'premium');
 		
-		console.log(`User ${userIdNum} upgraded to premium subscription after payment`);
+		console.log(`User ${userIdNum} upgraded to premium subscription with recurring billing after payment`);
 		
 		// Here you could also:
-		// - Update database records
 		// - Send confirmation emails
 		// - Log analytics events
 		// - Update external systems
@@ -104,9 +114,21 @@ async function handleMembershipUpdate(
 		}
 
 		if (status === 'active' || status === 'valid') {
+			// Create or renew subscription
+			await subscriptionManager.createSubscription(
+				userIdNum,
+				plan_id || 'premium',
+				'monthly', // Default billing cycle
+				undefined, // paymentMethodId
+				undefined  // whopSubscriptionId
+			);
+			
+			// Also update fallback counter
 			fallbackCounter.upgradeToSubscription(userIdNum, plan_id || 'premium');
-			console.log(`User ${userIdNum} membership activated`);
+			console.log(`User ${userIdNum} membership activated with recurring billing`);
 		} else {
+			// Cancel subscription
+			await subscriptionManager.cancelSubscription(userIdNum);
 			fallbackCounter.downgradeToFree(userIdNum);
 			console.log(`User ${userIdNum} membership deactivated`);
 		}

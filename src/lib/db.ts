@@ -70,7 +70,7 @@ export class Database {
     console.log('Using Vercel Postgres database');
     
     try {
-      // Create users table
+      // Create users table with recurring billing support
       await sql`
         CREATE TABLE IF NOT EXISTS users (
           id SERIAL PRIMARY KEY,
@@ -78,7 +78,14 @@ export class Database {
           whop_user_id VARCHAR(255),
           subscription_status VARCHAR(20) DEFAULT 'inactive',
           free_captions_used INTEGER DEFAULT 0,
-          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+          plan_id VARCHAR(50),
+          billing_cycle VARCHAR(20) DEFAULT 'monthly',
+          next_billing_date TIMESTAMP,
+          subscription_start_date TIMESTAMP,
+          payment_method_id VARCHAR(100),
+          whop_subscription_id VARCHAR(100),
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
       `;
 
@@ -119,10 +126,25 @@ export class Database {
     }
   }
 
-  async upsertUser(email: string, whopUserId?: string, subscriptionStatus?: string, username?: string): Promise<number> {
+  async upsertUser(
+    email: string, 
+    whopUserId?: string, 
+    subscriptionStatus?: string, 
+    username?: string,
+    planId?: string,
+    billingCycle?: string,
+    nextBillingDate?: Date,
+    subscriptionStartDate?: Date,
+    paymentMethodId?: string,
+    whopSubscriptionId?: string
+  ): Promise<number> {
     const localDev = isLocalDev();
     const supabaseAvailable = hasSupabase();
-    console.log('upsertUser called with:', { email, whopUserId, subscriptionStatus, username, isLocalDev: localDev, hasSupabase: supabaseAvailable });
+    console.log('upsertUser called with:', { 
+      email, whopUserId, subscriptionStatus, username, planId, billingCycle, 
+      nextBillingDate, subscriptionStartDate, paymentMethodId, whopSubscriptionId,
+      isLocalDev: localDev, hasSupabase: supabaseAvailable 
+    });
     
     if (supabaseAvailable) {
       console.log('Using Supabase for upsertUser');
@@ -145,23 +167,42 @@ export class Database {
       if (existingUser.rows.length > 0) {
         const userId = existingUser.rows[0].id;
         
-        // Update user info if provided
-        if (whopUserId || subscriptionStatus) {
-          await sql`
-            UPDATE users 
-            SET whop_user_id = COALESCE(${whopUserId}, whop_user_id),
-                subscription_status = COALESCE(${subscriptionStatus}, subscription_status)
-            WHERE id = ${userId}
-          `;
-        }
+        // Update user info with billing fields
+        await sql`
+          UPDATE users 
+          SET 
+            whop_user_id = COALESCE(${whopUserId}, whop_user_id),
+            subscription_status = COALESCE(${subscriptionStatus}, subscription_status),
+            plan_id = COALESCE(${planId}, plan_id),
+            billing_cycle = COALESCE(${billingCycle}, billing_cycle),
+            next_billing_date = COALESCE(${nextBillingDate}, next_billing_date),
+            subscription_start_date = COALESCE(${subscriptionStartDate}, subscription_start_date),
+            payment_method_id = COALESCE(${paymentMethodId}, payment_method_id),
+            whop_subscription_id = COALESCE(${whopSubscriptionId}, whop_subscription_id),
+            updated_at = CURRENT_TIMESTAMP
+          WHERE id = ${userId}
+        `;
         
         return userId;
       }
 
-      // Create new user
+      // Create new user with billing fields
       const newUser = await sql`
-        INSERT INTO users (email, whop_user_id, subscription_status) 
-        VALUES (${email}, ${whopUserId || null}, ${subscriptionStatus || 'inactive'}) 
+        INSERT INTO users (
+          email, whop_user_id, subscription_status, plan_id, billing_cycle,
+          next_billing_date, subscription_start_date, payment_method_id, whop_subscription_id
+        ) 
+        VALUES (
+          ${email}, 
+          ${whopUserId || null}, 
+          ${subscriptionStatus || 'inactive'},
+          ${planId || null},
+          ${billingCycle || 'monthly'},
+          ${nextBillingDate || null},
+          ${subscriptionStartDate || null},
+          ${paymentMethodId || null},
+          ${whopSubscriptionId || null}
+        ) 
         RETURNING id
       `;
 
@@ -429,7 +470,16 @@ export class Database {
     }
   }
 
-  async getUserUsage(userId: number): Promise<{ freeCaptionsUsed: number; subscriptionStatus: string }> {
+  async getUserUsage(userId: number): Promise<{ 
+    freeCaptionsUsed: number; 
+    subscriptionStatus: string;
+    planId?: string;
+    billingCycle?: string;
+    nextBillingDate?: Date;
+    subscriptionStartDate?: Date;
+    paymentMethodId?: string;
+    whopSubscriptionId?: string;
+  }> {
     const localDev = isLocalDev();
     const supabaseAvailable = hasSupabase();
     console.log('getUserUsage called with userId:', userId, 'isLocalDev:', localDev, 'hasSupabase:', supabaseAvailable);
@@ -448,7 +498,15 @@ export class Database {
 
     try {
       const result = await sql`
-        SELECT free_captions_used, subscription_status 
+        SELECT 
+          free_captions_used, 
+          subscription_status,
+          plan_id,
+          billing_cycle,
+          next_billing_date,
+          subscription_start_date,
+          payment_method_id,
+          whop_subscription_id
         FROM users 
         WHERE id = ${userId}
       `;
@@ -457,9 +515,16 @@ export class Database {
         return { freeCaptionsUsed: 0, subscriptionStatus: 'inactive' };
       }
 
+      const row = result.rows[0];
       return {
-        freeCaptionsUsed: result.rows[0].free_captions_used || 0,
-        subscriptionStatus: result.rows[0].subscription_status || 'inactive'
+        freeCaptionsUsed: row.free_captions_used || 0,
+        subscriptionStatus: row.subscription_status || 'inactive',
+        planId: row.plan_id,
+        billingCycle: row.billing_cycle,
+        nextBillingDate: row.next_billing_date,
+        subscriptionStartDate: row.subscription_start_date,
+        paymentMethodId: row.payment_method_id,
+        whopSubscriptionId: row.whop_subscription_id
       };
     } catch (error) {
       console.error('Error getting user usage:', error);

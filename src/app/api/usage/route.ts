@@ -3,6 +3,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { fallbackCounter } from '@/lib/fallback-counter';
+import { subscriptionManager } from '@/lib/subscription-manager';
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,11 +19,24 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Always use fallback counter for consistency
-    console.log('Using fallback counter for usage fetch');
-    const fallbackUsage = fallbackCounter.getUsage(parseInt(userId));
-    console.log('Fallback usage result:', fallbackUsage);
-    return NextResponse.json(fallbackUsage);
+    const userIdNum = parseInt(userId);
+    
+    // Get usage from database (includes billing info)
+    const dbUsage = await db.getUserUsage(userIdNum);
+    console.log('Database usage result:', dbUsage);
+    
+    // Get subscription status with expiry info
+    const subscriptionStatus = await subscriptionManager.getSubscriptionStatus(userIdNum);
+    console.log('Subscription status:', subscriptionStatus);
+    
+    // Combine usage and subscription info
+    const combinedUsage = {
+      ...dbUsage,
+      daysUntilExpiry: subscriptionStatus.daysUntilExpiry
+    };
+    
+    console.log('Combined usage result:', combinedUsage);
+    return NextResponse.json(combinedUsage);
   } catch (error) {
     console.error('Usage fetch error:', error);
     return NextResponse.json(

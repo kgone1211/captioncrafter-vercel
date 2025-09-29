@@ -10,7 +10,14 @@ interface UsageCounterProps {
 }
 
 export default function UsageCounter({ userId, className = '', refreshTrigger }: UsageCounterProps) {
-  const [usage, setUsage] = useState<{ freeCaptionsUsed: number; subscriptionStatus: string } | null>(null);
+  const [usage, setUsage] = useState<{ 
+    freeCaptionsUsed: number; 
+    subscriptionStatus: string;
+    planId?: string;
+    billingCycle?: string;
+    nextBillingDate?: Date;
+    daysUntilExpiry?: number;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -56,15 +63,35 @@ export default function UsageCounter({ userId, className = '', refreshTrigger }:
   }
 
   const remainingFree = Math.max(0, 3 - usage.freeCaptionsUsed);
-  // For now, everyone is on freemium model regardless of subscription status
-  // TODO: In the future, check for actual paid subscription status
-  const isSubscribed = false; // Disabled for now
+  
+  // Check if user has active subscription
+  const hasActiveSubscription = usage.subscriptionStatus === 'active';
+  
+  // Check if subscription is expired
+  const isExpired = usage.daysUntilExpiry !== undefined && usage.daysUntilExpiry <= 0;
+  
+  // Check if subscription needs renewal soon
+  const needsRenewalSoon = usage.daysUntilExpiry !== undefined && usage.daysUntilExpiry <= 7;
 
-  if (isSubscribed) {
+  if (hasActiveSubscription && !isExpired) {
     return (
       <div className={`flex items-center space-x-2 text-sm text-green-600 ${className}`}>
         <Crown className="h-4 w-4" />
-        <span>Unlimited</span>
+        <span>
+          {needsRenewalSoon 
+            ? `Renews in ${usage.daysUntilExpiry} days`
+            : 'Unlimited'
+          }
+        </span>
+      </div>
+    );
+  }
+
+  if (isExpired) {
+    return (
+      <div className={`flex items-center space-x-2 text-sm text-red-600 ${className}`}>
+        <Zap className="h-4 w-4" />
+        <span>Subscription Expired</span>
       </div>
     );
   }
