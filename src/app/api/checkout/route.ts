@@ -24,6 +24,22 @@ export async function POST(request: NextRequest) {
     
     const planPrice = planPrices[planId] || 9.99;
 
+    // TEMPORARY: Mock response for testing paywall
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Using mock checkout for development testing');
+      return NextResponse.json({
+        inAppPurchase: {
+          id: 'mock_checkout_' + Date.now(),
+          url: 'https://mock-checkout.whop.com',
+          amount: planPrice * 100,
+          currency: 'usd'
+        },
+        planId: planId,
+        amount: planPrice,
+        currency: "usd"
+      });
+    }
+
     // Create charge using Whop's chargeUser method
     console.log('Creating charge with Whop SDK...');
     const result = await whopSdk.payments.chargeUser({
