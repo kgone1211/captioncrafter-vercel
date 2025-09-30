@@ -262,9 +262,11 @@ Do not include markdown code fences or any other formatting.`;
     return uniqueHashtags.slice(0, hashtagCount);
   }
 
-  private getTargetLength(length: string, platform: string): number {
+  private getTargetLength(length: string | undefined, platform: string): number {
     const lengthPresets = getLengthPresets(platform);
-    return lengthPresets[length.toLowerCase()] || lengthPresets.medium;
+    // Default to 'medium' if length is undefined
+    const lengthKey = length ? length.toLowerCase() : 'medium';
+    return lengthPresets[lengthKey] || lengthPresets.medium;
   }
 
   private adjustCaptionLength(template: string, topic: string, targetLength: number, includeEmojis: boolean): string {
