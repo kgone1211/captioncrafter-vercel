@@ -99,61 +99,15 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
       return;
     }
 
-    console.log('Creating checkout session for plan:', planId);
+    console.log('Opening direct Whop checkout for plan:', planId);
     
-    // Set the selected plan and show loading
+    // Set the selected plan and show checkout options immediately
     setSelectedPlan(plan);
-    setIsCreatingCheckout(true);
     setShowCheckout(true);
-
-    // Set a timeout to prevent infinite loading
-    const timeoutId = setTimeout(() => {
-      console.log('Checkout creation timeout - using fallback');
-      setIsCreatingCheckout(false);
-      setCheckoutUrl(`https://whop.com/checkout/${planId}`);
-    }, 10000); // 10 second timeout
-
-    try {
-      // Create checkout session via API
-      const response = await fetch('/api/create-checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          planId: planId,
-          userId: whopUser?.id || userId || dbUserId
-        })
-      });
-
-      // Clear timeout since we got a response
-      clearTimeout(timeoutId);
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log('Checkout session response:', data);
-        
-        if (data.checkoutUrl) {
-          setCheckoutUrl(data.checkoutUrl);
-        } else {
-          console.error('No checkout URL in response:', data);
-          // Fallback to direct URL
-          setCheckoutUrl(`https://whop.com/checkout/${planId}`);
-        }
-      } else {
-        console.error('Failed to create checkout session:', response.status);
-        const errorData = await response.json().catch(() => ({}));
-        console.error('Error details:', errorData);
-        // Fallback to direct URL
-        setCheckoutUrl(`https://whop.com/checkout/${planId}`);
-      }
-    } catch (error) {
-      console.error('Error creating checkout session:', error);
-      // Fallback to direct URL
-      setCheckoutUrl(`https://whop.com/checkout/${planId}`);
-    } finally {
-      setIsCreatingCheckout(false);
-    }
+    setIsCreatingCheckout(false);
+    
+    // Set direct checkout URL immediately
+    setCheckoutUrl(`https://whop.com/checkout/${planId}`);
   };
 
 
@@ -510,32 +464,8 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
                 </ul>
               </div>
 
-              {/* Loading State */}
-              {isCreatingCheckout && (
-                <div className="text-center py-8">
-                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                  <p className="text-gray-600 mb-4">Creating secure checkout session...</p>
-                  
-                  {/* Immediate fallback option */}
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <p className="text-sm text-blue-800 mb-3">
-                      Taking too long? Use the direct checkout link below:
-                    </p>
-                    <button
-                      onClick={() => {
-                        setIsCreatingCheckout(false);
-                        setCheckoutUrl(`https://whop.com/checkout/${selectedPlan.id}`);
-                      }}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
-                    >
-                      Skip to Direct Checkout
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Embedded Checkout */}
-              {!isCreatingCheckout && checkoutUrl && (
+              {/* Direct Checkout Options */}
+              {checkoutUrl && (
                 <div className="space-y-4">
                   {/* Embedded iframe */}
                   <div className="border rounded-lg overflow-hidden">
@@ -552,43 +482,66 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
                     />
                   </div>
 
-                  {/* Alternative checkout options */}
-                  <div className="space-y-3">
+                  {/* Primary checkout options */}
+                  <div className="space-y-4">
                     <div className="text-center">
-                      <p className="text-sm text-gray-500 mb-3">
-                        Payment methods not loading? Try these options:
+                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Complete Your Subscription</h3>
+                      <p className="text-sm text-gray-600 mb-4">
+                        Choose the best option for you to complete your payment:
                       </p>
                     </div>
                     
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {/* Primary popup button */}
+                    <div className="text-center">
                       <button
                         onClick={() => {
                           const popup = window.open(
                             checkoutUrl, 
                             'whop-checkout', 
-                            'width=800,height=700,scrollbars=yes,resizable=yes'
+                            'width=900,height=800,scrollbars=yes,resizable=yes,status=yes,toolbar=no,menubar=no,location=no'
                           );
                           if (popup) {
                             popup.focus();
                           }
                         }}
-                        className="bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                        className="w-full bg-blue-600 text-white px-6 py-4 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg"
                       >
-                        Open in Popup Window
+                        🚀 Complete Subscription (Recommended)
                       </button>
-                      
+                      <p className="text-xs text-gray-500 mt-2">
+                        Opens in a secure popup window - best for payment processing
+                      </p>
+                    </div>
+                    
+                    {/* Alternative options */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <button
                         onClick={() => window.open(checkoutUrl, '_blank')}
-                        className="bg-gray-600 text-white px-4 py-3 rounded-lg hover:bg-gray-700 transition-colors font-medium"
+                        className="bg-gray-100 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium"
                       >
                         Open in New Tab
                       </button>
+                      
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(checkoutUrl);
+                          alert('Checkout link copied to clipboard!');
+                        }}
+                        className="bg-gray-100 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                      >
+                        Copy Link
+                      </button>
                     </div>
                     
-                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
-                      <p className="text-sm text-yellow-800">
-                        <strong>Tip:</strong> Popup windows often work better for payment processing and saved payment methods.
-                      </p>
+                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-blue-900 mb-2">💳 Payment Methods Accepted:</h4>
+                      <div className="flex flex-wrap gap-2 text-sm text-blue-800">
+                        <span className="bg-white px-2 py-1 rounded">Credit Cards</span>
+                        <span className="bg-white px-2 py-1 rounded">Debit Cards</span>
+                        <span className="bg-white px-2 py-1 rounded">PayPal</span>
+                        <span className="bg-white px-2 py-1 rounded">Apple Pay</span>
+                        <span className="bg-white px-2 py-1 rounded">Google Pay</span>
+                      </div>
                     </div>
                   </div>
                 </div>
