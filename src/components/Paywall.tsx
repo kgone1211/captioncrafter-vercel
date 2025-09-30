@@ -458,32 +458,53 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
                 </ul>
               </div>
 
-              {/* Whop Checkout Embed */}
-              <div className="border rounded-lg overflow-hidden">
-                <iframe
-                  src={`https://whop.com/checkout/${selectedPlan.id}?embed=true`}
-                  width="100%"
-                  height="600"
-                  frameBorder="0"
-                  className="w-full"
-                  title={`Checkout for ${selectedPlan.name}`}
-                />
-              </div>
+              {/* Checkout Options */}
+              <div className="space-y-4">
+                {/* Primary checkout button */}
+                <div className="text-center">
+                  <button
+                    onClick={() => {
+                      const checkoutUrl = `https://whop.com/checkout/${selectedPlan.id}`;
+                      window.open(checkoutUrl, '_blank');
+                    }}
+                    className="w-full bg-blue-600 text-white px-6 py-4 rounded-lg font-semibold text-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Complete Subscription - ${selectedPlan.price}/{selectedPlan.interval === 'month' ? 'month' : 'year'}
+                  </button>
+                </div>
 
-              {/* Fallback if iframe doesn't work */}
-              <div className="mt-4 text-center">
-                <p className="text-sm text-gray-500 mb-3">
-                  Having trouble with the checkout? 
-                </p>
-                <button
-                  onClick={() => {
-                    const checkoutUrl = `https://whop.com/checkout/${selectedPlan.id}`;
-                    window.open(checkoutUrl, '_blank');
-                  }}
-                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Open Checkout in New Tab
-                </button>
+                {/* Alternative checkout methods */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <button
+                    onClick={() => {
+                      const checkoutUrl = `https://whop.com/p/${selectedPlan.id}`;
+                      window.open(checkoutUrl, '_blank');
+                    }}
+                    className="bg-gray-100 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-200 transition-colors"
+                  >
+                    Alternative Checkout Link
+                  </button>
+                  <button
+                    onClick={() => {
+                      const checkoutUrl = `https://whop.com/access-pass/${selectedPlan.id}`;
+                      window.open(checkoutUrl, '_blank');
+                    }}
+                    className="bg-gray-100 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-200 transition-colors"
+                  >
+                    Access Pass Link
+                  </button>
+                </div>
+
+                {/* Instructions */}
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-blue-900 mb-2">How to Subscribe:</h4>
+                  <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
+                    <li>Click the "Complete Subscription" button above</li>
+                    <li>You'll be redirected to Whop's secure checkout</li>
+                    <li>Complete your payment information</li>
+                    <li>Return to this app to start using your subscription</li>
+                  </ol>
+                </div>
               </div>
             </div>
           </div>
