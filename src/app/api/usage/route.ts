@@ -1,17 +1,11 @@
-// API route for usage tracking
-
 import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/lib/db';
-import { fallbackCounter } from '@/lib/fallback-counter';
-import { subscriptionManager } from '@/lib/subscription-manager';
+import { supabaseDb } from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
   try {
-    const url = new URL(request.url);
-    const userId = url.searchParams.get('userId');
-    
-    console.log('Usage API GET called with userId:', userId);
-    
+    const { searchParams } = new URL(request.url);
+    const userId = searchParams.get('userId');
+
     if (!userId) {
       return NextResponse.json(
         { error: 'User ID is required' },
@@ -19,70 +13,18 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const userIdNum = parseInt(userId);
+    console.log('Usage API called for userId:', userId);
+
+    // Get user usage from Supabase
+    const usage = await supabaseDb.getUserUsage(parseInt(userId));
     
-    // Use fallback counter for consistency with the rest of the app
-    const fallbackUsage = fallbackCounter.getUsage(userIdNum);
-    console.log('Fallback usage result:', fallbackUsage);
-    
-    // Also get subscription status for additional info
-    try {
-      const subscriptionStatus = await subscriptionManager.getSubscriptionStatus(userIdNum);
-      console.log('Subscription status:', subscriptionStatus);
-      
-      // Combine fallback usage with subscription info
-      const combinedUsage = {
-        ...fallbackUsage,
-        daysUntilExpiry: subscriptionStatus.daysUntilExpiry
-      };
-      
-      console.log('Combined usage result:', combinedUsage);
-      return NextResponse.json(combinedUsage);
-    } catch (subError) {
-      console.log('Subscription status error, using fallback only:', subError);
-      return NextResponse.json(fallbackUsage);
-    }
+    console.log('Usage API returning:', usage);
+
+    return NextResponse.json(usage);
   } catch (error) {
-    console.error('Usage fetch error:', error);
+    console.error('Usage API error:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch usage' },
-      { status: 500 }
-    );
-  }
-}
-
-export async function POST(request: NextRequest) {
-  try {
-    const { userId } = await request.json();
-    
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'User ID is required' },
-        { status: 400 }
-      );
-    }
-
-    // Always use fallback counter for consistency
-    const canGenerate = fallbackCounter.canGenerateCaption(userId);
-    
-    if (!canGenerate) {
-      return NextResponse.json(
-        { error: 'Usage limit reached', canGenerate: false },
-        { status: 403 }
-      );
-    }
-
-    // Increment fallback counter
-    fallbackCounter.incrementUsage(userId);
-    const usage = fallbackCounter.getUsage(userId);
-    return NextResponse.json({ 
-      usage, 
-      canGenerate: true 
-    });
-  } catch (error) {
-    console.error('Usage increment error:', error);
-    return NextResponse.json(
-      { error: 'Failed to increment usage' },
+      { error: 'Failed to get usage data' },
       { status: 500 }
     );
   }
