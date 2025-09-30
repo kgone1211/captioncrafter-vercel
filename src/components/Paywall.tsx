@@ -34,13 +34,6 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
     loadPlans();
   }, [userId, dbUserId]);
 
-  // Reload usage when paywall is shown
-  useEffect(() => {
-    if (userId || dbUserId) {
-      loadUsage();
-    }
-  }, [showPaywall]);
-
   const loadPlans = async () => {
     try {
       const response = await fetch('/api/plans');
