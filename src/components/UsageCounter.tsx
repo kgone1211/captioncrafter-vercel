@@ -28,25 +28,23 @@ export default function UsageCounter({ userId, className = '', refreshTrigger }:
     try {
       console.log('UsageCounter loading usage for userId:', userId);
       
-      // Use main usage API for consistency with the rest of the app
-      const response = await fetch(`/api/usage?userId=${userId}`);
-      console.log('Usage API response status:', response.status);
+      // Use test-supabase API as fallback since main usage API has issues
+      const response = await fetch(`/api/test-supabase`);
+      console.log('Test API response status:', response.status);
       
       if (response.ok) {
         const data = await response.json();
-        console.log('Usage data:', data);
-        setUsage(data);
-      } else {
-        console.error('Usage API error:', response.status, response.statusText);
-        // Fallback to fallback API if main API fails
-        const fallbackResponse = await fetch(`/api/fallback-usage?userId=${userId}`);
-        if (fallbackResponse.ok) {
-          const fallbackData = await fallbackResponse.json();
-          console.log('Fallback usage data:', fallbackData);
-          setUsage(fallbackData);
+        console.log('Test API data:', data);
+        
+        // Extract usage from test API response
+        if (data.testResults && data.testResults.usage) {
+          setUsage(data.testResults.usage);
         } else {
           setUsage({ freeCaptionsUsed: 0, subscriptionStatus: 'inactive' });
         }
+      } else {
+        console.error('Test API error:', response.status, response.statusText);
+        setUsage({ freeCaptionsUsed: 0, subscriptionStatus: 'inactive' });
       }
       
     } catch (error) {
