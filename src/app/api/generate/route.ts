@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { CaptionGenerator } from '@/lib/ai';
 import { CaptionGenerationRequest } from '@/types';
 import { db } from '@/lib/db';
-import { fallbackCounter } from '@/lib/fallback-counter';
+import { supabaseDb } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
   try {
@@ -25,29 +25,11 @@ export async function POST(request: NextRequest) {
         if (body.userId) {
           console.log('Checking generation permissions for user:', body.userId);
           
-          // First, try to get subscription status from database
-          let hasActiveSubscription = false;
-          try {
-            const subscriptionResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'https://captioncrafter-vercel.vercel.app'}/api/subscription?userId=${body.userId}`);
-            if (subscriptionResponse.ok) {
-              const subscriptionData = await subscriptionResponse.json();
-              hasActiveSubscription = subscriptionData.subscription?.status === 'active';
-              console.log('Database subscription status:', subscriptionData.subscription?.status);
-            }
-          } catch (error) {
-            console.log('Could not fetch subscription from database, using fallback counter');
-          }
+          // Use Supabase database to check usage limits
+          const canGenerate = await supabaseDb.canGenerateCaption(body.userId);
+          console.log('Supabase canGenerateCaption:', canGenerate);
           
-          // Use fallback counter for consistency
-          const canGenerate = fallbackCounter.canGenerateCaption(body.userId);
-          console.log('Fallback canGenerateCaption:', canGenerate);
-          
-          // If user has active subscription, override the fallback counter
-          if (hasActiveSubscription) {
-            console.log('User has active subscription, allowing generation');
-            // Update fallback counter to reflect active subscription
-            fallbackCounter.upgradeToSubscription(body.userId, 'active');
-          } else if (!canGenerate) {
+          if (!canGenerate) {
             return NextResponse.json(
               { 
                 error: 'Usage limit reached', 
@@ -58,11 +40,10 @@ export async function POST(request: NextRequest) {
             );
           }
           
-          // Increment fallback counter (only for free users)
-          console.log('Before increment - fallback usage:', fallbackCounter.getUsage(body.userId));
-          fallbackCounter.incrementUsage(body.userId);
-          console.log('After increment - fallback usage:', fallbackCounter.getUsage(body.userId));
-          console.log(`Fallback usage incremented for userId: ${body.userId}`);
+          // Increment usage in Supabase database
+          console.log('Incrementing usage in Supabase for userId:', body.userId);
+          await supabaseDb.incrementUsage(body.userId);
+          console.log('Usage incremented successfully');
         }
 
     console.log('Starting caption generation...');

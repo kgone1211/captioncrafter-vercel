@@ -71,11 +71,11 @@ export class SupabaseDatabase {
     console.log('Supabase upsertUser called with:', { email, whopUserId, subscriptionStatus, username });
 
     try {
-      // Check if user exists
+      // Check if user exists by email
       const { data: existingUser, error: selectError } = await supabase
         .from('users')
-        .select('id, whop_user_id, subscription_status, username')
-        .or(`email.eq.${email}${whopUserId ? `,whop_user_id.eq.${whopUserId}` : ''}`)
+        .select('id, whop_user_id, subscription_status')
+        .eq('email', email)
         .single();
 
       if (existingUser && !selectError) {
@@ -99,7 +99,7 @@ export class SupabaseDatabase {
         return existingUser.id;
       }
 
-      // Create new user
+      // Create new user only if not found
       const { data: newUser, error: insertError } = await supabase
         .from('users')
         .insert({
@@ -192,11 +192,13 @@ export class SupabaseDatabase {
       const usage = await this.getUserUsage(userId);
       console.log('Usage for canGenerateCaption:', usage);
       
-      // For now, implement freemium model for ALL users
-      // TODO: In the future, check for actual paid subscription status
-      // For now, everyone gets 3 free captions regardless of Whop subscription status
+      // If user has active subscription, they can always generate
+      if (usage.subscriptionStatus === 'active') {
+        console.log('User has active subscription, allowing generation');
+        return true;
+      }
       
-      // If user has used less than 3 free captions, they can generate more
+      // For free users, check if they've used less than 3 captions
       const canGenerate = usage.freeCaptionsUsed < 3;
       console.log('Can generate caption:', canGenerate, '(used:', usage.freeCaptionsUsed, '/3)');
       return canGenerate;
