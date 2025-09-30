@@ -34,6 +34,13 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
     loadPlans();
   }, [userId, dbUserId]);
 
+  // Reload usage when paywall is shown
+  useEffect(() => {
+    if (userId || dbUserId) {
+      loadUsage();
+    }
+  }, [showPaywall]);
+
   const loadPlans = async () => {
     try {
       const response = await fetch('/api/plans');
@@ -60,15 +67,26 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
   const loadUsage = async () => {
     try {
       const targetUserId = userId || dbUserId;
-      if (!targetUserId) return;
+      console.log('Paywall loadUsage called with targetUserId:', targetUserId);
       
+      if (!targetUserId) {
+        console.log('No targetUserId, skipping usage load');
+        return;
+      }
+      
+      console.log('Fetching usage from /api/usage?userId=' + targetUserId);
       const response = await fetch(`/api/usage?userId=${targetUserId}`);
+      console.log('Usage API response:', response.status, response.statusText);
+      
       if (response.ok) {
         const data = await response.json();
+        console.log('Paywall received usage data:', data);
         setUsage(data);
+      } else {
+        console.error('Failed to load usage:', response.status, response.statusText);
       }
     } catch (error) {
-      console.error('Error loading usage:', error);
+      console.error('Error loading usage in Paywall:', error);
     }
   };
 

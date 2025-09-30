@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { whopSdk } from '@/lib/whop-sdk-official';
+import { whopSdk } from '@/lib/whop-sdk';
 
 export async function POST(request: NextRequest) {
   try {
@@ -40,12 +40,13 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Create charge using Whop's chargeUser method
-    console.log('Creating charge with Whop SDK...');
-    const result = await whopSdk.payments.chargeUser({
-      amount: planPrice * 100, // Convert to cents
-      currency: "usd",
+    // Create checkout session using Whop SDK
+    console.log('Creating checkout session with Whop SDK...');
+    const result = await whopSdk.createCheckoutSession({
+      planId: planId,
       userId: userId.toString(),
+      successUrl: successUrl || `${process.env.NEXT_PUBLIC_APP_URL}/success`,
+      cancelUrl: cancelUrl || `${process.env.NEXT_PUBLIC_APP_URL}/cancel`,
       metadata: {
         planId: planId,
         planName: planId.includes('Basic') ? 'Basic Plan' : 'Premium Plan',
@@ -54,14 +55,15 @@ export async function POST(request: NextRequest) {
       }
     });
 
-    if (!result?.inAppPurchase) {
-      throw new Error("Failed to create charge");
+    if (!result?.url) {
+      throw new Error("Failed to create checkout session");
     }
 
-    console.log('Charge created:', result.inAppPurchase);
+    console.log('Checkout session created:', result);
     
     return NextResponse.json({
-      inAppPurchase: result.inAppPurchase,
+      checkoutUrl: result.url,
+      sessionId: result.id,
       planId: planId,
       amount: planPrice,
       currency: "usd"

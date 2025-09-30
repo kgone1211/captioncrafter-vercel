@@ -79,18 +79,13 @@ export default function PaymentForm({ planId, planName, price, interval, userId,
         throw new Error(errorData.error || 'Failed to create charge');
       }
 
-      const { inAppPurchase } = await response.json();
+      const { checkoutUrl, sessionId } = await response.json();
       
-      // 2. Open payment modal using Whop iframe SDK
-      const res = await iframeSdk.inAppPurchase(inAppPurchase);
-      
-      if (res.status === "ok") {
-        setReceiptId(res.data.receiptId);
-        setError(null);
-        onSuccess();
+      // Redirect to Whop checkout page
+      if (checkoutUrl) {
+        window.location.href = checkoutUrl;
       } else {
-        setReceiptId(undefined);
-        setError(res.error || 'Payment failed');
+        throw new Error('No checkout URL received');
       }
       
     } catch (err) {

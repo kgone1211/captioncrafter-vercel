@@ -1,18 +1,36 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fallbackCounter } from '@/lib/fallback-counter';
+import crypto from 'crypto';
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
+    const body = await request.text();
+    const signature = request.headers.get('whop-signature');
+    
+    // Verify webhook signature
+    const webhookSecret = process.env.WHOP_WEBHOOK_SECRET;
+    if (webhookSecret && signature) {
+      const expectedSignature = crypto
+        .createHmac('sha256', webhookSecret)
+        .update(body)
+        .digest('hex');
+      
+      if (signature !== expectedSignature) {
+        console.error('Invalid webhook signature');
+        return NextResponse.json({ error: 'Invalid signature' }, { status: 401 });
+      }
+    }
+    
+    const data = JSON.parse(body);
     
     console.log('Whop webhook received:', {
-      type: body.type,
-      data: body.data
+      type: data.type,
+      data: data.data
     });
 
     // Handle subscription events
-    if (body.type === 'subscription.created' || body.type === 'subscription.updated') {
-      const subscription = body.data;
+    if (data.type === 'subscription.created' || data.type === 'subscription.updated') {
+      const subscription = data.data;
       const userId = subscription.user_id;
       
       if (subscription.status === 'active') {
@@ -33,8 +51,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Handle payment events
-    if (body.type === 'payment.succeeded') {
-      const payment = body.data;
+    if (data.type === 'payment.succeeded') {
+      const payment = data.data;
       const userId = payment.user_id;
       
       // If payment succeeded, ensure user has active subscription
