@@ -333,7 +333,7 @@ export default function CaptionGenerator({ userId, onStatsUpdate, whopUser }: Ca
       <div className="text-center">
         <h2 className="text-3xl font-bold text-gray-900 mb-2">Generate Captions</h2>
         <p className="text-gray-600 mb-4">Create engaging social media captions with AI</p>
-        <UsageCounter userId={userId} className="justify-center" refreshTrigger={refreshTrigger} />
+        <UsageCounter userId={userId} className="justify-center" refreshTrigger={refreshTrigger} whopUser={whopUser} />
       </div>
 
       {/* Generation Form */}

@@ -2,14 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { Zap, Crown } from 'lucide-react';
+import { WhopUser } from '@/lib/whop-sdk';
 
 interface UsageCounterProps {
   userId: number;
   className?: string;
   refreshTrigger?: number; // Add refresh trigger prop
+  whopUser?: WhopUser;
 }
 
-export default function UsageCounter({ userId, className = '', refreshTrigger }: UsageCounterProps) {
+export default function UsageCounter({ userId, className = '', refreshTrigger, whopUser }: UsageCounterProps) {
   const [usage, setUsage] = useState<{ 
     freeCaptionsUsed: number; 
     subscriptionStatus: string;
@@ -17,6 +19,7 @@ export default function UsageCounter({ userId, className = '', refreshTrigger }:
     billingCycle?: string;
     nextBillingDate?: Date;
     daysUntilExpiry?: number;
+    hasPaidPlan?: boolean;
   } | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -66,16 +69,48 @@ export default function UsageCounter({ userId, className = '', refreshTrigger }:
 
   const remainingFree = Math.max(0, 3 - usage.freeCaptionsUsed);
   
-  // Check if user has active subscription
+  // Check if user has active subscription AND a paid plan
+  // In Whop, subscriptionStatus might be 'active' even for free users
+  // We need to check if they actually have a paid plan
   const hasActiveSubscription = usage.subscriptionStatus === 'active';
   
+  // Check for paid plan using Whop user data
+  const hasPaidPlan = whopUser ? (
+    // Check if user has a plan ID (indicates paid subscription)
+    (whopUser.plan_id && whopUser.plan_id !== 'free') ||
+    (whopUser.subscription_plan_id && whopUser.subscription_plan_id !== 'free') ||
+    // Check if subscription status is active AND they have billing info
+    (whopUser.subscription_status === 'active' && whopUser.billing_cycle) ||
+    // Check if they have a company_id (indicates they're part of a paid company)
+    (whopUser.company_id && whopUser.company_id !== 'free')
+  ) : false;
+  
+  const hasValidPaidSubscription = hasActiveSubscription && hasPaidPlan;
+  
+  console.log('UsageCounter logic check:', {
+    subscriptionStatus: usage.subscriptionStatus,
+    hasActiveSubscription,
+    hasPaidPlan,
+    hasValidPaidSubscription,
+    planId: usage.planId,
+    billingCycle: usage.billingCycle,
+    freeCaptionsUsed: usage.freeCaptionsUsed,
+    whopUser: whopUser ? {
+      plan_id: whopUser.plan_id,
+      subscription_plan_id: whopUser.subscription_plan_id,
+      subscription_status: whopUser.subscription_status,
+      billing_cycle: whopUser.billing_cycle,
+      company_id: whopUser.company_id
+    } : null
+  });
+  
   // Check if subscription is expired (only for users who had an active subscription)
-  const isExpired = hasActiveSubscription && usage.daysUntilExpiry !== undefined && usage.daysUntilExpiry <= 0;
+  const isExpired = hasValidPaidSubscription && usage.daysUntilExpiry !== undefined && usage.daysUntilExpiry <= 0;
   
   // Check if subscription needs renewal soon
-  const needsRenewalSoon = hasActiveSubscription && usage.daysUntilExpiry !== undefined && usage.daysUntilExpiry <= 7;
+  const needsRenewalSoon = hasValidPaidSubscription && usage.daysUntilExpiry !== undefined && usage.daysUntilExpiry <= 7;
 
-  if (hasActiveSubscription && !isExpired) {
+  if (hasValidPaidSubscription && !isExpired) {
     return (
       <div className={`flex items-center space-x-2 text-sm text-green-600 ${className}`}>
         <Crown className="h-4 w-4" />
