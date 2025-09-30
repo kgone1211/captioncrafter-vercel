@@ -120,7 +120,7 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
     console.log('Setting checkout URL:', checkoutUrl);
     setCheckoutUrl(checkoutUrl);
     
-    // Also try opening immediately as a test
+    // Try multiple methods to ensure checkout opens
     console.log('Opening checkout popup immediately...');
     const popup = window.open(
       checkoutUrl, 
@@ -131,8 +131,16 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
     if (popup) {
       console.log('Popup opened successfully');
       popup.focus();
+      
+      // Also show a confirmation message
+      setTimeout(() => {
+        alert(`✅ Checkout window opened! If you don't see it, check for a new browser window or tab.\n\nURL: ${checkoutUrl}`);
+      }, 500);
     } else {
-      console.log('Popup was blocked by browser');
+      console.log('Popup was blocked by browser - opening in new tab');
+      // Fallback: open in new tab
+      window.open(checkoutUrl, '_blank');
+      alert(`⚠️ Popup blocked! Opening checkout in new tab instead.\n\nURL: ${checkoutUrl}`);
     }
   };
 
