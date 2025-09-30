@@ -85,6 +85,7 @@ export default function UsageCounter({ userId, className = '', refreshTrigger, w
   
   const hasValidPaidSubscription = hasActiveSubscription && hasPaidPlan;
   
+  console.log('=== USAGE COUNTER LOGIC DEBUG ===');
   console.log('UsageCounter logic check:', {
     subscriptionStatus: usage.subscriptionStatus,
     hasActiveSubscription,
@@ -100,6 +101,7 @@ export default function UsageCounter({ userId, className = '', refreshTrigger, w
       company_id: whopUser.company_id
     } : null
   });
+  console.log('=== END USAGE COUNTER DEBUG ===');
   
   // Check if subscription is expired (only for users who had an active subscription)
   const isExpired = hasValidPaidSubscription && usage.daysUntilExpiry !== undefined && usage.daysUntilExpiry <= 0;

@@ -125,10 +125,13 @@ export default async function Home() {
     let whopUser;
     try {
       whopUser = await whopSdk.getUser({ userId: userId });
-      console.log('Whop User:', whopUser);
+      console.log('=== PRODUCTION WHOP USER DATA ===');
+      console.log('Full Whop User object:', JSON.stringify(whopUser, null, 2));
       console.log('Whop User subscription_status:', whopUser.subscription_status);
       console.log('Whop User plan_id:', whopUser.plan_id);
       console.log('Whop User subscription_plan_id:', whopUser.subscription_plan_id);
+      console.log('Whop User company_id:', whopUser.company_id);
+      console.log('=== END PRODUCTION DATA ===');
     } catch (sdkError) {
       console.error('Whop SDK error, using fallback user:', sdkError);
       // Fallback user if SDK fails - use dynamic data from environment or auth
