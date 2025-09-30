@@ -5,6 +5,14 @@ export async function GET(request: NextRequest) {
   try {
     console.log('Testing Supabase connection...');
     
+    // Debug environment variables
+    console.log('Environment variables debug:', {
+      SUPABASE_URL: process.env.SUPABASE_URL ? 'present' : 'missing',
+      NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL ? 'present' : 'missing',
+      SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY ? 'present' : 'missing',
+      NODE_ENV: process.env.NODE_ENV
+    });
+    
     // Test 1: Check if we can connect to Supabase
     const testUser = await supabaseDb.upsertUser(
       'test@example.com',
