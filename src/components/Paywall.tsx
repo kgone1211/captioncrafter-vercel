@@ -511,6 +511,7 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
                         onClick={() => {
                           // Try multiple checkout URL formats
                           const urls = [
+                            `https://whop.com/checkout/${selectedPlan.id}/`,
                             `https://whop.com/checkout/${selectedPlan.id}`,
                             `https://whop.com/p/${selectedPlan.id}`,
                             `https://whop.com/access-pass/${selectedPlan.id}`,
@@ -520,6 +521,9 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
                           console.log('Opening checkout with URLs:', urls);
                           console.log('Selected plan:', selectedPlan);
                           console.log('Plan ID:', selectedPlan.id);
+                          
+                          // Show alert to confirm button click
+                          alert(`Opening checkout for ${selectedPlan.name} (${selectedPlan.id})`);
                           
                           // Try the first URL
                           const primaryUrl = urls[0];
@@ -601,6 +605,7 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
                         <p><strong>Primary URL:</strong> {checkoutUrl}</p>
                         <p><strong>Alternative URLs:</strong></p>
                         <ul className="ml-4 space-y-1">
+                          <li>• https://whop.com/checkout/{selectedPlan.id}/ (with trailing slash)</li>
                           <li>• https://whop.com/checkout/{selectedPlan.id}</li>
                           <li>• https://whop.com/p/{selectedPlan.id}</li>
                           <li>• https://whop.com/access-pass/{selectedPlan.id}</li>
