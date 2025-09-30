@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { WhopUser } from '@/lib/whop-sdk';
-import { WhopCheckoutEmbed } from '@whop/checkout/react';
 
 interface PaywallProps {
   whopUser?: WhopUser;
@@ -17,7 +16,6 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
   const [usage, setUsage] = useState<{ freeCaptionsUsed: number; subscriptionStatus: string } | null>(null);
   const [showSubscriptionForm, setShowSubscriptionForm] = useState(false);
   const [plans, setPlans] = useState<any[]>([]);
-  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: whopUser?.username || 'User',
     email: whopUser?.email || 'user@example.com',
@@ -97,8 +95,12 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
       return;
     }
 
-    console.log('Setting selected plan for Whop checkout:', planId);
-    setSelectedPlanId(planId);
+    console.log('Redirecting to Whop checkout for plan:', planId);
+    
+    // For now, redirect to Whop's checkout page
+    // This is a temporary solution until Node.js 22 is supported on Vercel
+    const checkoutUrl = `https://whop.com/checkout/${planId}`;
+    window.open(checkoutUrl, '_blank');
   };
 
 
@@ -329,24 +331,6 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
             </div>
           ) : null}
           
-          {/* Whop Checkout Embed */}
-          {selectedPlanId && (
-            <div className="mt-6">
-              <WhopCheckoutEmbed
-                planId={selectedPlanId}
-                onComplete={(plan_id, receipt_id) => {
-                  console.log('Checkout completed:', { plan_id, receipt_id });
-                  setSelectedPlanId(null);
-                  if (onUpgrade) {
-                    onUpgrade();
-                  }
-                }}
-                prefill={{
-                  email: whopUser?.email || formData.email
-                }}
-              />
-            </div>
-          )}
         </div>
 
         {/* Subscription Form */}
