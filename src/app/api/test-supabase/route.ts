@@ -70,3 +70,42 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+
+export async function POST(request: NextRequest) {
+  try {
+    const { action, userId } = await request.json();
+    
+    if (action === 'reset' && userId) {
+      // Reset user's usage to 0
+      const { error } = await supabaseDb.supabase
+        .from('users')
+        .update({ free_captions_used: 0 })
+        .eq('id', userId);
+
+      if (error) {
+        console.error('Error resetting user usage:', error);
+        return NextResponse.json(
+          { error: 'Failed to reset user usage' },
+          { status: 500 }
+        );
+      }
+
+      return NextResponse.json({ 
+        success: true,
+        message: `User ${userId} usage reset to 0` 
+      });
+    }
+    
+    return NextResponse.json(
+      { error: 'Invalid action or missing userId' },
+      { status: 400 }
+    );
+    
+  } catch (error) {
+    console.error('Reset user usage error:', error);
+    return NextResponse.json(
+      { error: 'Failed to reset user usage' },
+      { status: 500 }
+    );
+  }
+}

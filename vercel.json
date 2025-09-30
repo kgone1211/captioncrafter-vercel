@@ -1,9 +1,4 @@
 {
-  "functions": {
-    "src/app/api/**/*.ts": {
-      "runtime": "@vercel/node@3.0.7"
-    }
-  },
   "crons": [
     {
       "path": "/api/cron/subscription-renewal",
