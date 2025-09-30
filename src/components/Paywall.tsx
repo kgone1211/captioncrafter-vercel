@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { WhopUser } from '@/lib/whop-sdk';
-import { WhopCheckout } from '@whop/checkout';
+import { WhopCheckoutEmbed } from '@whop/checkout/react';
 
 interface PaywallProps {
   whopUser?: WhopUser;
@@ -17,6 +17,7 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
   const [usage, setUsage] = useState<{ freeCaptionsUsed: number; subscriptionStatus: string } | null>(null);
   const [showSubscriptionForm, setShowSubscriptionForm] = useState(false);
   const [plans, setPlans] = useState<any[]>([]);
+  const [selectedPlanId, setSelectedPlanId] = useState<string | null>(null);
   const [formData, setFormData] = useState({
     name: whopUser?.username || 'User',
     email: whopUser?.email || 'user@example.com',
@@ -96,41 +97,8 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
       return;
     }
 
-    console.log('Starting Whop checkout for plan:', planId);
-    
-    try {
-      // Use Whop checkout embed instead of API
-      const checkoutContainer = document.getElementById('whop-checkout-container');
-      if (!checkoutContainer) {
-        throw new Error('Checkout container not found');
-      }
-      
-      // Clear any existing checkout
-      checkoutContainer.innerHTML = '';
-      
-      // Embed Whop checkout
-      await WhopCheckout.embed({
-        element: '#whop-checkout-container',
-        planId: planId,
-        onSuccess: (result: any) => {
-          console.log('Checkout successful:', result);
-          if (onUpgrade) {
-            onUpgrade();
-          }
-        },
-        onError: (error: any) => {
-          console.error('Checkout error:', error);
-          alert('Checkout failed: ' + (error.message || 'Unknown error'));
-        },
-        onCancel: () => {
-          console.log('Checkout cancelled');
-        }
-      });
-      
-    } catch (error) {
-      console.error('Error starting checkout:', error);
-      alert('Error starting checkout: ' + (error instanceof Error ? error.message : 'Unknown error'));
-    }
+    console.log('Setting selected plan for Whop checkout:', planId);
+    setSelectedPlanId(planId);
   };
 
 
@@ -361,8 +329,24 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
             </div>
           ) : null}
           
-          {/* Whop Checkout Container */}
-          <div id="whop-checkout-container" className="mt-6"></div>
+          {/* Whop Checkout Embed */}
+          {selectedPlanId && (
+            <div className="mt-6">
+              <WhopCheckoutEmbed
+                planId={selectedPlanId}
+                onComplete={(plan_id, receipt_id) => {
+                  console.log('Checkout completed:', { plan_id, receipt_id });
+                  setSelectedPlanId(null);
+                  if (onUpgrade) {
+                    onUpgrade();
+                  }
+                }}
+                prefill={{
+                  email: whopUser?.email || formData.email
+                }}
+              />
+            </div>
+          )}
         </div>
 
         {/* Subscription Form */}
