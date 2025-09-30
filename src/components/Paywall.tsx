@@ -40,10 +40,16 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
 
   const loadPlans = async () => {
     try {
+      console.log('Loading plans from /api/plans...');
       const response = await fetch('/api/plans');
+      console.log('Plans API response:', response.status, response.statusText);
+      
       if (response.ok) {
         const plansData = await response.json();
+        console.log('Plans data received:', plansData);
         setPlans(plansData);
+      } else {
+        console.error('Failed to load plans:', response.status, response.statusText);
       }
     } catch (error) {
       console.error('Error loading plans:', error);
@@ -511,23 +517,40 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
                             `https://whop.com/checkout?product_id=${selectedPlan.id}`
                           ];
                           
+                          console.log('Opening checkout with URLs:', urls);
+                          console.log('Selected plan:', selectedPlan);
+                          console.log('Plan ID:', selectedPlan.id);
+                          
                           // Try the first URL
+                          const primaryUrl = urls[0];
+                          console.log('Opening primary URL:', primaryUrl);
+                          
                           const popup = window.open(
-                            urls[0], 
+                            primaryUrl, 
                             'whop-checkout', 
                             'width=900,height=800,scrollbars=yes,resizable=yes,status=yes,toolbar=no,menubar=no,location=no'
                           );
                           
                           if (popup) {
+                            console.log('Popup opened successfully');
                             popup.focus();
                             
                             // Check if popup was blocked or failed to load
                             setTimeout(() => {
                               if (popup.closed) {
                                 console.log('Popup was blocked, trying alternative URL');
-                                window.open(urls[1], '_blank');
+                                const altUrl = urls[1];
+                                console.log('Opening alternative URL:', altUrl);
+                                window.open(altUrl, '_blank');
+                              } else {
+                                console.log('Popup is still open');
                               }
                             }, 1000);
+                          } else {
+                            console.log('Popup was blocked by browser');
+                            // Try opening in new tab as fallback
+                            console.log('Opening in new tab:', primaryUrl);
+                            window.open(primaryUrl, '_blank');
                           }
                         }}
                         className="w-full bg-blue-600 text-white px-6 py-4 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg"
