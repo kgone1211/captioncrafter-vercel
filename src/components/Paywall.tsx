@@ -106,8 +106,16 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
     setShowCheckout(true);
     setIsCreatingCheckout(false);
     
-    // Set direct checkout URL immediately
-    setCheckoutUrl(`https://whop.com/checkout/${planId}`);
+    // Set multiple checkout URL options to try
+    const checkoutOptions = [
+      `https://whop.com/checkout/${planId}`,
+      `https://whop.com/p/${planId}`,
+      `https://whop.com/access-pass/${planId}`,
+      `https://whop.com/checkout?product_id=${planId}`
+    ];
+    
+    // Use the first option as primary
+    setCheckoutUrl(checkoutOptions[0]);
   };
 
 
@@ -495,13 +503,31 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
                     <div className="text-center">
                       <button
                         onClick={() => {
+                          // Try multiple checkout URL formats
+                          const urls = [
+                            `https://whop.com/checkout/${selectedPlan.id}`,
+                            `https://whop.com/p/${selectedPlan.id}`,
+                            `https://whop.com/access-pass/${selectedPlan.id}`,
+                            `https://whop.com/checkout?product_id=${selectedPlan.id}`
+                          ];
+                          
+                          // Try the first URL
                           const popup = window.open(
-                            checkoutUrl, 
+                            urls[0], 
                             'whop-checkout', 
                             'width=900,height=800,scrollbars=yes,resizable=yes,status=yes,toolbar=no,menubar=no,location=no'
                           );
+                          
                           if (popup) {
                             popup.focus();
+                            
+                            // Check if popup was blocked or failed to load
+                            setTimeout(() => {
+                              if (popup.closed) {
+                                console.log('Popup was blocked, trying alternative URL');
+                                window.open(urls[1], '_blank');
+                              }
+                            }, 1000);
                           }
                         }}
                         className="w-full bg-blue-600 text-white px-6 py-4 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg"
@@ -542,6 +568,28 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
                         <span className="bg-white px-2 py-1 rounded">Apple Pay</span>
                         <span className="bg-white px-2 py-1 rounded">Google Pay</span>
                       </div>
+                    </div>
+
+                    {/* Debug Information */}
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                      <h4 className="font-semibold text-gray-900 mb-2">🔧 Debug Information:</h4>
+                      <div className="text-sm text-gray-600 space-y-1">
+                        <p><strong>Plan ID:</strong> {selectedPlan.id}</p>
+                        <p><strong>Primary URL:</strong> {checkoutUrl}</p>
+                        <p><strong>Alternative URLs:</strong></p>
+                        <ul className="ml-4 space-y-1">
+                          <li>• https://whop.com/checkout/{selectedPlan.id}</li>
+                          <li>• https://whop.com/p/{selectedPlan.id}</li>
+                          <li>• https://whop.com/access-pass/{selectedPlan.id}</li>
+                          <li>• https://whop.com/checkout?product_id={selectedPlan.id}</li>
+                        </ul>
+                      </div>
+                      <button
+                        onClick={() => window.open(`/api/test-checkout?planId=${selectedPlan.id}`, '_blank')}
+                        className="mt-2 text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300"
+                      >
+                        Test All URLs
+                      </button>
                     </div>
                   </div>
                 </div>
