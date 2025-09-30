@@ -34,7 +34,9 @@ export default function UsageCounter({ userId, className = '', refreshTrigger }:
       
       if (response.ok) {
         const data = await response.json();
-        console.log('Usage data:', data);
+        console.log('UsageCounter received usage data:', data);
+        console.log('UsageCounter subscription status:', data.subscriptionStatus);
+        console.log('UsageCounter free captions used:', data.freeCaptionsUsed);
         setUsage(data);
       } else {
         console.error('Usage API error:', response.status, response.statusText);

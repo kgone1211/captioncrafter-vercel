@@ -126,6 +126,9 @@ export default async function Home() {
     try {
       whopUser = await whopSdk.getUser({ userId: userId });
       console.log('Whop User:', whopUser);
+      console.log('Whop User subscription_status:', whopUser.subscription_status);
+      console.log('Whop User plan_id:', whopUser.plan_id);
+      console.log('Whop User subscription_plan_id:', whopUser.subscription_plan_id);
     } catch (sdkError) {
       console.error('Whop SDK error, using fallback user:', sdkError);
       // Fallback user if SDK fails - use dynamic data from environment or auth
