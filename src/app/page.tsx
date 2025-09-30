@@ -19,6 +19,63 @@ export default async function Home() {
     if (!auth.isAuthenticated) {
       // Check if this is a direct access (not through Whop)
       if (!(await isWhopRequest())) {
+        // Allow development mode access with test user
+        if (process.env.NODE_ENV === 'development') {
+          console.log('Development mode: Creating test user for direct access');
+          
+          // Create a test user for development
+          const testUserId = 'dev-test-user';
+          const fallbackEmail = 'dev@test.com';
+          const fallbackUsername = 'Dev Test User';
+          
+          const whopUser = {
+            id: testUserId,
+            email: fallbackEmail,
+            username: fallbackUsername,
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            company_id: 'dev-company',
+            subscription_status: 'inactive' as const
+          };
+          
+          // Create/update user in our database
+          let dbUserId;
+          try {
+            await db.initDatabase();
+            dbUserId = await db.upsertUser(
+              whopUser.email, 
+              whopUser.id, 
+              whopUser.subscription_status,
+              whopUser.username
+            );
+            console.log('Dev user created/updated with ID:', dbUserId);
+          } catch (dbError) {
+            console.error('Database error:', dbError);
+            dbUserId = 999; // Fallback ID
+          }
+          
+          // Check if user can generate captions
+          let canGenerate;
+          try {
+            const { fallbackCounter } = await import('@/lib/fallback-counter');
+            canGenerate = fallbackCounter.canGenerateCaption(dbUserId);
+            console.log('Dev user can generate captions:', canGenerate);
+          } catch (canGenerateError) {
+            console.error('Can generate error:', canGenerateError);
+            canGenerate = true;
+          }
+          
+          // Use ClientAuthWrapper with test data
+          return (
+            <ClientAuthWrapper 
+              fallbackAuth={{ userId: testUserId, isAuthenticated: true, source: 'development' }}
+              fallbackWhopUser={whopUser}
+              fallbackDbUserId={dbUserId}
+              fallbackCanGenerate={canGenerate}
+            />
+          );
+        }
+        
         return (
           <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
             <div className="text-center max-w-md mx-4">
