@@ -507,25 +507,54 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
                     <iframe
                       src={checkoutUrl}
                       width="100%"
-                      height="600"
+                      height="700"
                       frameBorder="0"
                       className="w-full"
                       title={`Checkout for ${selectedPlan.name}`}
-                      sandbox="allow-scripts allow-forms allow-same-origin allow-top-navigation"
+                      sandbox="allow-scripts allow-forms allow-same-origin allow-top-navigation allow-popups allow-popups-to-escape-sandbox allow-presentation"
+                      allow="payment; fullscreen"
+                      loading="lazy"
                     />
                   </div>
 
-                  {/* Fallback button */}
-                  <div className="text-center">
-                    <p className="text-sm text-gray-500 mb-3">
-                      Having trouble with the embedded checkout?
-                    </p>
-                    <button
-                      onClick={() => window.open(checkoutUrl, '_blank')}
-                      className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
-                    >
-                      Open Checkout in New Tab
-                    </button>
+                  {/* Alternative checkout options */}
+                  <div className="space-y-3">
+                    <div className="text-center">
+                      <p className="text-sm text-gray-500 mb-3">
+                        Payment methods not loading? Try these options:
+                      </p>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      <button
+                        onClick={() => {
+                          const popup = window.open(
+                            checkoutUrl, 
+                            'whop-checkout', 
+                            'width=800,height=700,scrollbars=yes,resizable=yes'
+                          );
+                          if (popup) {
+                            popup.focus();
+                          }
+                        }}
+                        className="bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
+                      >
+                        Open in Popup Window
+                      </button>
+                      
+                      <button
+                        onClick={() => window.open(checkoutUrl, '_blank')}
+                        className="bg-gray-600 text-white px-4 py-3 rounded-lg hover:bg-gray-700 transition-colors font-medium"
+                      >
+                        Open in New Tab
+                      </button>
+                    </div>
+                    
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                      <p className="text-sm text-yellow-800">
+                        <strong>Tip:</strong> Popup windows often work better for payment processing and saved payment methods.
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}

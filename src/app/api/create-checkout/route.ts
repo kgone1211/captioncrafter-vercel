@@ -20,7 +20,12 @@ export async function POST(request: NextRequest) {
         planId: planId,
         userId: userId,
         successUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://captioncrafter-vercel.vercel.app'}/checkout/success`,
-        cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://captioncrafter-vercel.vercel.app'}/checkout/cancel`
+        cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://captioncrafter-vercel.vercel.app'}/checkout/cancel`,
+        metadata: {
+          embedded: true,
+          source: 'caption-crafter-app',
+          user_agent: 'embedded-checkout'
+        }
       });
 
       console.log('Checkout session created:', checkoutSession);
