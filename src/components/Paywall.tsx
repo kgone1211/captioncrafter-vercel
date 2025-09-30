@@ -446,10 +446,10 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
         </div>
       </div>
 
-      {/* Embedded Checkout Modal */}
-      {showCheckout && selectedPlan && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+          {/* Embedded Checkout Modal */}
+          {showCheckout && selectedPlan && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+              <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
             {/* Modal Header */}
             <div className="flex items-center justify-between p-6 border-b">
               <div>
@@ -466,8 +466,8 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
               </button>
             </div>
 
-            {/* Embedded Checkout */}
-            <div className="p-6">
+                {/* Embedded Checkout */}
+                <div className="p-6 overflow-y-auto">
               <div className="bg-gray-50 rounded-lg p-4 mb-4">
                 <h3 className="font-semibold text-gray-900 mb-2">{selectedPlan.name}</h3>
                 <div className="text-2xl font-bold text-gray-900 mb-2">
@@ -492,7 +492,7 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
                       </div>
 
                       {/* Whop Checkout Embed Container */}
-                      <div className="border rounded-lg overflow-hidden bg-white min-h-[600px]">
+                      <div className="border rounded-lg overflow-hidden bg-white h-[500px]">
                         <WhopCheckoutEmbed 
                           planId={selectedPlan.id}
                         />
