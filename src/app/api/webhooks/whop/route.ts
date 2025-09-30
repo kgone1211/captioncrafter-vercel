@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { fallbackCounter } from '@/lib/fallback-counter';
+import { supabaseDb } from '@/lib/supabase';
 import crypto from 'crypto';
 
 export async function POST(request: NextRequest) {
@@ -34,16 +35,44 @@ export async function POST(request: NextRequest) {
       const userId = subscription.user_id;
       
       if (subscription.status === 'active') {
-        // User has active subscription - upgrade them in fallback counter
+        // User has active subscription - upgrade them in both databases
         const numericUserId = parseInt(userId);
         if (!isNaN(numericUserId)) {
+          // Update Supabase database
+          try {
+            await supabaseDb.upsertUser(
+              subscription.user_email || 'user@example.com',
+              userId,
+              'active',
+              subscription.user_name || 'User'
+            );
+            console.log(`Webhook: Updated Supabase user ${numericUserId} to active subscription`);
+          } catch (error) {
+            console.error('Error updating Supabase user:', error);
+          }
+          
+          // Update fallback counter
           fallbackCounter.upgradeToSubscription(numericUserId, subscription.plan_id);
           console.log(`Webhook: Upgraded user ${numericUserId} to subscription ${subscription.plan_id}`);
         }
       } else if (subscription.status === 'cancelled' || subscription.status === 'inactive') {
-        // User subscription cancelled - downgrade them
+        // User subscription cancelled - downgrade them in both databases
         const numericUserId = parseInt(userId);
         if (!isNaN(numericUserId)) {
+          // Update Supabase database
+          try {
+            await supabaseDb.upsertUser(
+              subscription.user_email || 'user@example.com',
+              userId,
+              'inactive',
+              subscription.user_name || 'User'
+            );
+            console.log(`Webhook: Updated Supabase user ${numericUserId} to inactive subscription`);
+          } catch (error) {
+            console.error('Error updating Supabase user:', error);
+          }
+          
+          // Update fallback counter
           fallbackCounter.downgradeToFree(numericUserId);
           console.log(`Webhook: Downgraded user ${numericUserId} to free plan`);
         }
@@ -55,9 +84,23 @@ export async function POST(request: NextRequest) {
       const payment = data.data;
       const userId = payment.user_id;
       
-      // If payment succeeded, ensure user has active subscription
+      // If payment succeeded, ensure user has active subscription in both databases
       const numericUserId = parseInt(userId);
       if (!isNaN(numericUserId)) {
+        // Update Supabase database
+        try {
+          await supabaseDb.upsertUser(
+            payment.user_email || 'user@example.com',
+            userId,
+            'active',
+            payment.user_name || 'User'
+          );
+          console.log(`Webhook: Payment succeeded - Updated Supabase user ${numericUserId} to active`);
+        } catch (error) {
+          console.error('Error updating Supabase user after payment:', error);
+        }
+        
+        // Update fallback counter
         fallbackCounter.upgradeToSubscription(numericUserId, 'active');
         console.log(`Webhook: Payment succeeded for user ${numericUserId}, upgraded to active`);
       }
