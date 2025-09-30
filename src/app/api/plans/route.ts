@@ -5,9 +5,9 @@ export async function GET() {
     // Return your actual Whop access pass plans
     const plans = [
       {
-        id: 'prod_OAeju0utHppI2', // Basic Plan Access Pass ID
+        id: 'plan_cs24bg68DSLES', // Basic Plan Access Pass ID
         name: 'Basic Plan',
-        price: 19.99,
+        price: 9.99,
         interval: 'month',
         description: 'Perfect for individuals getting started',
         features: [
@@ -18,9 +18,9 @@ export async function GET() {
         ]
       },
       {
-        id: 'prod_xcU9zERSGgyNK', // Premium Plan Access Pass ID
+        id: 'plan_bB3i8FYLYYBI8', // Premium Plan Access Pass ID
         name: 'Premium Plan',
-        price: 39.99,
+        price: 19.99,
         interval: 'month',
         description: 'Advanced features for power users',
         features: [

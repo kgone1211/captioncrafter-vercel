@@ -135,30 +135,42 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
         console.log('Loading Whop checkout script...');
         
         // Set data attributes for the checkout container
+        console.log('Setting data attributes on container element');
+        console.log('Container element:', checkoutContainerRef.current);
         checkoutContainerRef.current.setAttribute('data-whop-checkout-plan-id', planId);
         checkoutContainerRef.current.setAttribute('data-whop-checkout-mounted', 'false');
+        console.log('Data attributes set:', {
+          'data-whop-checkout-plan-id': checkoutContainerRef.current.getAttribute('data-whop-checkout-plan-id'),
+          'data-whop-checkout-mounted': checkoutContainerRef.current.getAttribute('data-whop-checkout-mounted')
+        });
         
         // Load the Whop checkout script if not already loaded
+        console.log('Checking if Whop script is loaded:', !!window.wco);
         if (!window.wco) {
+          console.log('Loading Whop checkout script from: https://whop.com/embedded/checkout/loader.js');
           const script = document.createElement('script');
           script.src = 'https://whop.com/embedded/checkout/loader.js';
           script.async = true;
           script.defer = true;
           script.onload = () => {
-            console.log('✅ Whop checkout script loaded');
+            console.log('✅ Whop checkout script loaded successfully');
+            console.log('window.wco after load:', window.wco);
             // Hide loading indicator after script loads
             setTimeout(() => {
               const loadingEl = document.getElementById('checkout-loading');
               if (loadingEl) {
+                console.log('Hiding loading indicator');
                 loadingEl.style.display = 'none';
               }
             }, 1000);
           };
-          script.onerror = () => {
-            console.error('❌ Failed to load Whop checkout script');
+          script.onerror = (error) => {
+            console.error('❌ Failed to load Whop checkout script:', error);
           };
           document.head.appendChild(script);
+          console.log('Script element added to document head');
         } else {
+          console.log('Whop script already loaded, hiding loading indicator');
           // Script already loaded, just hide loading indicator
           setTimeout(() => {
             const loadingEl = document.getElementById('checkout-loading');
@@ -201,8 +213,8 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
     try {
       console.log('Subscription form submitted:', formData);
       
-      // Redirect to Whop checkout
-      const planId = formData.plan === 'basic' ? 'prod_OAeju0utHppI2' : 'prod_xcU9zERSGgyNK';
+          // Redirect to Whop checkout
+          const planId = formData.plan === 'basic' ? 'plan_cs24bg68DSLES' : 'plan_bB3i8FYLYYBI8';
       await handleUpgrade(planId, formData.plan === 'basic' ? 'Basic Plan' : 'Premium Plan');
     } catch (error) {
       console.error('Error processing subscription:', error);
@@ -456,10 +468,10 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
                         onChange={() => setFormData({ ...formData, plan: 'basic' })}
                         className="mr-2"
                       />
-                      <div>
-                        <h3 className="font-semibold text-gray-900">Basic Plan</h3>
-                        <p className="text-sm text-gray-600">$19/month - 100 captions</p>
-                      </div>
+                          <div>
+                            <h3 className="font-semibold text-gray-900">Basic Plan</h3>
+                            <p className="text-sm text-gray-600">$9.99/month - Unlimited captions</p>
+                          </div>
                     </div>
                   </div>
                   <div className={`border rounded-lg p-4 cursor-pointer transition-colors ${
@@ -474,10 +486,10 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
                         onChange={() => setFormData({ ...formData, plan: 'premium' })}
                         className="mr-2"
                       />
-                      <div>
-                        <h3 className="font-semibold text-gray-900">Premium Plan</h3>
-                        <p className="text-sm text-gray-600">$39/month - Unlimited captions</p>
-                      </div>
+                          <div>
+                            <h3 className="font-semibold text-gray-900">Premium Plan</h3>
+                            <p className="text-sm text-gray-600">$19.99/month - Unlimited captions + Advanced features</p>
+                          </div>
                     </div>
                   </div>
                 </div>
