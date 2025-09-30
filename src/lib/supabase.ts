@@ -82,13 +82,12 @@ export class SupabaseDatabase {
         console.log('Found existing user:', existingUser);
         
         // Update user if needed
-        if (whopUserId || subscriptionStatus || username) {
+        if (whopUserId || subscriptionStatus) {
           const { error: updateError } = await supabase
             .from('users')
             .update({
               whop_user_id: whopUserId || existingUser.whop_user_id,
-              subscription_status: subscriptionStatus || existingUser.subscription_status,
-              username: username || existingUser.username
+              subscription_status: subscriptionStatus || existingUser.subscription_status
             })
             .eq('id', existingUser.id);
 
@@ -107,7 +106,6 @@ export class SupabaseDatabase {
           email,
           whop_user_id: whopUserId,
           subscription_status: subscriptionStatus || 'inactive',
-          username: username,
           free_captions_used: 0
         })
         .select('id')
