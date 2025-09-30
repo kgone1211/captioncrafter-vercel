@@ -483,7 +483,7 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
                       </div>
 
                       {/* Embedded iframe */}
-                      <div className="border rounded-lg overflow-hidden bg-white">
+                      <div className="border rounded-lg overflow-hidden bg-white relative">
                         <iframe
                           src={checkoutUrl}
                           width="100%"
@@ -491,12 +491,32 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
                           frameBorder="0"
                           className="w-full"
                           title={`Checkout for ${selectedPlan.name}`}
-                          sandbox="allow-scripts allow-forms allow-same-origin allow-top-navigation allow-popups allow-popups-to-escape-sandbox allow-presentation allow-payment"
+                          sandbox="allow-scripts allow-forms allow-same-origin allow-top-navigation allow-popups allow-popups-to-escape-sandbox allow-presentation allow-payment allow-modals"
                           allow="payment; fullscreen; microphone; camera"
                           loading="lazy"
-                          onLoad={() => console.log('Checkout iframe loaded successfully')}
-                          onError={(e) => console.error('Checkout iframe failed to load:', e)}
+                          onLoad={() => {
+                            console.log('✅ Checkout iframe loaded successfully');
+                            console.log('Checkout URL:', checkoutUrl);
+                            // Hide loading indicator
+                            const loadingEl = document.getElementById('iframe-loading');
+                            if (loadingEl) {
+                              loadingEl.style.display = 'none';
+                            }
+                          }}
+                          onError={(e) => {
+                            console.error('❌ Checkout iframe failed to load:', e);
+                            console.error('Failed URL:', checkoutUrl);
+                          }}
                         />
+                        
+                        {/* Loading indicator */}
+                        <div className="absolute inset-0 bg-gray-100 flex items-center justify-center" id="iframe-loading">
+                          <div className="text-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                            <p className="text-gray-600">Loading checkout...</p>
+                            <p className="text-xs text-gray-500 mt-2">URL: {checkoutUrl}</p>
+                          </div>
+                        </div>
                       </div>
 
                       {/* Payment methods info */}
