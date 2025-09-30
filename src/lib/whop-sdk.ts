@@ -231,6 +231,8 @@ class WhopSDK {
    */
   async getUserSubscriptionStatus(userId: string): Promise<'active' | 'inactive' | 'cancelled'> {
     try {
+      console.log(`Fetching subscription status for user: ${userId}`);
+      
       const response = await fetch(`${this.baseUrl}/users/${userId}/subscriptions`, {
         headers: {
           'Authorization': `Bearer ${this.apiKey}`,
@@ -238,17 +240,25 @@ class WhopSDK {
         },
       });
 
+      console.log(`Subscription API response status: ${response.status}`);
+
       if (!response.ok) {
+        console.log(`Subscription API failed with status ${response.status}, defaulting to inactive`);
         return 'inactive';
       }
 
       const data = await response.json();
+      console.log('Subscription API response data:', data);
+      
       const subscriptions = data.data || [];
       
       // Check if user has any active subscription
       const activeSubscription = subscriptions.find((sub: WhopSubscription) => sub.status === 'active');
       
-      return activeSubscription ? 'active' : 'inactive';
+      const status = activeSubscription ? 'active' : 'inactive';
+      console.log(`Final subscription status for user ${userId}: ${status}`);
+      
+      return status;
     } catch (error) {
       console.error('Error fetching subscription status:', error);
       return 'inactive';

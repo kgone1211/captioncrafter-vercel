@@ -23,12 +23,31 @@ export async function POST(request: NextRequest) {
 
         // Check if user can generate captions (usage limit)
         if (body.userId) {
-          // Always use fallback counter for consistency
-          console.log('Using fallback counter for usage tracking');
+          console.log('Checking generation permissions for user:', body.userId);
+          
+          // First, try to get subscription status from database
+          let hasActiveSubscription = false;
+          try {
+            const subscriptionResponse = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'https://captioncrafter-vercel.vercel.app'}/api/subscription?userId=${body.userId}`);
+            if (subscriptionResponse.ok) {
+              const subscriptionData = await subscriptionResponse.json();
+              hasActiveSubscription = subscriptionData.subscription?.status === 'active';
+              console.log('Database subscription status:', subscriptionData.subscription?.status);
+            }
+          } catch (error) {
+            console.log('Could not fetch subscription from database, using fallback counter');
+          }
+          
+          // Use fallback counter for consistency
           const canGenerate = fallbackCounter.canGenerateCaption(body.userId);
           console.log('Fallback canGenerateCaption:', canGenerate);
           
-          if (!canGenerate) {
+          // If user has active subscription, override the fallback counter
+          if (hasActiveSubscription) {
+            console.log('User has active subscription, allowing generation');
+            // Update fallback counter to reflect active subscription
+            fallbackCounter.upgradeToSubscription(body.userId, 'active');
+          } else if (!canGenerate) {
             return NextResponse.json(
               { 
                 error: 'Usage limit reached', 

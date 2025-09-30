@@ -36,21 +36,22 @@ export default function WhopClientPage({ whopUser }: WhopClientPageProps) {
     try {
       setLoading(true);
       
-      // Check if user has active subscription
-      if (whopUser.subscription_status !== 'active') {
-        setError('No active subscription found. Please subscribe to access Caption Crafter.');
-        setLoading(false);
-        return;
-      }
+      console.log('Initializing user with Whop data:', {
+        id: whopUser.id,
+        email: whopUser.email,
+        subscription_status: whopUser.subscription_status,
+        plan_id: whopUser.plan_id
+      });
 
-      // Create or get local user
+      // Create or get local user first (don't block on subscription status)
       const localUserResponse = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           email: whopUser.email,
           whopUserId: whopUser.id,
-          subscriptionStatus: whopUser.subscription_status
+          subscriptionStatus: whopUser.subscription_status || 'inactive',
+          planId: whopUser.plan_id
         }),
       });
 
@@ -62,6 +63,15 @@ export default function WhopClientPage({ whopUser }: WhopClientPageProps) {
           email: whopUser.email,
           username: whopUser.username 
         });
+        
+        // Update fallback counter with subscription status
+        if (whopUser.subscription_status === 'active') {
+          // Import fallback counter and upgrade user
+          const { fallbackCounter } = await import('@/lib/fallback-counter');
+          fallbackCounter.upgradeToSubscription(userId, whopUser.plan_id || 'unknown');
+          console.log('Updated fallback counter for active subscription');
+        }
+        
         await loadUserStats(userId);
         showSuccess('Welcome!', `Logged in as ${whopUser.username || whopUser.email}`);
       } else {
