@@ -75,12 +75,13 @@ export default function UsageCounter({ userId, className = '', refreshTrigger, w
   const hasActiveSubscription = usage.subscriptionStatus === 'active';
   
   // Check for paid plan using Whop user data
+  // NOTE: company_id is NOT a reliable indicator of paid plans in Whop
+  // Every user gets a company_id, even free users
   const hasPaidPlan = whopUser ? (
     // Check if user has a plan ID (indicates paid subscription)
     (whopUser.plan_id && whopUser.plan_id !== 'free') ||
-    (whopUser.subscription_plan_id && whopUser.subscription_plan_id !== 'free') ||
-    // Check if they have a company_id (indicates they're part of a paid company)
-    (whopUser.company_id && whopUser.company_id !== 'free')
+    (whopUser.subscription_plan_id && whopUser.subscription_plan_id !== 'free')
+    // Removed company_id check - it's not reliable for paid plans
   ) : false;
   
   const hasValidPaidSubscription = hasActiveSubscription && hasPaidPlan;
