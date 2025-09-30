@@ -25,6 +25,8 @@ interface SavedPaymentMethod {
 }
 
 export default function PaymentForm({ planId, planName, price, interval, userId, onSuccess, onCancel }: PaymentFormProps) {
+  console.log('PaymentForm rendered with props:', { planId, planName, price, interval, userId });
+  
   const iframeSdk = useIframeSdk();
   const [savedMethods, setSavedMethods] = useState<SavedPaymentMethod[]>([]);
   const [selectedMethod, setSelectedMethod] = useState<string>('new');
@@ -56,10 +58,13 @@ export default function PaymentForm({ planId, planName, price, interval, userId,
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('PaymentForm handleSubmit called');
     setLoading(true);
     setError(null);
 
     try {
+      console.log('Creating checkout session with:', { planId, userId });
+      
       // Create checkout session with Whop
       const response = await fetch('/api/checkout', {
         method: 'POST',
@@ -74,15 +79,20 @@ export default function PaymentForm({ planId, planName, price, interval, userId,
         })
       });
 
+      console.log('Checkout API response:', response.status, response.statusText);
+
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('Checkout API error:', errorData);
         throw new Error(errorData.error || 'Failed to create charge');
       }
 
       const { checkoutUrl, sessionId } = await response.json();
+      console.log('Received checkout data:', { checkoutUrl, sessionId });
       
       // Redirect to Whop checkout page
       if (checkoutUrl) {
+        console.log('Redirecting to checkout URL:', checkoutUrl);
         window.location.href = checkoutUrl;
       } else {
         throw new Error('No checkout URL received');

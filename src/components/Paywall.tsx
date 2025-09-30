@@ -28,6 +28,11 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
   // Debug logging
   console.log('Paywall received whopUser:', whopUser);
   console.log('Paywall formData initialized with:', formData);
+  console.log('Paywall state:', { 
+    showPaymentForm, 
+    selectedPlan: selectedPlan ? { id: selectedPlan.id, name: selectedPlan.name } : null,
+    plansCount: plans.length 
+  });
 
   useEffect(() => {
     loadUsage();
@@ -84,16 +89,23 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
   };
 
   const handleUpgrade = async (planId: string, planName: string) => {
+    console.log('handleUpgrade called with:', { planId, planName });
+    
     // Find the selected plan
     const plan = plans.find(p => p.id === planId);
+    console.log('Found plan:', plan);
+    
     if (!plan) {
       console.error('Plan not found:', planId);
       return;
     }
 
+    console.log('Setting selected plan and showing payment form');
     // Set the selected plan and show payment form
     setSelectedPlan(plan);
     setShowPaymentForm(true);
+    
+    console.log('Payment form should now be visible');
   };
 
   const handlePaymentSuccess = async () => {

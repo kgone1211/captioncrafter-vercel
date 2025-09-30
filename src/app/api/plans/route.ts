@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { whopSdk } from '@/lib/whop-sdk-official';
 
 export async function GET() {
   try {
