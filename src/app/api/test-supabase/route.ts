@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseDb } from '@/lib/supabase';
+import { supabaseDb, supabase } from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
   try {
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
     
     if (action === 'reset' && userId) {
       // Reset user's usage to 0
-      const { error } = await supabaseDb.supabase
+      const { error } = await supabase
         .from('users')
         .update({ free_captions_used: 0 })
         .eq('id', userId);
