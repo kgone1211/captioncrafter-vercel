@@ -97,10 +97,34 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
 
     console.log('Redirecting to Whop checkout for plan:', planId);
     
-    // For now, redirect to Whop's checkout page
-    // This is a temporary solution until Node.js 22 is supported on Vercel
-    const checkoutUrl = `https://whop.com/checkout/${planId}`;
-    window.open(checkoutUrl, '_blank');
+    // Try different Whop checkout URL formats
+    const checkoutUrls = [
+      `https://whop.com/checkout/${planId}`,
+      `https://whop.com/p/${planId}`,
+      `https://whop.com/access-pass/${planId}`,
+      `https://whop.com/checkout?product=${planId}`
+    ];
+    
+    console.log('Trying checkout URLs:', checkoutUrls);
+    
+    // Try the first URL format
+    const checkoutUrl = checkoutUrls[0];
+    console.log('Opening checkout URL:', checkoutUrl);
+    
+    // Try to open in new tab, fallback to same tab if blocked
+    try {
+      const newWindow = window.open(checkoutUrl, '_blank', 'noopener,noreferrer');
+      if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
+        console.log('Popup blocked, redirecting in same tab');
+        window.location.href = checkoutUrl;
+      } else {
+        console.log('Checkout opened in new tab successfully');
+      }
+    } catch (error) {
+      console.error('Error opening checkout:', error);
+      // Fallback to same tab redirect
+      window.location.href = checkoutUrl;
+    }
   };
 
 
