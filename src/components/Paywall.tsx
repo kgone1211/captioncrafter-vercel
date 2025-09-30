@@ -495,16 +495,6 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
                       <div className="border rounded-lg overflow-hidden bg-white min-h-[600px]">
                         <WhopCheckoutEmbed 
                           planId={selectedPlan.id}
-                          onSuccess={() => {
-                            console.log('✅ Checkout successful!');
-                            alert('Payment successful! Your subscription is now active.');
-                            setShowCheckout(false);
-                            if (onUpgrade) onUpgrade();
-                          }}
-                          onError={(error) => {
-                            console.error('❌ Checkout error:', error);
-                            alert('Payment failed. Please try again.');
-                          }}
                         />
                       </div>
 
