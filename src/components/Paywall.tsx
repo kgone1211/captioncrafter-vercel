@@ -1,18 +1,10 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { WhopUser } from '@/lib/whop-sdk';
+import { WhopCheckoutEmbed } from '@whop/checkout/react';
 
-// Extend Window interface for Whop checkout
-declare global {
-  interface Window {
-    wco?: {
-      injected: boolean;
-      listening: boolean;
-      frames: Map<HTMLElement, () => void>;
-    };
-  }
-}
+// No need for global window interface with React component approach
 
 interface PaywallProps {
   whopUser?: WhopUser;
@@ -31,7 +23,6 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [isCreatingCheckout, setIsCreatingCheckout] = useState(false);
-  const checkoutContainerRef = useRef<HTMLDivElement>(null);
   const [formData, setFormData] = useState({
     name: whopUser?.username || 'User',
     email: whopUser?.email || 'user@example.com',
@@ -50,41 +41,7 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
     loadPlans();
   }, [userId, dbUserId]);
 
-  // Trigger script loading when modal opens and container is ready
-  useEffect(() => {
-    if (showCheckout && selectedPlan && checkoutContainerRef.current) {
-      console.log('🔄 Modal opened, triggering delayed script loading...');
-      // Small delay to ensure DOM is fully rendered
-      setTimeout(() => {
-        console.log('⏰ Delayed script loading triggered');
-        console.log('Container ref still exists:', !!checkoutContainerRef.current);
-        if (checkoutContainerRef.current) {
-          console.log('✅ Container exists, setting data attributes...');
-          checkoutContainerRef.current.setAttribute('data-whop-checkout-plan-id', selectedPlan.id);
-          checkoutContainerRef.current.setAttribute('data-whop-checkout-mounted', 'false');
-          
-          // Load script if not already loaded
-          if (!window.wco) {
-            console.log('📦 Loading Whop script...');
-            const script = document.createElement('script');
-            script.src = 'https://whop.com/embedded/checkout/loader.js';
-            script.async = true;
-            script.defer = true;
-            script.onload = () => {
-              console.log('✅ Whop script loaded successfully');
-              console.log('window.wco after load:', window.wco);
-            };
-            script.onerror = (error) => {
-              console.error('❌ Failed to load Whop script:', error);
-            };
-            document.head.appendChild(script);
-          } else {
-            console.log('✅ Whop script already loaded');
-          }
-        }
-      }, 100);
-    }
-  }, [showCheckout, selectedPlan]);
+  // No need for complex script loading with React component
 
   const loadPlans = async () => {
     try {
@@ -166,84 +123,8 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
     console.log('Setting checkout URL:', checkoutUrl);
     setCheckoutUrl(checkoutUrl);
     
-        // Load Whop checkout script and embed
-        console.log('About to check checkoutContainerRef.current:', checkoutContainerRef.current);
-        if (checkoutContainerRef.current) {
-          console.log('✅ checkoutContainerRef.current exists, proceeding with script loading');
-      try {
-        console.log('Loading Whop checkout script...');
-        
-        // Set data attributes for the checkout container
-        console.log('Setting data attributes on container element');
-        console.log('Container element:', checkoutContainerRef.current);
-        checkoutContainerRef.current.setAttribute('data-whop-checkout-plan-id', planId);
-        checkoutContainerRef.current.setAttribute('data-whop-checkout-mounted', 'false');
-        console.log('Data attributes set:', {
-          'data-whop-checkout-plan-id': checkoutContainerRef.current.getAttribute('data-whop-checkout-plan-id'),
-          'data-whop-checkout-mounted': checkoutContainerRef.current.getAttribute('data-whop-checkout-mounted')
-        });
-        
-        // Load the Whop checkout script if not already loaded
-        console.log('Checking if Whop script is loaded:', !!window.wco);
-        if (!window.wco) {
-          console.log('Loading Whop checkout script from: https://whop.com/embedded/checkout/loader.js');
-          const script = document.createElement('script');
-          script.src = 'https://whop.com/embedded/checkout/loader.js';
-          script.async = true;
-          script.defer = true;
-          script.onload = () => {
-            console.log('✅ Whop checkout script loaded successfully');
-            console.log('window.wco after load:', window.wco);
-            // Hide loading indicator after script loads
-            setTimeout(() => {
-              const loadingEl = document.getElementById('checkout-loading');
-              if (loadingEl) {
-                console.log('Hiding loading indicator');
-                loadingEl.style.display = 'none';
-              }
-            }, 1000);
-          };
-          script.onerror = (error) => {
-            console.error('❌ Failed to load Whop checkout script:', error);
-          };
-          document.head.appendChild(script);
-          console.log('Script element added to document head');
-        } else {
-          console.log('Whop script already loaded, hiding loading indicator');
-          // Script already loaded, just hide loading indicator
-          setTimeout(() => {
-            const loadingEl = document.getElementById('checkout-loading');
-            if (loadingEl) {
-              loadingEl.style.display = 'none';
-            }
-          }, 500);
-        }
-        
-        // Listen for checkout completion messages
-        const handleMessage = (event: MessageEvent) => {
-          if (event.origin !== 'https://whop.com') return;
-          
-          if (event.data?.event === 'checkout_success') {
-            console.log('✅ Checkout successful:', event.data);
-            alert('Payment successful! Your subscription is now active.');
-            setShowCheckout(false);
-            if (onUpgrade) onUpgrade();
-            window.removeEventListener('message', handleMessage);
-          } else if (event.data?.event === 'checkout_error') {
-            console.error('❌ Checkout error:', event.data);
-            alert('Payment failed. Please try again.');
-            window.removeEventListener('message', handleMessage);
-          }
-        };
-        
-        window.addEventListener('message', handleMessage);
-        
-        } catch (error) {
-          console.error('Failed to setup checkout:', error);
-        }
-      } else {
-        console.log('❌ checkoutContainerRef.current is null - modal may not be rendered yet');
-      }
+    // React component will handle the checkout embedding
+    console.log('✅ Using WhopCheckoutEmbed React component for plan:', planId);
   };
 
 
@@ -612,20 +493,19 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
 
                       {/* Whop Checkout Embed Container */}
                       <div className="border rounded-lg overflow-hidden bg-white min-h-[600px]">
-                        <div 
-                          ref={checkoutContainerRef}
-                          id="whop-checkout-container"
-                          className="w-full h-full min-h-[600px]"
+                        <WhopCheckoutEmbed 
+                          planId={selectedPlan.id}
+                          onSuccess={() => {
+                            console.log('✅ Checkout successful!');
+                            alert('Payment successful! Your subscription is now active.');
+                            setShowCheckout(false);
+                            if (onUpgrade) onUpgrade();
+                          }}
+                          onError={(error) => {
+                            console.error('❌ Checkout error:', error);
+                            alert('Payment failed. Please try again.');
+                          }}
                         />
-                        
-                        {/* Loading indicator */}
-                        <div className="absolute inset-0 bg-gray-100 flex items-center justify-center" id="checkout-loading">
-                          <div className="text-center">
-                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                            <p className="text-gray-600">Loading checkout...</p>
-                            <p className="text-xs text-gray-500 mt-2">Plan: {selectedPlan.name}</p>
-                          </div>
-                        </div>
                       </div>
 
                       {/* Payment methods info */}
