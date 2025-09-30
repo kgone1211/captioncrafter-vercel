@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
         fallbackUrls: fallbackUrls,
         sessionId: null,
         fallback: true,
-        error: sdkError.message || 'Failed to create checkout session'
+        error: sdkError instanceof Error ? sdkError.message : 'Failed to create checkout session'
       });
     }
 
