@@ -192,15 +192,15 @@ export class SupabaseDatabase {
       const usage = await this.getUserUsage(userId);
       console.log('Usage for canGenerateCaption:', usage);
       
-      // If user has active subscription, they can always generate
-      if (usage.subscriptionStatus === 'active') {
-        console.log('User has active subscription, allowing generation');
-        return true;
-      }
+      // NOTE: subscriptionStatus === 'active' is NOT reliable for paid plans
+      // Whop sends 'active' even for free users
+      // We need to check for actual paid plan indicators
       
-      // For free users, check if they've used less than 3 captions
+      // For now, treat everyone as free users and check usage limit
+      // TODO: Add proper paid plan detection when we have reliable indicators
       const canGenerate = usage.freeCaptionsUsed < 3;
       console.log('Can generate caption:', canGenerate, '(used:', usage.freeCaptionsUsed, '/3)');
+      console.log('Supabase canGenerateCaption:', canGenerate);
       return canGenerate;
     } catch (error) {
       console.error('Supabase canGenerateCaption error:', error);
