@@ -50,6 +50,42 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
     loadPlans();
   }, [userId, dbUserId]);
 
+  // Trigger script loading when modal opens and container is ready
+  useEffect(() => {
+    if (showCheckout && selectedPlan && checkoutContainerRef.current) {
+      console.log('🔄 Modal opened, triggering delayed script loading...');
+      // Small delay to ensure DOM is fully rendered
+      setTimeout(() => {
+        console.log('⏰ Delayed script loading triggered');
+        console.log('Container ref still exists:', !!checkoutContainerRef.current);
+        if (checkoutContainerRef.current) {
+          console.log('✅ Container exists, setting data attributes...');
+          checkoutContainerRef.current.setAttribute('data-whop-checkout-plan-id', selectedPlan.id);
+          checkoutContainerRef.current.setAttribute('data-whop-checkout-mounted', 'false');
+          
+          // Load script if not already loaded
+          if (!window.wco) {
+            console.log('📦 Loading Whop script...');
+            const script = document.createElement('script');
+            script.src = 'https://whop.com/embedded/checkout/loader.js';
+            script.async = true;
+            script.defer = true;
+            script.onload = () => {
+              console.log('✅ Whop script loaded successfully');
+              console.log('window.wco after load:', window.wco);
+            };
+            script.onerror = (error) => {
+              console.error('❌ Failed to load Whop script:', error);
+            };
+            document.head.appendChild(script);
+          } else {
+            console.log('✅ Whop script already loaded');
+          }
+        }
+      }, 100);
+    }
+  }, [showCheckout, selectedPlan]);
+
   const loadPlans = async () => {
     try {
       console.log('Loading plans from /api/plans...');
@@ -119,18 +155,21 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
 
     console.log('Opening Whop checkout embed for plan:', planId);
     
-    // Set the selected plan and show embedded checkout modal
-    setSelectedPlan(plan);
-    setShowCheckout(true);
-    setIsCreatingCheckout(false);
+        // Set the selected plan and show embedded checkout modal
+        setSelectedPlan(plan);
+        setShowCheckout(true);
+        setIsCreatingCheckout(false);
+        console.log('✅ Modal state updated - showCheckout:', true, 'selectedPlan:', plan.name);
     
     // Set checkout URL for reference
     const checkoutUrl = `https://whop.com/checkout/${planId}/`;
     console.log('Setting checkout URL:', checkoutUrl);
     setCheckoutUrl(checkoutUrl);
     
-    // Load Whop checkout script and embed
-    if (checkoutContainerRef.current) {
+        // Load Whop checkout script and embed
+        console.log('About to check checkoutContainerRef.current:', checkoutContainerRef.current);
+        if (checkoutContainerRef.current) {
+          console.log('✅ checkoutContainerRef.current exists, proceeding with script loading');
       try {
         console.log('Loading Whop checkout script...');
         
@@ -199,10 +238,12 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
         
         window.addEventListener('message', handleMessage);
         
-      } catch (error) {
-        console.error('Failed to setup checkout:', error);
+        } catch (error) {
+          console.error('Failed to setup checkout:', error);
+        }
+      } else {
+        console.log('❌ checkoutContainerRef.current is null - modal may not be rendered yet');
       }
-    }
   };
 
 
