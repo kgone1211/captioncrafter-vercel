@@ -64,6 +64,14 @@ export default function UsageCounter({ userId, className = '', refreshTrigger }:
 
   const remainingFree = Math.max(0, 3 - usage.freeCaptionsUsed);
   
+  // Debug logging
+  console.log('UsageCounter debug:', {
+    usage,
+    remainingFree,
+    subscriptionStatus: usage.subscriptionStatus,
+    freeCaptionsUsed: usage.freeCaptionsUsed
+  });
+  
   // Check if user has active subscription
   const hasActiveSubscription = usage.subscriptionStatus === 'active';
   
@@ -72,6 +80,13 @@ export default function UsageCounter({ userId, className = '', refreshTrigger }:
   
   // Check if subscription needs renewal soon
   const needsRenewalSoon = hasActiveSubscription && usage.daysUntilExpiry !== undefined && usage.daysUntilExpiry <= 7;
+  
+  console.log('UsageCounter logic:', {
+    hasActiveSubscription,
+    isExpired,
+    needsRenewalSoon,
+    daysUntilExpiry: usage.daysUntilExpiry
+  });
 
   if (hasActiveSubscription && !isExpired) {
     return (
