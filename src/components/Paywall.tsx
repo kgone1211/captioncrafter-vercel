@@ -106,6 +106,13 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
     setIsCreatingCheckout(true);
     setShowCheckout(true);
 
+    // Set a timeout to prevent infinite loading
+    const timeoutId = setTimeout(() => {
+      console.log('Checkout creation timeout - using fallback');
+      setIsCreatingCheckout(false);
+      setCheckoutUrl(`https://whop.com/checkout/${planId}`);
+    }, 10000); // 10 second timeout
+
     try {
       // Create checkout session via API
       const response = await fetch('/api/create-checkout', {
@@ -119,12 +126,24 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
         })
       });
 
+      // Clear timeout since we got a response
+      clearTimeout(timeoutId);
+
       if (response.ok) {
         const data = await response.json();
-        console.log('Checkout session created:', data);
-        setCheckoutUrl(data.checkoutUrl);
+        console.log('Checkout session response:', data);
+        
+        if (data.checkoutUrl) {
+          setCheckoutUrl(data.checkoutUrl);
+        } else {
+          console.error('No checkout URL in response:', data);
+          // Fallback to direct URL
+          setCheckoutUrl(`https://whop.com/checkout/${planId}`);
+        }
       } else {
         console.error('Failed to create checkout session:', response.status);
+        const errorData = await response.json().catch(() => ({}));
+        console.error('Error details:', errorData);
         // Fallback to direct URL
         setCheckoutUrl(`https://whop.com/checkout/${planId}`);
       }
@@ -495,7 +514,23 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
               {isCreatingCheckout && (
                 <div className="text-center py-8">
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
-                  <p className="text-gray-600">Creating secure checkout session...</p>
+                  <p className="text-gray-600 mb-4">Creating secure checkout session...</p>
+                  
+                  {/* Immediate fallback option */}
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <p className="text-sm text-blue-800 mb-3">
+                      Taking too long? Use the direct checkout link below:
+                    </p>
+                    <button
+                      onClick={() => {
+                        setIsCreatingCheckout(false);
+                        setCheckoutUrl(`https://whop.com/checkout/${selectedPlan.id}`);
+                      }}
+                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm"
+                    >
+                      Skip to Direct Checkout
+                    </button>
+                  </div>
                 </div>
               )}
 

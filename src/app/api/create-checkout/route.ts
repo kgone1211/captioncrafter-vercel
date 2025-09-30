@@ -15,6 +15,8 @@ export async function POST(request: NextRequest) {
     console.log('Creating checkout session for plan:', planId, 'user:', userId);
     
     try {
+      console.log('Attempting to create Whop checkout session...');
+      
       // Create a checkout session using Whop SDK
       const checkoutSession = await whopSdk.createCheckoutSession({
         planId: planId,
@@ -28,22 +30,30 @@ export async function POST(request: NextRequest) {
         }
       });
 
-      console.log('Checkout session created:', checkoutSession);
+      console.log('Checkout session created successfully:', checkoutSession);
 
       return NextResponse.json({
         checkoutUrl: checkoutSession.url,
-        sessionId: checkoutSession.id
+        sessionId: checkoutSession.id,
+        success: true
       });
 
     } catch (sdkError) {
-      console.error('Whop SDK error:', sdkError);
+      console.error('Whop SDK checkout session creation failed:', sdkError);
       
-      // Fallback: return the direct checkout URL
-      const fallbackUrl = `https://whop.com/checkout/${planId}`;
+      // Provide multiple fallback URLs
+      const fallbackUrls = {
+        primary: `https://whop.com/checkout/${planId}`,
+        alternative: `https://whop.com/p/${planId}`,
+        accessPass: `https://whop.com/access-pass/${planId}`
+      };
+      
       return NextResponse.json({
-        checkoutUrl: fallbackUrl,
+        checkoutUrl: fallbackUrls.primary,
+        fallbackUrls: fallbackUrls,
         sessionId: null,
-        fallback: true
+        fallback: true,
+        error: sdkError.message || 'Failed to create checkout session'
       });
     }
 
