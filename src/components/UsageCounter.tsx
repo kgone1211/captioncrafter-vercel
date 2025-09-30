@@ -79,8 +79,6 @@ export default function UsageCounter({ userId, className = '', refreshTrigger, w
     // Check if user has a plan ID (indicates paid subscription)
     (whopUser.plan_id && whopUser.plan_id !== 'free') ||
     (whopUser.subscription_plan_id && whopUser.subscription_plan_id !== 'free') ||
-    // Check if subscription status is active AND they have billing info
-    (whopUser.subscription_status === 'active' && whopUser.billing_cycle) ||
     // Check if they have a company_id (indicates they're part of a paid company)
     (whopUser.company_id && whopUser.company_id !== 'free')
   ) : false;
@@ -99,7 +97,6 @@ export default function UsageCounter({ userId, className = '', refreshTrigger, w
       plan_id: whopUser.plan_id,
       subscription_plan_id: whopUser.subscription_plan_id,
       subscription_status: whopUser.subscription_status,
-      billing_cycle: whopUser.billing_cycle,
       company_id: whopUser.company_id
     } : null
   });
