@@ -25,7 +25,41 @@ export default function ClientAuthWrapper({
   const [canGenerate, setCanGenerate] = useState<boolean>(fallbackCanGenerate);
   const [loading, setLoading] = useState<boolean>(false);
 
+  // Function to refresh usage status
+  const refreshUsageStatus = async () => {
+    const currentUserId = dbUserId || fallbackDbUserId;
+    if (currentUserId) {
+      try {
+        const canGenResponse = await fetch(`/api/user/can-generate?userId=${currentUserId}`);
+        if (canGenResponse.ok) {
+          const canGenResult = await canGenResponse.json();
+          console.log('Refreshed canGenerate status:', canGenResult.canGenerate);
+          setCanGenerate(canGenResult.canGenerate);
+        }
+      } catch (error) {
+        console.error('Error refreshing usage status:', error);
+      }
+    }
+  };
+
   useEffect(() => {
+    // Always check current usage status regardless of auth method
+    const checkCurrentUsage = async () => {
+      const currentUserId = dbUserId || fallbackDbUserId;
+      if (currentUserId) {
+        try {
+          const canGenResponse = await fetch(`/api/user/can-generate?userId=${currentUserId}`);
+          if (canGenResponse.ok) {
+            const canGenResult = await canGenResponse.json();
+            console.log('Client-side: Updated canGenerate status:', canGenResult.canGenerate);
+            setCanGenerate(canGenResult.canGenerate);
+          }
+        } catch (error) {
+          console.error('Error checking current usage:', error);
+        }
+      }
+    };
+
     // Check for stored OAuth user data first
     const storedUserData = localStorage.getItem('whop_user_data');
     if (storedUserData) {
@@ -71,6 +105,9 @@ export default function ClientAuthWrapper({
         localStorage.removeItem('whop_user_data');
       }
     }
+
+    // Check current usage status for existing user
+    checkCurrentUsage();
 
     // Check for URL parameters on client side
     const clientAuth = getWhopAuthClient();
@@ -223,6 +260,15 @@ export default function ClientAuthWrapper({
     }
   }, [fallbackAuth, fallbackWhopUser, fallbackDbUserId, fallbackCanGenerate]);
 
+  // Periodically check usage status to catch any changes
+  useEffect(() => {
+    const interval = setInterval(() => {
+      refreshUsageStatus();
+    }, 30000); // Check every 30 seconds
+
+    return () => clearInterval(interval);
+  }, [dbUserId, fallbackDbUserId]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center">
@@ -250,5 +296,5 @@ export default function ClientAuthWrapper({
 
   // If user can generate captions, show the app
   console.log('Client-side: Showing main app for user:', whopUser);
-  return <HomeClientPage whopUser={whopUser} dbUserId={dbUserId} />;
+  return <HomeClientPage whopUser={whopUser} dbUserId={dbUserId} onUsageRefresh={refreshUsageStatus} />;
 }

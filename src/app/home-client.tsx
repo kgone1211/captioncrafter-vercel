@@ -13,9 +13,10 @@ import { WhopUser } from '@/lib/whop-sdk';
 interface HomeClientPageProps {
   whopUser: WhopUser;
   dbUserId: number;
+  onUsageRefresh?: () => Promise<void>;
 }
 
-export default function HomeClientPage({ whopUser, dbUserId }: HomeClientPageProps) {
+export default function HomeClientPage({ whopUser, dbUserId, onUsageRefresh }: HomeClientPageProps) {
   const [activeTab, setActiveTab] = useState<'generate' | 'calendar' | 'library'>('generate');
   const [user, setUser] = useState<{ id: number; email: string; username?: string } | null>(null);
   const [stats, setStats] = useState<UserStats | null>(null);
@@ -61,6 +62,14 @@ export default function HomeClientPage({ whopUser, dbUserId }: HomeClientPagePro
       }
     } catch (error) {
       console.error('Stats error:', error);
+    }
+  };
+
+  const handleStatsUpdate = async () => {
+    await loadUserStats(user?.id || dbUserId);
+    // Also refresh usage status to check if paywall should show
+    if (onUsageRefresh) {
+      await onUsageRefresh();
     }
   };
 
@@ -178,8 +187,8 @@ export default function HomeClientPage({ whopUser, dbUserId }: HomeClientPagePro
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {activeTab === 'generate' && <CaptionGenerator userId={user.id} onStatsUpdate={() => loadUserStats(user.id)} whopUser={whopUser} />}
-        {activeTab === 'calendar' && <ContentCalendar userId={user.id} onStatsUpdate={() => loadUserStats(user.id)} />}
+        {activeTab === 'generate' && <CaptionGenerator userId={user.id} onStatsUpdate={handleStatsUpdate} whopUser={whopUser} />}
+        {activeTab === 'calendar' && <ContentCalendar userId={user.id} onStatsUpdate={handleStatsUpdate} />}
         {activeTab === 'library' && <CaptionLibrary userId={user.id} />}
       </main>
 
