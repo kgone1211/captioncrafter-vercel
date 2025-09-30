@@ -1,46 +1,62 @@
-// Test API to check Supabase connection directly
-
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { supabaseDb } from '@/lib/supabase';
 
 export async function GET(request: NextRequest) {
   try {
     console.log('Testing Supabase connection...');
-    console.log('Supabase URL:', process.env.NEXT_PUBLIC_SUPABASE_URL);
-    console.log('Supabase Key present:', !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
     
-    // Test basic connection
-    const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .limit(5);
+    // Test 1: Check if we can connect to Supabase
+    const testUser = await supabaseDb.upsertUser(
+      'test@example.com',
+      'test_whop_user',
+      'inactive',
+      'Test User'
+    );
     
-    if (error) {
-      console.error('Supabase error:', error);
-      return NextResponse.json({
-        success: false,
-        error: error.message,
-        code: error.code,
-        details: error.details,
-        hint: error.hint
-      });
-    }
+    console.log('Test user created/retrieved with ID:', testUser);
     
-    console.log('Supabase connection successful, data:', data);
+    // Test 2: Get user usage
+    const usage = await supabaseDb.getUserUsage(testUser);
+    console.log('Test user usage:', usage);
+    
+    // Test 3: Check if user can generate captions
+    const canGenerate = await supabaseDb.canGenerateCaption(testUser);
+    console.log('Can generate caption:', canGenerate);
+    
+    // Test 4: Get all users
+    const allUsers = await supabaseDb.getAllUsers();
+    console.log('All users:', allUsers);
     
     return NextResponse.json({
       success: true,
-      data: data,
-      count: data?.length || 0,
-      message: 'Supabase connection successful'
+      message: 'Supabase connection successful!',
+      testResults: {
+        testUserId: testUser,
+        usage: usage,
+        canGenerate: canGenerate,
+        totalUsers: allUsers.length,
+        users: allUsers
+      },
+      instructions: [
+        '1. Supabase is now connected and working',
+        '2. Data will persist between server restarts',
+        '3. User subscriptions will be properly tracked',
+        '4. Usage counters will persist across sessions'
+      ]
     });
+    
   } catch (error) {
     console.error('Supabase test error:', error);
     return NextResponse.json(
       { 
-        success: false,
-        error: 'Failed to test Supabase connection',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        success: false, 
+        error: 'Supabase connection failed', 
+        details: error instanceof Error ? error.message : 'Unknown error',
+        instructions: [
+          '1. Make sure to uncomment Supabase URLs in .env.local',
+          '2. Run the SQL schema in Supabase SQL Editor',
+          '3. Check that SUPABASE_SERVICE_ROLE_KEY is correct'
+        ]
       },
       { status: 500 }
     );
