@@ -147,22 +147,6 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
           <p className="text-lg text-gray-600">Unlock the full power of AI-generated captions</p>
         </div>
 
-        {/* User Info */}
-        <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
-          <div className="flex items-center space-x-4">
-            <div className="w-12 h-12 bg-gray-200 rounded-full flex items-center justify-center">
-              <span className="text-lg font-semibold text-gray-600">
-                {(whopUser?.username || whopUser?.email || 'U').charAt(0).toUpperCase()}
-              </span>
-            </div>
-            <div>
-              <h3 className="font-semibold text-gray-900">
-                Welcome, {whopUser?.username || whopUser?.email?.split('@')[0] || 'User'}!
-              </h3>
-              <p className="text-sm text-gray-500">{whopUser?.email || 'user@example.com'}</p>
-            </div>
-          </div>
-        </div>
 
         {/* Subscription Status */}
         <div className="bg-white rounded-xl shadow-sm border p-6 mb-6">
