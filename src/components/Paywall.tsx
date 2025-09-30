@@ -105,43 +105,17 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
       return;
     }
 
-    console.log('Opening direct Whop checkout for plan:', planId);
+    console.log('Opening embedded Whop checkout for plan:', planId);
     
-    // Show immediate alert to confirm function is working
-    alert(`Opening checkout for ${planName} (${planId})`);
-    
-    // Set the selected plan and show checkout options immediately
+    // Set the selected plan and show embedded checkout modal
     setSelectedPlan(plan);
     setShowCheckout(true);
     setIsCreatingCheckout(false);
     
-    // Set checkout URL with trailing slash (confirmed working)
+    // Set checkout URL for embedded iframe
     const checkoutUrl = `https://whop.com/checkout/${planId}/`;
-    console.log('Setting checkout URL:', checkoutUrl);
+    console.log('Setting embedded checkout URL:', checkoutUrl);
     setCheckoutUrl(checkoutUrl);
-    
-    // Try multiple methods to ensure checkout opens
-    console.log('Opening checkout popup immediately...');
-    const popup = window.open(
-      checkoutUrl, 
-      'whop-checkout', 
-      'width=900,height=800,scrollbars=yes,resizable=yes,status=yes,toolbar=no,menubar=no,location=no'
-    );
-    
-    if (popup) {
-      console.log('Popup opened successfully');
-      popup.focus();
-      
-      // Also show a confirmation message
-      setTimeout(() => {
-        alert(`✅ Checkout window opened! If you don't see it, check for a new browser window or tab.\n\nURL: ${checkoutUrl}`);
-      }, 500);
-    } else {
-      console.log('Popup was blocked by browser - opening in new tab');
-      // Fallback: open in new tab
-      window.open(checkoutUrl, '_blank');
-      alert(`⚠️ Popup blocked! Opening checkout in new tab instead.\n\nURL: ${checkoutUrl}`);
-    }
   };
 
 
@@ -498,150 +472,69 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
                 </ul>
               </div>
 
-              {/* Direct Checkout Options */}
-              {checkoutUrl && (
-                <div className="space-y-4">
-                  {/* Embedded iframe */}
-                  <div className="border rounded-lg overflow-hidden">
-                    <iframe
-                      src={checkoutUrl}
-                      width="100%"
-                      height="700"
-                      frameBorder="0"
-                      className="w-full"
-                      title={`Checkout for ${selectedPlan.name}`}
-                      sandbox="allow-scripts allow-forms allow-same-origin allow-top-navigation allow-popups allow-popups-to-escape-sandbox allow-presentation"
-                      allow="payment; fullscreen"
-                      loading="lazy"
-                    />
-                  </div>
+                  {/* Embedded Checkout */}
+                  {checkoutUrl && (
+                    <div className="space-y-4">
+                      <div className="text-center mb-4">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">Complete Your Subscription</h3>
+                        <p className="text-sm text-gray-600">
+                          Complete your payment securely below to unlock unlimited captions.
+                        </p>
+                      </div>
 
-                  {/* Primary checkout options */}
-                  <div className="space-y-4">
-                    <div className="text-center">
-                      <h3 className="text-lg font-semibold text-gray-900 mb-2">Complete Your Subscription</h3>
-                      <p className="text-sm text-gray-600 mb-4">
-                        Choose the best option for you to complete your payment:
-                      </p>
-                    </div>
-                    
-                    {/* Primary popup button */}
-                    <div className="text-center">
-                      <button
-                        onClick={() => {
-                          // Try multiple checkout URL formats
-                          const urls = [
-                            `https://whop.com/checkout/${selectedPlan.id}/`,
-                            `https://whop.com/checkout/${selectedPlan.id}`,
-                            `https://whop.com/p/${selectedPlan.id}`,
-                            `https://whop.com/access-pass/${selectedPlan.id}`,
-                            `https://whop.com/checkout?product_id=${selectedPlan.id}`
-                          ];
-                          
-                          console.log('Opening checkout with URLs:', urls);
-                          console.log('Selected plan:', selectedPlan);
-                          console.log('Plan ID:', selectedPlan.id);
-                          
-                          // Show alert to confirm button click
-                          alert(`Opening checkout for ${selectedPlan.name} (${selectedPlan.id})`);
-                          
-                          // Try the first URL
-                          const primaryUrl = urls[0];
-                          console.log('Opening primary URL:', primaryUrl);
-                          
-                          const popup = window.open(
-                            primaryUrl, 
-                            'whop-checkout', 
-                            'width=900,height=800,scrollbars=yes,resizable=yes,status=yes,toolbar=no,menubar=no,location=no'
-                          );
-                          
-                          if (popup) {
-                            console.log('Popup opened successfully');
-                            popup.focus();
-                            
-                            // Check if popup was blocked or failed to load
-                            setTimeout(() => {
-                              if (popup.closed) {
-                                console.log('Popup was blocked, trying alternative URL');
-                                const altUrl = urls[1];
-                                console.log('Opening alternative URL:', altUrl);
-                                window.open(altUrl, '_blank');
-                              } else {
-                                console.log('Popup is still open');
-                              }
-                            }, 1000);
-                          } else {
-                            console.log('Popup was blocked by browser');
-                            // Try opening in new tab as fallback
-                            console.log('Opening in new tab:', primaryUrl);
-                            window.open(primaryUrl, '_blank');
-                          }
-                        }}
-                        className="w-full bg-blue-600 text-white px-6 py-4 rounded-lg hover:bg-blue-700 transition-colors font-semibold text-lg"
-                      >
-                        🚀 Complete Subscription (Recommended)
-                      </button>
-                      <p className="text-xs text-gray-500 mt-2">
-                        Opens in a secure popup window - best for payment processing
-                      </p>
-                    </div>
-                    
-                    {/* Alternative options */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                      <button
-                        onClick={() => window.open(checkoutUrl, '_blank')}
-                        className="bg-gray-100 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium"
-                      >
-                        Open in New Tab
-                      </button>
-                      
-                      <button
-                        onClick={() => {
-                          navigator.clipboard.writeText(checkoutUrl);
-                          alert('Checkout link copied to clipboard!');
-                        }}
-                        className="bg-gray-100 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium"
-                      >
-                        Copy Link
-                      </button>
-                    </div>
-                    
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                      <h4 className="font-semibold text-blue-900 mb-2">💳 Payment Methods Accepted:</h4>
-                      <div className="flex flex-wrap gap-2 text-sm text-blue-800">
-                        <span className="bg-white px-2 py-1 rounded">Credit Cards</span>
-                        <span className="bg-white px-2 py-1 rounded">Debit Cards</span>
-                        <span className="bg-white px-2 py-1 rounded">PayPal</span>
-                        <span className="bg-white px-2 py-1 rounded">Apple Pay</span>
-                        <span className="bg-white px-2 py-1 rounded">Google Pay</span>
+                      {/* Embedded iframe */}
+                      <div className="border rounded-lg overflow-hidden bg-white">
+                        <iframe
+                          src={checkoutUrl}
+                          width="100%"
+                          height="600"
+                          frameBorder="0"
+                          className="w-full"
+                          title={`Checkout for ${selectedPlan.name}`}
+                          sandbox="allow-scripts allow-forms allow-same-origin allow-top-navigation allow-popups allow-popups-to-escape-sandbox allow-presentation allow-payment"
+                          allow="payment; fullscreen; microphone; camera"
+                          loading="lazy"
+                          onLoad={() => console.log('Checkout iframe loaded successfully')}
+                          onError={(e) => console.error('Checkout iframe failed to load:', e)}
+                        />
+                      </div>
+
+                      {/* Payment methods info */}
+                      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h4 className="font-semibold text-blue-900 mb-2">💳 Secure Payment Methods:</h4>
+                        <div className="flex flex-wrap gap-2 text-sm text-blue-800">
+                          <span className="bg-white px-2 py-1 rounded">Credit Cards</span>
+                          <span className="bg-white px-2 py-1 rounded">Debit Cards</span>
+                          <span className="bg-white px-2 py-1 rounded">PayPal</span>
+                          <span className="bg-white px-2 py-1 rounded">Apple Pay</span>
+                          <span className="bg-white px-2 py-1 rounded">Google Pay</span>
+                        </div>
+                        <p className="text-xs text-blue-700 mt-2">
+                          Your payment is processed securely by Whop. No payment information is stored on our servers.
+                        </p>
+                      </div>
+
+                      {/* Fallback options */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <button
+                          onClick={() => window.open(checkoutUrl, '_blank')}
+                          className="bg-gray-100 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                        >
+                          Open in New Tab
+                        </button>
+                        
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(checkoutUrl);
+                            alert('Checkout link copied to clipboard!');
+                          }}
+                          className="bg-gray-100 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                        >
+                          Copy Link
+                        </button>
                       </div>
                     </div>
-
-                    {/* Debug Information */}
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                      <h4 className="font-semibold text-gray-900 mb-2">🔧 Debug Information:</h4>
-                      <div className="text-sm text-gray-600 space-y-1">
-                        <p><strong>Plan ID:</strong> {selectedPlan.id}</p>
-                        <p><strong>Primary URL:</strong> {checkoutUrl}</p>
-                        <p><strong>Alternative URLs:</strong></p>
-                        <ul className="ml-4 space-y-1">
-                          <li>• https://whop.com/checkout/{selectedPlan.id}/ (with trailing slash)</li>
-                          <li>• https://whop.com/checkout/{selectedPlan.id}</li>
-                          <li>• https://whop.com/p/{selectedPlan.id}</li>
-                          <li>• https://whop.com/access-pass/{selectedPlan.id}</li>
-                          <li>• https://whop.com/checkout?product_id={selectedPlan.id}</li>
-                        </ul>
-                      </div>
-                      <button
-                        onClick={() => window.open(`/api/test-checkout?planId=${selectedPlan.id}`, '_blank')}
-                        className="mt-2 text-xs bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300"
-                      >
-                        Test All URLs
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
+                  )}
             </div>
           </div>
         </div>
