@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { WhopUser } from '@/lib/whop-sdk';
-import PaymentForm from './PaymentForm';
 
 interface PaywallProps {
   whopUser?: WhopUser;
@@ -17,8 +16,6 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
   const [usage, setUsage] = useState<{ freeCaptionsUsed: number; subscriptionStatus: string } | null>(null);
   const [showSubscriptionForm, setShowSubscriptionForm] = useState(false);
   const [plans, setPlans] = useState<any[]>([]);
-  const [showPaymentForm, setShowPaymentForm] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [formData, setFormData] = useState({
     name: whopUser?.username || 'User',
     email: whopUser?.email || 'user@example.com',
@@ -29,8 +26,6 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
   console.log('Paywall received whopUser:', whopUser);
   console.log('Paywall formData initialized with:', formData);
   console.log('Paywall state:', { 
-    showPaymentForm, 
-    selectedPlan: selectedPlan ? { id: selectedPlan.id, name: selectedPlan.name } : null,
     plansCount: plans.length 
   });
 
@@ -100,46 +95,58 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
       return;
     }
 
-    console.log('Setting selected plan and showing payment form');
-    // Set the selected plan and show payment form
-    setSelectedPlan(plan);
-    setShowPaymentForm(true);
+    console.log('Creating checkout session and redirecting to Whop...');
     
-    console.log('Payment form should now be visible');
-  };
-
-  const handlePaymentSuccess = async () => {
     try {
-      // Close payment form
-      setShowPaymentForm(false);
-      
-      // Show success message
-      alert('Payment successful! Your subscription has been activated.');
-      
-      // Call onUpgrade callback to refresh the app
-      if (onUpgrade) {
-        onUpgrade();
+      // Create checkout session and redirect directly to Whop
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          planId,
+          userId: userId || dbUserId || (whopUser?.id ? parseInt(whopUser.id.toString()) : 1),
+          successUrl: `${window.location.origin}/success`,
+          cancelUrl: `${window.location.origin}/cancel`
+        })
+      });
+
+      console.log('Checkout API response:', response.status, response.statusText);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Checkout API error:', errorData);
+        alert('Failed to create checkout session: ' + (errorData.error || 'Unknown error'));
+        return;
       }
+
+      const { checkoutUrl, sessionId } = await response.json();
+      console.log('Received checkout URL:', checkoutUrl);
+      
+      // Redirect directly to Whop checkout page
+      if (checkoutUrl) {
+        console.log('Redirecting to Whop checkout:', checkoutUrl);
+        window.location.href = checkoutUrl;
+      } else {
+        throw new Error('No checkout URL received');
+      }
+      
     } catch (error) {
-      console.error('Error handling payment success:', error);
+      console.error('Error creating checkout session:', error);
+      alert('Error creating checkout session: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
   };
 
-  const handlePaymentCancel = () => {
-    setShowPaymentForm(false);
-    setSelectedPlan(null);
-  };
 
   const handleSubscriptionForm = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading('form');
     
     try {
-      // Here you would typically send the form data to your backend
-      // which would then create a Whop subscription
       console.log('Subscription form submitted:', formData);
       
-      // For now, redirect to Whop checkout
+      // Redirect to Whop checkout
       const planId = formData.plan === 'basic' ? 'prod_OAeju0utHppI2' : 'prod_xcU9zERSGgyNK';
       await handleUpgrade(planId, formData.plan === 'basic' ? 'Basic Plan' : 'Premium Plan');
     } catch (error) {
@@ -151,19 +158,6 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
-      {/* Payment Form Modal */}
-      {showPaymentForm && selectedPlan && (
-        <PaymentForm
-          planId={selectedPlan.id}
-          planName={selectedPlan.name}
-          price={selectedPlan.price}
-          interval={selectedPlan.interval}
-          userId={userId || dbUserId || (whopUser?.id ? parseInt(whopUser.id.toString()) : 1)}
-          onSuccess={handlePaymentSuccess}
-          onCancel={handlePaymentCancel}
-        />
-      )}
-      
       <div className="max-w-2xl w-full relative">
         {/* Close Button */}
         {onClose && (
