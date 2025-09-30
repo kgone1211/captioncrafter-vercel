@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { WhopSDKWithAccess } from '@/lib/whop-sdk';
+import { whopSdk } from '@/lib/whop-sdk';
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,14 +13,11 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('Creating checkout session for plan:', planId, 'user:', userId);
-
-    // Initialize Whop SDK
-    const whopSdk = new WhopSDKWithAccess();
     
     try {
       // Create a checkout session using Whop SDK
       const checkoutSession = await whopSdk.createCheckoutSession({
-        productId: planId,
+        planId: planId,
         userId: userId,
         successUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://captioncrafter-vercel.vercel.app'}/checkout/success`,
         cancelUrl: `${process.env.NEXT_PUBLIC_APP_URL || 'https://captioncrafter-vercel.vercel.app'}/checkout/cancel`
