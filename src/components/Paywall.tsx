@@ -593,7 +593,7 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
                       {/* Fallback options */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <button
-                          onClick={() => window.open(checkoutUrl, '_blank')}
+                          onClick={() => checkoutUrl && window.open(checkoutUrl, '_blank')}
                           className="bg-gray-100 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium"
                         >
                           Open in New Tab
