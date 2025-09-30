@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { WhopUser } from '@/lib/whop-sdk';
+import { WhopCheckoutEmbed } from '@whop/checkout';
 
 interface PaywallProps {
   whopUser?: WhopUser;
@@ -20,6 +21,7 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [isCreatingCheckout, setIsCreatingCheckout] = useState(false);
+  const checkoutContainerRef = useRef<HTMLDivElement>(null);
   const [formData, setFormData] = useState({
     name: whopUser?.username || 'User',
     email: whopUser?.email || 'user@example.com',
@@ -105,17 +107,53 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
       return;
     }
 
-    console.log('Opening embedded Whop checkout for plan:', planId);
+    console.log('Opening Whop checkout embed for plan:', planId);
     
     // Set the selected plan and show embedded checkout modal
     setSelectedPlan(plan);
     setShowCheckout(true);
     setIsCreatingCheckout(false);
     
-    // Set checkout URL for embedded iframe
+    // Set checkout URL for reference
     const checkoutUrl = `https://whop.com/checkout/${planId}/`;
-    console.log('Setting embedded checkout URL:', checkoutUrl);
+    console.log('Setting checkout URL:', checkoutUrl);
     setCheckoutUrl(checkoutUrl);
+    
+    // Embed the Whop checkout using the proper SDK
+    if (checkoutContainerRef.current) {
+      try {
+        console.log('Embedding Whop checkout...');
+        WhopCheckoutEmbed.embed({
+          element: checkoutContainerRef.current,
+          planId: planId,
+          onSuccess: (data: any) => {
+            console.log('✅ Checkout successful:', data);
+            // Hide loading indicator
+            const loadingEl = document.getElementById('checkout-loading');
+            if (loadingEl) {
+              loadingEl.style.display = 'none';
+            }
+            alert('Payment successful! Your subscription is now active.');
+            setShowCheckout(false);
+            if (onUpgrade) onUpgrade();
+          },
+          onError: (error: any) => {
+            console.error('❌ Checkout error:', error);
+            alert('Payment failed. Please try again.');
+          }
+        });
+        
+        // Hide loading indicator after 3 seconds as fallback
+        setTimeout(() => {
+          const loadingEl = document.getElementById('checkout-loading');
+          if (loadingEl) {
+            loadingEl.style.display = 'none';
+          }
+        }, 3000);
+      } catch (error) {
+        console.error('Failed to embed checkout:', error);
+      }
+    }
   };
 
 
@@ -472,8 +510,8 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
                 </ul>
               </div>
 
-                  {/* Embedded Checkout */}
-                  {checkoutUrl && (
+                  {/* Whop Checkout Embed */}
+                  {selectedPlan && (
                     <div className="space-y-4">
                       <div className="text-center mb-4">
                         <h3 className="text-lg font-semibold text-gray-900 mb-2">Complete Your Subscription</h3>
@@ -482,39 +520,20 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
                         </p>
                       </div>
 
-                      {/* Embedded iframe */}
-                      <div className="border rounded-lg overflow-hidden bg-white relative">
-                        <iframe
-                          src={checkoutUrl}
-                          width="100%"
-                          height="600"
-                          frameBorder="0"
-                          className="w-full"
-                          title={`Checkout for ${selectedPlan.name}`}
-                          sandbox="allow-scripts allow-forms allow-same-origin allow-top-navigation allow-popups allow-popups-to-escape-sandbox allow-presentation allow-payment allow-modals"
-                          allow="payment; fullscreen; microphone; camera"
-                          loading="lazy"
-                          onLoad={() => {
-                            console.log('✅ Checkout iframe loaded successfully');
-                            console.log('Checkout URL:', checkoutUrl);
-                            // Hide loading indicator
-                            const loadingEl = document.getElementById('iframe-loading');
-                            if (loadingEl) {
-                              loadingEl.style.display = 'none';
-                            }
-                          }}
-                          onError={(e) => {
-                            console.error('❌ Checkout iframe failed to load:', e);
-                            console.error('Failed URL:', checkoutUrl);
-                          }}
+                      {/* Whop Checkout Embed Container */}
+                      <div className="border rounded-lg overflow-hidden bg-white min-h-[600px]">
+                        <div 
+                          ref={checkoutContainerRef}
+                          id="whop-checkout-container"
+                          className="w-full h-full min-h-[600px]"
                         />
                         
                         {/* Loading indicator */}
-                        <div className="absolute inset-0 bg-gray-100 flex items-center justify-center" id="iframe-loading">
+                        <div className="absolute inset-0 bg-gray-100 flex items-center justify-center" id="checkout-loading">
                           <div className="text-center">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
                             <p className="text-gray-600">Loading checkout...</p>
-                            <p className="text-xs text-gray-500 mt-2">URL: {checkoutUrl}</p>
+                            <p className="text-xs text-gray-500 mt-2">Plan: {selectedPlan.name}</p>
                           </div>
                         </div>
                       </div>
@@ -545,7 +564,7 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
                         
                         <button
                           onClick={() => {
-                            navigator.clipboard.writeText(checkoutUrl);
+                            navigator.clipboard.writeText(checkoutUrl || '');
                             alert('Checkout link copied to clipboard!');
                           }}
                           className="bg-gray-100 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium"
