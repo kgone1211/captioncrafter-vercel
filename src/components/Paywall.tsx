@@ -2,7 +2,17 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { WhopUser } from '@/lib/whop-sdk';
-import { WhopCheckoutEmbed } from '@whop/checkout';
+
+// Extend Window interface for Whop checkout
+declare global {
+  interface Window {
+    wco?: {
+      injected: boolean;
+      listening: boolean;
+      frames: Map<HTMLElement, () => void>;
+    };
+  }
+}
 
 interface PaywallProps {
   whopUser?: WhopUser;
@@ -119,39 +129,66 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
     console.log('Setting checkout URL:', checkoutUrl);
     setCheckoutUrl(checkoutUrl);
     
-    // Embed the Whop checkout using the proper SDK
+    // Load Whop checkout script and embed
     if (checkoutContainerRef.current) {
       try {
-        console.log('Embedding Whop checkout...');
-        WhopCheckoutEmbed.embed({
-          element: checkoutContainerRef.current,
-          planId: planId,
-          onSuccess: (data: any) => {
-            console.log('✅ Checkout successful:', data);
-            // Hide loading indicator
+        console.log('Loading Whop checkout script...');
+        
+        // Set data attributes for the checkout container
+        checkoutContainerRef.current.setAttribute('data-whop-checkout-plan-id', planId);
+        checkoutContainerRef.current.setAttribute('data-whop-checkout-mounted', 'false');
+        
+        // Load the Whop checkout script if not already loaded
+        if (!window.wco) {
+          const script = document.createElement('script');
+          script.src = 'https://whop.com/embedded/checkout/loader.js';
+          script.async = true;
+          script.defer = true;
+          script.onload = () => {
+            console.log('✅ Whop checkout script loaded');
+            // Hide loading indicator after script loads
+            setTimeout(() => {
+              const loadingEl = document.getElementById('checkout-loading');
+              if (loadingEl) {
+                loadingEl.style.display = 'none';
+              }
+            }, 1000);
+          };
+          script.onerror = () => {
+            console.error('❌ Failed to load Whop checkout script');
+          };
+          document.head.appendChild(script);
+        } else {
+          // Script already loaded, just hide loading indicator
+          setTimeout(() => {
             const loadingEl = document.getElementById('checkout-loading');
             if (loadingEl) {
               loadingEl.style.display = 'none';
             }
+          }, 500);
+        }
+        
+        // Listen for checkout completion messages
+        const handleMessage = (event: MessageEvent) => {
+          if (event.origin !== 'https://whop.com') return;
+          
+          if (event.data?.event === 'checkout_success') {
+            console.log('✅ Checkout successful:', event.data);
             alert('Payment successful! Your subscription is now active.');
             setShowCheckout(false);
             if (onUpgrade) onUpgrade();
-          },
-          onError: (error: any) => {
-            console.error('❌ Checkout error:', error);
+            window.removeEventListener('message', handleMessage);
+          } else if (event.data?.event === 'checkout_error') {
+            console.error('❌ Checkout error:', event.data);
             alert('Payment failed. Please try again.');
+            window.removeEventListener('message', handleMessage);
           }
-        });
+        };
         
-        // Hide loading indicator after 3 seconds as fallback
-        setTimeout(() => {
-          const loadingEl = document.getElementById('checkout-loading');
-          if (loadingEl) {
-            loadingEl.style.display = 'none';
-          }
-        }, 3000);
+        window.addEventListener('message', handleMessage);
+        
       } catch (error) {
-        console.error('Failed to embed checkout:', error);
+        console.error('Failed to setup checkout:', error);
       }
     }
   };
