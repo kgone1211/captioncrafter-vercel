@@ -18,6 +18,8 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
   const [plans, setPlans] = useState<any[]>([]);
   const [showCheckout, setShowCheckout] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
+  const [isCreatingCheckout, setIsCreatingCheckout] = useState(false);
   const [formData, setFormData] = useState({
     name: whopUser?.username || 'User',
     email: whopUser?.email || 'user@example.com',
@@ -97,11 +99,42 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
       return;
     }
 
-    console.log('Showing embedded checkout for plan:', planId);
+    console.log('Creating checkout session for plan:', planId);
     
-    // Set the selected plan and show embedded checkout
+    // Set the selected plan and show loading
     setSelectedPlan(plan);
+    setIsCreatingCheckout(true);
     setShowCheckout(true);
+
+    try {
+      // Create checkout session via API
+      const response = await fetch('/api/create-checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          planId: planId,
+          userId: whopUser?.id || userId || dbUserId
+        })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        console.log('Checkout session created:', data);
+        setCheckoutUrl(data.checkoutUrl);
+      } else {
+        console.error('Failed to create checkout session:', response.status);
+        // Fallback to direct URL
+        setCheckoutUrl(`https://whop.com/checkout/${planId}`);
+      }
+    } catch (error) {
+      console.error('Error creating checkout session:', error);
+      // Fallback to direct URL
+      setCheckoutUrl(`https://whop.com/checkout/${planId}`);
+    } finally {
+      setIsCreatingCheckout(false);
+    }
   };
 
 
@@ -458,54 +491,44 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
                 </ul>
               </div>
 
-              {/* Checkout Options */}
-              <div className="space-y-4">
-                {/* Primary checkout button */}
-                <div className="text-center">
-                  <button
-                    onClick={() => {
-                      const checkoutUrl = `https://whop.com/checkout/${selectedPlan.id}`;
-                      window.open(checkoutUrl, '_blank');
-                    }}
-                    className="w-full bg-blue-600 text-white px-6 py-4 rounded-lg font-semibold text-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Complete Subscription - ${selectedPlan.price}/{selectedPlan.interval === 'month' ? 'month' : 'year'}
-                  </button>
+              {/* Loading State */}
+              {isCreatingCheckout && (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-4"></div>
+                  <p className="text-gray-600">Creating secure checkout session...</p>
                 </div>
+              )}
 
-                {/* Alternative checkout methods */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  <button
-                    onClick={() => {
-                      const checkoutUrl = `https://whop.com/p/${selectedPlan.id}`;
-                      window.open(checkoutUrl, '_blank');
-                    }}
-                    className="bg-gray-100 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-200 transition-colors"
-                  >
-                    Alternative Checkout Link
-                  </button>
-                  <button
-                    onClick={() => {
-                      const checkoutUrl = `https://whop.com/access-pass/${selectedPlan.id}`;
-                      window.open(checkoutUrl, '_blank');
-                    }}
-                    className="bg-gray-100 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-200 transition-colors"
-                  >
-                    Access Pass Link
-                  </button>
-                </div>
+              {/* Embedded Checkout */}
+              {!isCreatingCheckout && checkoutUrl && (
+                <div className="space-y-4">
+                  {/* Embedded iframe */}
+                  <div className="border rounded-lg overflow-hidden">
+                    <iframe
+                      src={checkoutUrl}
+                      width="100%"
+                      height="600"
+                      frameBorder="0"
+                      className="w-full"
+                      title={`Checkout for ${selectedPlan.name}`}
+                      sandbox="allow-scripts allow-forms allow-same-origin allow-top-navigation"
+                    />
+                  </div>
 
-                {/* Instructions */}
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h4 className="font-semibold text-blue-900 mb-2">How to Subscribe:</h4>
-                  <ol className="text-sm text-blue-800 space-y-1 list-decimal list-inside">
-                    <li>Click the "Complete Subscription" button above</li>
-                    <li>You'll be redirected to Whop's secure checkout</li>
-                    <li>Complete your payment information</li>
-                    <li>Return to this app to start using your subscription</li>
-                  </ol>
+                  {/* Fallback button */}
+                  <div className="text-center">
+                    <p className="text-sm text-gray-500 mb-3">
+                      Having trouble with the embedded checkout?
+                    </p>
+                    <button
+                      onClick={() => window.open(checkoutUrl, '_blank')}
+                      className="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+                    >
+                      Open Checkout in New Tab
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>
