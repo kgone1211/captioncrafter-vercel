@@ -107,21 +107,33 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
 
     console.log('Opening direct Whop checkout for plan:', planId);
     
+    // Show immediate alert to confirm function is working
+    alert(`Opening checkout for ${planName} (${planId})`);
+    
     // Set the selected plan and show checkout options immediately
     setSelectedPlan(plan);
     setShowCheckout(true);
     setIsCreatingCheckout(false);
     
-    // Set multiple checkout URL options to try
-    const checkoutOptions = [
-      `https://whop.com/checkout/${planId}`,
-      `https://whop.com/p/${planId}`,
-      `https://whop.com/access-pass/${planId}`,
-      `https://whop.com/checkout?product_id=${planId}`
-    ];
+    // Set checkout URL with trailing slash (confirmed working)
+    const checkoutUrl = `https://whop.com/checkout/${planId}/`;
+    console.log('Setting checkout URL:', checkoutUrl);
+    setCheckoutUrl(checkoutUrl);
     
-    // Use the first option as primary
-    setCheckoutUrl(checkoutOptions[0]);
+    // Also try opening immediately as a test
+    console.log('Opening checkout popup immediately...');
+    const popup = window.open(
+      checkoutUrl, 
+      'whop-checkout', 
+      'width=900,height=800,scrollbars=yes,resizable=yes,status=yes,toolbar=no,menubar=no,location=no'
+    );
+    
+    if (popup) {
+      console.log('Popup opened successfully');
+      popup.focus();
+    } else {
+      console.log('Popup was blocked by browser');
+    }
   };
 
 
