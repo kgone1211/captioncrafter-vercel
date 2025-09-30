@@ -16,6 +16,8 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
   const [usage, setUsage] = useState<{ freeCaptionsUsed: number; subscriptionStatus: string } | null>(null);
   const [showSubscriptionForm, setShowSubscriptionForm] = useState(false);
   const [plans, setPlans] = useState<any[]>([]);
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [formData, setFormData] = useState({
     name: whopUser?.username || 'User',
     email: whopUser?.email || 'user@example.com',
@@ -95,36 +97,11 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
       return;
     }
 
-    console.log('Redirecting to Whop checkout for plan:', planId);
+    console.log('Showing embedded checkout for plan:', planId);
     
-    // Try different Whop checkout URL formats
-    const checkoutUrls = [
-      `https://whop.com/checkout/${planId}`,
-      `https://whop.com/p/${planId}`,
-      `https://whop.com/access-pass/${planId}`,
-      `https://whop.com/checkout?product=${planId}`
-    ];
-    
-    console.log('Trying checkout URLs:', checkoutUrls);
-    
-    // Try the first URL format
-    const checkoutUrl = checkoutUrls[0];
-    console.log('Opening checkout URL:', checkoutUrl);
-    
-    // Try to open in new tab, fallback to same tab if blocked
-    try {
-      const newWindow = window.open(checkoutUrl, '_blank', 'noopener,noreferrer');
-      if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
-        console.log('Popup blocked, redirecting in same tab');
-        window.location.href = checkoutUrl;
-      } else {
-        console.log('Checkout opened in new tab successfully');
-      }
-    } catch (error) {
-      console.error('Error opening checkout:', error);
-      // Fallback to same tab redirect
-      window.location.href = checkoutUrl;
-    }
+    // Set the selected plan and show embedded checkout
+    setSelectedPlan(plan);
+    setShowCheckout(true);
   };
 
 
@@ -445,6 +422,73 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
           </p>
         </div>
       </div>
+
+      {/* Embedded Checkout Modal */}
+      {showCheckout && selectedPlan && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden">
+            {/* Modal Header */}
+            <div className="flex items-center justify-between p-6 border-b">
+              <div>
+                <h2 className="text-2xl font-bold text-gray-900">Complete Your Subscription</h2>
+                <p className="text-gray-600">You're subscribing to the {selectedPlan.name}</p>
+              </div>
+              <button
+                onClick={() => setShowCheckout(false)}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {/* Embedded Checkout */}
+            <div className="p-6">
+              <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                <h3 className="font-semibold text-gray-900 mb-2">{selectedPlan.name}</h3>
+                <div className="text-2xl font-bold text-gray-900 mb-2">
+                  ${selectedPlan.price}/{selectedPlan.interval === 'month' ? 'month' : selectedPlan.interval === 'year' ? 'year' : 'one-time'}
+                </div>
+                <p className="text-sm text-gray-600 mb-3">{selectedPlan.description}</p>
+                <ul className="text-sm text-gray-600 space-y-1">
+                  {selectedPlan.features.map((feature: string, index: number) => (
+                    <li key={index}>• {feature}</li>
+                  ))}
+                </ul>
+              </div>
+
+              {/* Whop Checkout Embed */}
+              <div className="border rounded-lg overflow-hidden">
+                <iframe
+                  src={`https://whop.com/checkout/${selectedPlan.id}?embed=true`}
+                  width="100%"
+                  height="600"
+                  frameBorder="0"
+                  className="w-full"
+                  title={`Checkout for ${selectedPlan.name}`}
+                />
+              </div>
+
+              {/* Fallback if iframe doesn't work */}
+              <div className="mt-4 text-center">
+                <p className="text-sm text-gray-500 mb-3">
+                  Having trouble with the checkout? 
+                </p>
+                <button
+                  onClick={() => {
+                    const checkoutUrl = `https://whop.com/checkout/${selectedPlan.id}`;
+                    window.open(checkoutUrl, '_blank');
+                  }}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Open Checkout in New Tab
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
