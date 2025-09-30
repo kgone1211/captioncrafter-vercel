@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { WhopUser } from '@/lib/whop-sdk';
+import { WhopCheckout } from '@whop/checkout';
 
 interface PaywallProps {
   whopUser?: WhopUser;
@@ -95,46 +96,40 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
       return;
     }
 
-    console.log('Creating checkout session and redirecting to Whop...');
+    console.log('Starting Whop checkout for plan:', planId);
     
     try {
-      // Create checkout session and redirect directly to Whop
-      const response = await fetch('/api/checkout', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          planId,
-          userId: userId || dbUserId || (whopUser?.id ? parseInt(whopUser.id.toString()) : 1),
-          successUrl: `${window.location.origin}/success`,
-          cancelUrl: `${window.location.origin}/cancel`
-        })
-      });
-
-      console.log('Checkout API response:', response.status, response.statusText);
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Checkout API error:', errorData);
-        alert('Failed to create checkout session: ' + (errorData.error || 'Unknown error'));
-        return;
+      // Use Whop checkout embed instead of API
+      const checkoutContainer = document.getElementById('whop-checkout-container');
+      if (!checkoutContainer) {
+        throw new Error('Checkout container not found');
       }
-
-      const { checkoutUrl, sessionId } = await response.json();
-      console.log('Received checkout URL:', checkoutUrl);
       
-      // Redirect directly to Whop checkout page
-      if (checkoutUrl) {
-        console.log('Redirecting to Whop checkout:', checkoutUrl);
-        window.location.href = checkoutUrl;
-      } else {
-        throw new Error('No checkout URL received');
-      }
+      // Clear any existing checkout
+      checkoutContainer.innerHTML = '';
+      
+      // Embed Whop checkout
+      await WhopCheckout.embed({
+        element: '#whop-checkout-container',
+        planId: planId,
+        onSuccess: (result: any) => {
+          console.log('Checkout successful:', result);
+          if (onUpgrade) {
+            onUpgrade();
+          }
+        },
+        onError: (error: any) => {
+          console.error('Checkout error:', error);
+          alert('Checkout failed: ' + (error.message || 'Unknown error'));
+        },
+        onCancel: () => {
+          console.log('Checkout cancelled');
+        }
+      });
       
     } catch (error) {
-      console.error('Error creating checkout session:', error);
-      alert('Error creating checkout session: ' + (error instanceof Error ? error.message : 'Unknown error'));
+      console.error('Error starting checkout:', error);
+      alert('Error starting checkout: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
   };
 
@@ -365,6 +360,9 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
               )}
             </div>
           ) : null}
+          
+          {/* Whop Checkout Container */}
+          <div id="whop-checkout-container" className="mt-6"></div>
         </div>
 
         {/* Subscription Form */}
