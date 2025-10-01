@@ -235,7 +235,7 @@ export class SupabaseDatabase {
           topic,
           tone,
           text,
-          hashtags: hashtags.join(','),
+          hashtags: hashtags,
           char_count: charCount
         })
         .select('id')
