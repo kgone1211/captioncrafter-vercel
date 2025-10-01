@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseDb } from '@/lib/supabase';
+import { supabase } from '@/lib/supabase';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,17 +14,12 @@ export async function POST(request: NextRequest) {
 
     // Reset user data in Supabase
     if (userId) {
-      const { error } = await supabaseDb.supabase
+      const { error } = await supabase
         .from('users')
         .update({
           free_captions_used: 0,
           subscription_status: 'inactive',
-          plan_id: null,
-          billing_cycle: null,
-          next_billing_date: null,
-          subscription_start_date: null,
-          payment_method_id: null,
-          whop_subscription_id: null
+          plan_id: null
         })
         .eq('id', userId);
 
@@ -37,8 +32,8 @@ export async function POST(request: NextRequest) {
       }
 
       // Delete captions and scheduled posts
-      await supabaseDb.supabase.from('captions').delete().eq('user_id', userId);
-      await supabaseDb.supabase.from('scheduled_posts').delete().eq('user_id', userId);
+      await supabase.from('captions').delete().eq('user_id', userId);
+      await supabase.from('scheduled_posts').delete().eq('user_id', userId);
 
       return NextResponse.json({
         success: true,
@@ -48,17 +43,12 @@ export async function POST(request: NextRequest) {
     }
 
     if (email) {
-      const { error } = await supabaseDb.supabase
+      const { error } = await supabase
         .from('users')
         .update({
           free_captions_used: 0,
           subscription_status: 'inactive',
-          plan_id: null,
-          billing_cycle: null,
-          next_billing_date: null,
-          subscription_start_date: null,
-          payment_method_id: null,
-          whop_subscription_id: null
+          plan_id: null
         })
         .eq('email', email);
 
@@ -71,15 +61,15 @@ export async function POST(request: NextRequest) {
       }
 
       // Get user ID to delete related data
-      const { data: userData } = await supabaseDb.supabase
+      const { data: userData } = await supabase
         .from('users')
         .select('id')
         .eq('email', email)
         .single();
 
       if (userData) {
-        await supabaseDb.supabase.from('captions').delete().eq('user_id', userData.id);
-        await supabaseDb.supabase.from('scheduled_posts').delete().eq('user_id', userData.id);
+        await supabase.from('captions').delete().eq('user_id', userData.id);
+        await supabase.from('scheduled_posts').delete().eq('user_id', userData.id);
       }
 
       return NextResponse.json({
@@ -111,9 +101,9 @@ export async function DELETE(request: NextRequest) {
 
     // Delete all user data
     if (userId) {
-      await supabaseDb.supabase.from('captions').delete().eq('user_id', userId);
-      await supabaseDb.supabase.from('scheduled_posts').delete().eq('user_id', userId);
-      const { error } = await supabaseDb.supabase.from('users').delete().eq('id', userId);
+      await supabase.from('captions').delete().eq('user_id', userId);
+      await supabase.from('scheduled_posts').delete().eq('user_id', userId);
+      const { error } = await supabase.from('users').delete().eq('id', userId);
 
       if (error) {
         console.error('Error deleting user:', error);
@@ -131,18 +121,18 @@ export async function DELETE(request: NextRequest) {
 
     if (email) {
       // Get user ID first
-      const { data: userData } = await supabaseDb.supabase
+      const { data: userData } = await supabase
         .from('users')
         .select('id')
         .eq('email', email)
         .single();
 
       if (userData) {
-        await supabaseDb.supabase.from('captions').delete().eq('user_id', userData.id);
-        await supabaseDb.supabase.from('scheduled_posts').delete().eq('user_id', userData.id);
+        await supabase.from('captions').delete().eq('user_id', userData.id);
+        await supabase.from('scheduled_posts').delete().eq('user_id', userData.id);
       }
 
-      const { error } = await supabaseDb.supabase.from('users').delete().eq('email', email);
+      const { error } = await supabase.from('users').delete().eq('email', email);
 
       if (error) {
         console.error('Error deleting user:', error);
