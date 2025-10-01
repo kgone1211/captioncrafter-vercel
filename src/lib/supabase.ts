@@ -85,12 +85,40 @@ export class SupabaseDatabase {
     });
 
     try {
-      // Check if user exists by email
-      const { data: existingUser, error: selectError } = await supabase
-        .from('users')
-        .select('id, whop_user_id, subscription_status')
-        .eq('email', email)
-        .single();
+      // Check if user exists by email OR whop_user_id
+      let existingUser = null;
+      let selectError = null;
+
+      if (whopUserId) {
+        // First try to find by whop_user_id (most reliable for webhooks)
+        const { data, error } = await supabase
+          .from('users')
+          .select('id, whop_user_id, subscription_status')
+          .eq('whop_user_id', whopUserId)
+          .single();
+        
+        if (data && !error) {
+          existingUser = data;
+          console.log('Found existing user by whop_user_id:', existingUser);
+        } else {
+          selectError = error;
+        }
+      }
+
+      // If not found by whop_user_id, try email
+      if (!existingUser && email) {
+        const { data, error } = await supabase
+          .from('users')
+          .select('id, whop_user_id, subscription_status')
+          .eq('email', email)
+          .single();
+        
+        existingUser = data;
+        selectError = error;
+        if (existingUser) {
+          console.log('Found existing user by email:', existingUser);
+        }
+      }
 
       if (existingUser && !selectError) {
         console.log('Found existing user:', existingUser);
