@@ -23,7 +23,6 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [isCreatingCheckout, setIsCreatingCheckout] = useState(false);
-  const [iframeError, setIframeError] = useState(false);
   const [formData, setFormData] = useState({
     name: whopUser?.username || 'User',
     email: whopUser?.email || 'user@example.com',
@@ -117,7 +116,6 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
     setSelectedPlan(plan);
     setShowCheckout(true);
     setIsCreatingCheckout(false);
-    setIframeError(false);
     console.log('✅ Modal state updated - showCheckout:', true, 'selectedPlan:', plan.name);
     
     // Set checkout URL for reference
@@ -147,10 +145,6 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
     }
   };
 
-  const handleIframeError = () => {
-    console.log('Iframe failed to load, showing fallback options');
-    setIframeError(true);
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center p-4">
@@ -498,34 +492,30 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
                         </p>
                       </div>
 
-                      {/* Embedded Checkout iframe */}
-                      {!iframeError ? (
-                        <div className="border rounded-lg overflow-hidden bg-white h-[500px]">
-                          <iframe
-                            src={checkoutUrl || ''}
-                            width="100%"
-                            height="100%"
-                            frameBorder="0"
-                            onError={handleIframeError}
-                            onLoad={() => console.log('Iframe loaded successfully')}
-                            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation"
-                            allow="payment; fullscreen"
-                            title="Whop Checkout"
-                          />
-                        </div>
-                      ) : (
-                        <div className="border rounded-lg p-8 text-center bg-gray-50">
-                          <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-                            </svg>
-                          </div>
-                          <h3 className="text-lg font-semibold text-gray-900 mb-2">Embedded Checkout Not Available</h3>
-                          <p className="text-sm text-gray-600 mb-4">
-                            The embedded checkout couldn't load due to security restrictions. Please use one of the options below to complete your subscription.
-                          </p>
-                        </div>
-                      )}
+                  {/* Checkout Options */}
+                  <div className="border rounded-lg p-8 text-center bg-gradient-to-br from-blue-50 to-indigo-50">
+                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <svg className="w-8 h-8 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Complete Your Payment</h3>
+                    <p className="text-gray-600 mb-6">
+                      Click the button below to open the secure checkout page where you can complete your subscription with your preferred payment method.
+                    </p>
+                    
+                    {/* Primary Checkout Button */}
+                    <button
+                      onClick={() => checkoutUrl && window.open(checkoutUrl, '_blank')}
+                      className="w-full bg-blue-600 text-white px-6 py-4 rounded-lg hover:bg-blue-700 transition-colors font-medium text-lg mb-4"
+                    >
+                      🚀 Complete Payment
+                    </button>
+                    
+                    <p className="text-xs text-gray-500">
+                      This will open in a new tab for secure payment processing
+                    </p>
+                  </div>
 
                       {/* Payment methods info */}
                       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -542,15 +532,8 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
                         </p>
                       </div>
 
-                      {/* Fallback options */}
+                      {/* Additional Options */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                        <button
-                          onClick={() => checkoutUrl && window.open(checkoutUrl, '_blank')}
-                          className="bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
-                        >
-                          Open in New Tab
-                        </button>
-                        
                         <button
                           onClick={() => {
                             navigator.clipboard.writeText(checkoutUrl || '');
@@ -558,7 +541,14 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
                           }}
                           className="bg-gray-100 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium"
                         >
-                          Copy Link
+                          📋 Copy Link
+                        </button>
+                        
+                        <button
+                          onClick={() => setShowCheckout(false)}
+                          className="bg-gray-100 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                        >
+                          ← Back to Plans
                         </button>
                       </div>
                     </div>
