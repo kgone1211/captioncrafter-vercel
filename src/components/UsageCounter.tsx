@@ -69,48 +69,25 @@ export default function UsageCounter({ userId, className = '', refreshTrigger, w
 
   const remainingFree = Math.max(0, 3 - usage.freeCaptionsUsed);
   
-  // Check if user has active subscription AND a paid plan
-  // In Whop, subscriptionStatus might be 'active' even for free users
-  // We need to check if they actually have a paid plan
+  // Check if user has active subscription
+  // The database subscription_status is set to 'active' when user pays through Whop webhook
   const hasActiveSubscription = usage.subscriptionStatus === 'active';
-  
-  // Check for paid plan using Whop user data
-  // NOTE: company_id is NOT a reliable indicator of paid plans in Whop
-  // Every user gets a company_id, even free users
-  const hasPaidPlan = whopUser ? (
-    // Check if user has a plan ID (indicates paid subscription)
-    (whopUser.plan_id && whopUser.plan_id !== 'free') ||
-    (whopUser.subscription_plan_id && whopUser.subscription_plan_id !== 'free')
-    // Removed company_id check - it's not reliable for paid plans
-  ) : false;
-  
-  const hasValidPaidSubscription = hasActiveSubscription && hasPaidPlan;
   
   console.log('=== USAGE COUNTER LOGIC DEBUG ===');
   console.log('UsageCounter logic check:', {
     subscriptionStatus: usage.subscriptionStatus,
     hasActiveSubscription,
-    hasPaidPlan,
-    hasValidPaidSubscription,
-    planId: usage.planId,
-    billingCycle: usage.billingCycle,
-    freeCaptionsUsed: usage.freeCaptionsUsed,
-    whopUser: whopUser ? {
-      plan_id: whopUser.plan_id,
-      subscription_plan_id: whopUser.subscription_plan_id,
-      subscription_status: whopUser.subscription_status,
-      company_id: whopUser.company_id
-    } : null
+    freeCaptionsUsed: usage.freeCaptionsUsed
   });
   console.log('=== END USAGE COUNTER DEBUG ===');
   
   // Check if subscription is expired (only for users who had an active subscription)
-  const isExpired = hasValidPaidSubscription && usage.daysUntilExpiry !== undefined && usage.daysUntilExpiry <= 0;
+  const isExpired = hasActiveSubscription && usage.daysUntilExpiry !== undefined && usage.daysUntilExpiry <= 0;
   
   // Check if subscription needs renewal soon
-  const needsRenewalSoon = hasValidPaidSubscription && usage.daysUntilExpiry !== undefined && usage.daysUntilExpiry <= 7;
+  const needsRenewalSoon = hasActiveSubscription && usage.daysUntilExpiry !== undefined && usage.daysUntilExpiry <= 7;
 
-  if (hasValidPaidSubscription && !isExpired) {
+  if (hasActiveSubscription && !isExpired) {
     return (
       <div className={`flex items-center space-x-2 text-sm text-green-600 ${className}`}>
         <Crown className="h-4 w-4" />
