@@ -65,22 +65,27 @@ export const PLAN_FEATURES: Record<string, PlanFeatures> = {
 };
 
 export function getPlanFeatures(subscriptionStatus: string, planId?: string): PlanFeatures {
-  if (subscriptionStatus === 'active' && planId) {
-    // Map Whop plan IDs to our internal plan features
-    const planMapping: Record<string, string> = {
-      'plan_cs24bg68DSLES': 'basic',  // Basic Plan
-      'plan_qbxMJNrDzxyfw': 'premium', // Premium Plan
-      // Legacy plan IDs for backwards compatibility
-      'prod_OAeju0utHppI2': 'basic',
-      'prod_xcU9zERSGgyNK': 'premium',
-      'prod_Premium123': 'premium',
-    };
-    
-    const mappedPlanId = planMapping[planId] || 'premium'; // Default to premium for unknown active plans
-    return PLAN_FEATURES[mappedPlanId] || PLAN_FEATURES.premium;
+  if (subscriptionStatus === 'active') {
+    if (planId) {
+      // Map Whop plan IDs to our internal plan features
+      const planMapping: Record<string, string> = {
+        'plan_cs24bg68DSLES': 'basic',  // Basic Plan
+        'plan_qbxMJNrDzxyfw': 'premium', // Premium Plan
+        // Legacy plan IDs for backwards compatibility
+        'prod_OAeju0utHppI2': 'basic',
+        'prod_xcU9zERSGgyNK': 'premium',
+        'prod_Premium123': 'premium',
+      };
+      
+      const mappedPlanId = planMapping[planId] || 'basic'; // Default to basic for unknown active plans
+      return PLAN_FEATURES[mappedPlanId] || PLAN_FEATURES.basic;
+    } else {
+      // If subscription is active but no plan_id, assume Basic plan (user paid but plan_id not set)
+      return PLAN_FEATURES.basic;
+    }
   }
   
-  // For inactive subscriptions or no plan ID, return free plan
+  // For inactive subscriptions, return free plan
   return PLAN_FEATURES.free;
 }
 

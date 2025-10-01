@@ -42,7 +42,7 @@ export default function SubscriptionPlanBadge({ userId }: SubscriptionPlanBadgeP
   if (subscriptionStatus === 'active') {
     // Determine plan name based on plan ID
     let planName = 'Basic Plan'; // Default to Basic for active subscriptions
-    if (planId === 'plan_bB3i8FYLYYBI8') {
+    if (planId === 'plan_qbxMJNrDzxyfw') {
       planName = 'Premium Plan';
     } else if (planId === 'plan_cs24bg68DSLES') {
       planName = 'Basic Plan';
