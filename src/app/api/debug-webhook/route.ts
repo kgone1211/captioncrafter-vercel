@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
         const usage = await db.getUserUsage(parseInt(userId));
         userLookup = usage;
       } catch (error) {
-        userLookupError = error.message;
+        userLookupError = error instanceof Error ? error.message : String(error);
       }
     }
 
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
       );
       columnCheck = { success: true, userId: testUpdate };
     } catch (error) {
-      columnCheck = { success: false, error: error.message };
+      columnCheck = { success: false, error: error instanceof Error ? error.message : String(error) };
     }
 
     // Test 4: Simulate webhook processing
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       webhookProcessing = {
         success: false,
-        error: error.message
+        error: error instanceof Error ? error.message : String(error)
       };
     }
 
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Debug webhook error:', error);
     return NextResponse.json(
-      { error: 'Debug webhook failed', details: error.message },
+      { error: 'Debug webhook failed', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
