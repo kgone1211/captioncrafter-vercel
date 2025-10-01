@@ -226,8 +226,8 @@ export class Database {
     const supabaseAvailable = hasSupabase();
     
     if (supabaseAvailable) {
-      // TODO: Implement Supabase saveCaption
-      return this.localDb.saveCaption(userId, platform, topic, tone, text, hashtags, charCount);
+      console.log('Using Supabase for saveCaption');
+      return supabaseDb.saveCaption(userId, platform, topic, tone, text, hashtags, charCount);
     }
     
     if (localDev) {
@@ -340,8 +340,8 @@ export class Database {
     const supabaseAvailable = hasSupabase();
     
     if (supabaseAvailable) {
-      // TODO: Implement Supabase schedulePost
-      return this.localDb.schedulePost(userId, captionId, platform, scheduledAt, notifyVia as 'None' | 'Email');
+      console.log('Using Supabase for schedulePost');
+      return supabaseDb.schedulePost(userId, captionId, platform, scheduledAt, notifyVia as 'None' | 'Email');
     }
     
     if (localDev) {

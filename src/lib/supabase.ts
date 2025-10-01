@@ -210,6 +210,81 @@ export class SupabaseDatabase {
     }
   }
 
+  async saveCaption(
+    userId: number,
+    platform: string,
+    topic: string,
+    tone: string,
+    text: string,
+    hashtags: string[],
+    charCount: number
+  ): Promise<number> {
+    console.log('Supabase saveCaption called with:', { userId, platform, topic, tone, charCount });
+    
+    try {
+      const { data, error } = await supabase
+        .from('captions')
+        .insert({
+          user_id: userId,
+          platform,
+          topic,
+          tone,
+          text,
+          hashtags: JSON.stringify(hashtags),
+          char_count: charCount
+        })
+        .select('id')
+        .single();
+
+      if (error) {
+        console.error('Error saving caption:', error);
+        throw error;
+      }
+
+      console.log('Supabase saveCaption result:', data);
+      return data.id;
+    } catch (error) {
+      console.error('Supabase saveCaption error:', error);
+      throw error;
+    }
+  }
+
+  async schedulePost(
+    userId: number,
+    captionId: number,
+    platform: string,
+    scheduledAt: string,
+    notifyVia: string
+  ): Promise<number> {
+    console.log('Supabase schedulePost called with:', { userId, captionId, platform, scheduledAt, notifyVia });
+    
+    try {
+      const { data, error } = await supabase
+        .from('scheduled_posts')
+        .insert({
+          user_id: userId,
+          caption_id: captionId,
+          platform,
+          scheduled_at: scheduledAt,
+          notify_via: notifyVia,
+          status: 'scheduled'
+        })
+        .select('id')
+        .single();
+
+      if (error) {
+        console.error('Error scheduling post:', error);
+        throw error;
+      }
+
+      console.log('Supabase schedulePost result:', data);
+      return data.id;
+    } catch (error) {
+      console.error('Supabase schedulePost error:', error);
+      throw error;
+    }
+  }
+
   async getAllUsers(): Promise<any[]> {
     try {
       const { data: users, error } = await supabase
