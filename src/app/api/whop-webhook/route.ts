@@ -58,18 +58,18 @@ async function handleSubscriptionUpdate(data: any) {
   
   try {
     // Update user subscription in database
-    await db.upsertUser({
-      email: data.user?.email || '',
-      whopUserId: user_id,
-      subscriptionStatus: status,
-      username: data.user?.username || '',
-      planId: plan_id,
-      billingCycle: billing_cycle,
-      nextBillingDate: next_billing_date ? new Date(next_billing_date) : undefined,
-      subscriptionStartDate: new Date(),
-      paymentMethodId: data.payment_method_id,
-      whopSubscriptionId: data.id
-    });
+    await db.upsertUser(
+      data.user?.email || '',
+      user_id,
+      status,
+      data.user?.username || '',
+      plan_id,
+      billing_cycle,
+      next_billing_date ? new Date(next_billing_date) : undefined,
+      new Date(),
+      data.payment_method_id,
+      data.id
+    );
     
     console.log(`✅ Updated subscription for user ${user_id} to ${status}`);
   } catch (error) {
@@ -84,18 +84,18 @@ async function handleSubscriptionCancellation(data: any) {
   
   try {
     // Update user subscription status to cancelled
-    await db.upsertUser({
-      email: data.user?.email || '',
-      whopUserId: user_id,
-      subscriptionStatus: 'cancelled',
-      username: data.user?.username || '',
-      planId: undefined,
-      billingCycle: undefined,
-      nextBillingDate: undefined,
-      subscriptionStartDate: undefined,
-      paymentMethodId: undefined,
-      whopSubscriptionId: data.id
-    });
+    await db.upsertUser(
+      data.user?.email || '',
+      user_id,
+      'cancelled',
+      data.user?.username || '',
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      undefined,
+      data.id
+    );
     
     console.log(`✅ Cancelled subscription for user ${user_id}`);
   } catch (error) {
@@ -110,18 +110,18 @@ async function handlePaymentSuccess(data: any) {
   
   try {
     // Update user's subscription status to active
-    await db.upsertUser({
-      email: data.user?.email || '',
-      whopUserId: user_id,
-      subscriptionStatus: 'active',
-      username: data.user?.username || '',
-      planId: data.plan_id,
-      billingCycle: data.billing_cycle,
-      nextBillingDate: data.next_billing_date ? new Date(data.next_billing_date) : undefined,
-      subscriptionStartDate: new Date(),
-      paymentMethodId: data.payment_method_id,
-      whopSubscriptionId: data.subscription_id
-    });
+    await db.upsertUser(
+      data.user?.email || '',
+      user_id,
+      'active',
+      data.user?.username || '',
+      data.plan_id,
+      data.billing_cycle,
+      data.next_billing_date ? new Date(data.next_billing_date) : undefined,
+      new Date(),
+      data.payment_method_id,
+      data.subscription_id
+    );
     
     console.log(`✅ Payment successful for user ${user_id}: ${amount} ${currency}`);
   } catch (error) {
@@ -136,18 +136,18 @@ async function handlePaymentFailure(data: any) {
   
   try {
     // Update user's subscription status to failed
-    await db.upsertUser({
-      email: data.user?.email || '',
-      whopUserId: user_id,
-      subscriptionStatus: 'payment_failed',
-      username: data.user?.username || '',
-      planId: data.plan_id,
-      billingCycle: data.billing_cycle,
-      nextBillingDate: data.next_billing_date ? new Date(data.next_billing_date) : undefined,
-      subscriptionStartDate: undefined,
-      paymentMethodId: data.payment_method_id,
-      whopSubscriptionId: data.subscription_id
-    });
+    await db.upsertUser(
+      data.user?.email || '',
+      user_id,
+      'payment_failed',
+      data.user?.username || '',
+      data.plan_id,
+      data.billing_cycle,
+      data.next_billing_date ? new Date(data.next_billing_date) : undefined,
+      undefined,
+      data.payment_method_id,
+      data.subscription_id
+    );
     
     console.log(`❌ Payment failed for user ${user_id}: ${amount} ${currency} - ${failure_reason}`);
   } catch (error) {
