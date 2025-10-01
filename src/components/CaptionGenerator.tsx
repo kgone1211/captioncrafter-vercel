@@ -535,7 +535,7 @@ export default function CaptionGenerator({ userId, onStatsUpdate, whopUser }: Ca
       {captions.length > 0 && (
         <div className="space-y-6">
           <div className="flex items-center justify-between">
-            <h3 className="text-xl font-semibold text-gray-900">
+            <h3 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
               Generated {captions.length} Captions
             </h3>
             <button
@@ -547,68 +547,70 @@ export default function CaptionGenerator({ userId, onStatsUpdate, whopUser }: Ca
             </button>
           </div>
           
-          {captions.map((caption, index) => (
-            <div key={index} className="bg-white rounded-xl shadow-sm border p-6">
-              <div className="flex items-start justify-between mb-4">
-                <div className="flex items-center space-x-2">
-                  <span className="text-sm font-medium text-gray-500">Caption {index + 1}</span>
-                  <span className="text-sm text-gray-400">•</span>
-                  <div className="flex items-center space-x-1 text-sm text-gray-500">
-                    <Clock className="h-4 w-4" />
-                    <span>{caption.char_count} characters</span>
+          <div className="max-h-[800px] overflow-y-auto pr-2 space-y-6 scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-200 dark:scrollbar-track-gray-800">
+            {captions.map((caption, index) => (
+              <div key={index} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Caption {index + 1}</span>
+                    <span className="text-sm text-gray-400 dark:text-gray-500">•</span>
+                    <div className="flex items-center space-x-1 text-sm text-gray-500 dark:text-gray-400">
+                      <Clock className="h-4 w-4" />
+                      <span>{caption.char_count} characters</span>
+                    </div>
                   </div>
-                </div>
-                
-                <div className="flex items-center space-x-2">
-                  <button
-                    onClick={() => copyCaptionWithHashtags(caption, index)}
-                    className="flex items-center space-x-1 px-3 py-1 text-sm text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-                  >
-                    <Copy className="h-4 w-4" />
-                    <span>{copiedIndex === index ? 'Copied!' : 'Copy All'}</span>
-                  </button>
                   
-                  <button
-                    onClick={() => saveCaption(caption)}
-                    className="flex items-center space-x-1 px-3 py-1 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
-                  >
-                    <Star className="h-4 w-4" />
-                    <span>Save</span>
-                  </button>
-                  
-                  <button
-                    onClick={() => scheduleCaption(caption)}
-                    className="flex items-center space-x-1 px-3 py-1 text-sm text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors"
-                  >
-                    <Calendar className="h-4 w-4" />
-                    <span>Schedule</span>
-                  </button>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Caption
-                  </label>
-                  <div className="p-4 bg-gray-50 rounded-lg border">
-                    <p className="text-gray-900 whitespace-pre-wrap">{caption.caption}</p>
+                  <div className="flex items-center space-x-2">
+                    <button
+                      onClick={() => copyCaptionWithHashtags(caption, index)}
+                      className="flex items-center space-x-1 px-3 py-1 text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                    >
+                      <Copy className="h-4 w-4" />
+                      <span>{copiedIndex === index ? 'Copied!' : 'Copy All'}</span>
+                    </button>
+                    
+                    <button
+                      onClick={() => saveCaption(caption)}
+                      className="flex items-center space-x-1 px-3 py-1 text-sm text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-colors"
+                    >
+                      <Star className="h-4 w-4" />
+                      <span>Save</span>
+                    </button>
+                    
+                    <button
+                      onClick={() => scheduleCaption(caption)}
+                      className="flex items-center space-x-1 px-3 py-1 text-sm text-green-600 dark:text-green-400 hover:text-green-700 dark:hover:text-green-300 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition-colors"
+                    >
+                      <Calendar className="h-4 w-4" />
+                      <span>Schedule</span>
+                    </button>
                   </div>
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Hashtags
-                  </label>
-                  <div className="p-4 bg-gray-50 rounded-lg border">
-                    <p className="text-gray-900">
-                      {caption.hashtags.map(tag => `#${tag}`).join(' ')}
-                    </p>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Caption
+                    </label>
+                    <div className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                      <p className="text-gray-900 dark:text-gray-100 whitespace-pre-wrap">{caption.caption}</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                      Hashtags
+                    </label>
+                    <div className="p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg border border-gray-200 dark:border-gray-700">
+                      <p className="text-gray-900 dark:text-gray-100">
+                        {caption.hashtags.map(tag => `#${tag}`).join(' ')}
+                      </p>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       )}
     </div>
