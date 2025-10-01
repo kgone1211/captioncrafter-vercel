@@ -8,6 +8,7 @@ import UsageCounter from './UsageCounter';
 import Paywall from './Paywall';
 import { WhopUser } from '@/lib/whop-sdk';
 import { PlanAwareFeature, PlanBadge, getAvailablePlatforms } from './PlanAwareComponents';
+import SubscriptionPlanBadge from './SubscriptionPlanBadge';
 
 interface CaptionGeneratorProps {
   userId: number;
@@ -343,10 +344,7 @@ export default function CaptionGenerator({ userId, onStatsUpdate, whopUser }: Ca
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Platform
-                <PlanBadge 
-                  subscriptionStatus={whopUser?.subscription_status || 'inactive'} 
-                  planId={whopUser?.plan_id || whopUser?.subscription_plan_id}
-                />
+                <SubscriptionPlanBadge userId={userId} />
               </label>
               <PlanAwareFeature
                 subscriptionStatus={whopUser?.subscription_status || 'inactive'}
