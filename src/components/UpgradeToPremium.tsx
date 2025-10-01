@@ -37,8 +37,13 @@ export default function UpgradeToPremium({ userId }: UpgradeToPremiumProps) {
     window.open(premiumCheckoutUrl, '_blank');
   };
 
-  // Only show upgrade button for Basic plan users
-  if (loading || subscriptionStatus !== 'active' || planId !== 'plan_cs24bg68DSLES') {
+  // Only show upgrade button for Basic plan users (or active users without plan_id set)
+  if (loading || subscriptionStatus !== 'active') {
+    return null;
+  }
+  
+  // If planId is set and it's not Basic, don't show (user is Premium)
+  if (planId && planId !== 'plan_cs24bg68DSLES') {
     return null;
   }
 
