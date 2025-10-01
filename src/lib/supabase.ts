@@ -362,6 +362,72 @@ export class SupabaseDatabase {
     }
   }
 
+  async getUserStats(userId: number): Promise<{ total_captions: number; favorite_captions: number; scheduled_posts: number; sent_posts: number }> {
+    console.log('Supabase getUserStats called with:', { userId });
+
+    try {
+      // Get total captions count
+      const { count: totalCaptions, error: captionsError } = await supabase
+        .from('captions')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
+
+      if (captionsError) {
+        console.error('Error getting total captions:', captionsError);
+      }
+
+      // Get favorite captions count
+      const { count: favoriteCaptions, error: favoritesError } = await supabase
+        .from('captions')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('is_favorite', true);
+
+      if (favoritesError) {
+        console.error('Error getting favorite captions:', favoritesError);
+      }
+
+      // Get scheduled posts count
+      const { count: scheduledPosts, error: scheduledError } = await supabase
+        .from('scheduled_posts')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId);
+
+      if (scheduledError) {
+        console.error('Error getting scheduled posts:', scheduledError);
+      }
+
+      // Get sent posts count
+      const { count: sentPosts, error: sentError } = await supabase
+        .from('scheduled_posts')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .eq('status', 'SENT');
+
+      if (sentError) {
+        console.error('Error getting sent posts:', sentError);
+      }
+
+      const stats = {
+        total_captions: totalCaptions || 0,
+        favorite_captions: favoriteCaptions || 0,
+        scheduled_posts: scheduledPosts || 0,
+        sent_posts: sentPosts || 0
+      };
+
+      console.log('Supabase getUserStats result:', stats);
+      return stats;
+    } catch (error) {
+      console.error('Supabase getUserStats error:', error);
+      return {
+        total_captions: 0,
+        favorite_captions: 0,
+        scheduled_posts: 0,
+        sent_posts: 0
+      };
+    }
+  }
+
   async clearDatabase(): Promise<{ success: boolean; message: string; errors?: string[] }> {
     console.log('Clearing Supabase database...');
     const errors: string[] = [];

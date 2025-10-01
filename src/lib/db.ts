@@ -454,8 +454,8 @@ export class Database {
     const supabaseAvailable = hasSupabase();
     
     if (supabaseAvailable) {
-      // TODO: Implement Supabase getUserStats
-      return this.localDb.getUserStats(userId);
+      console.log('Using Supabase for getUserStats');
+      return supabaseDb.getUserStats(userId);
     }
     
     if (localDev) {
