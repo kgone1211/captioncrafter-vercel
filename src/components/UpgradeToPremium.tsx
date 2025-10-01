@@ -33,7 +33,7 @@ export default function UpgradeToPremium({ userId }: UpgradeToPremiumProps) {
 
   const handleUpgrade = () => {
     // Open Premium plan checkout in new tab
-    const premiumCheckoutUrl = 'https://whop.com/checkout/plan_bB3i8FYLYYBI8/';
+    const premiumCheckoutUrl = 'https://whop.com/checkout/plan_qbxMJNrDzxyfw/';
     window.open(premiumCheckoutUrl, '_blank');
   };
 
