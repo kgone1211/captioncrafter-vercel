@@ -19,8 +19,7 @@ export async function POST(request: NextRequest) {
       `user-${userId}@example.com`, // We'll use a placeholder email
       userId.toString(),
       'active',
-      'officialkgg', // Your username
-      planId || 'plan_cs24bg68DSLES' // Default to Basic plan
+      'officialkgg' // Your username
     );
 
     // Get updated usage to verify
