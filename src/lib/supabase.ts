@@ -227,25 +227,42 @@ export class SupabaseDatabase {
 
       if (selectError || !user) {
         console.error('Error getting user for increment:', selectError);
+        console.log('User not found with ID:', userId, '- Creating new user record');
         
-        // If user doesn't exist, create them with a default email
-        console.log('User not found, creating new user with ID:', userId);
-        await this.upsertUser(`user_${userId}@temp.com`, undefined, 'inactive');
-        
-        // Now proceed with incrementing from 0
-        const { error: updateError } = await supabase
+        // If user doesn't exist, create them directly with this ID
+        const { error: insertError } = await supabase
           .from('users')
-          .update({
+          .insert({
+            id: userId,
+            email: `user_${userId}@temp.com`,
+            subscription_status: 'inactive',
             free_captions_used: 1
-          })
-          .eq('id', userId);
+          });
 
-        if (updateError) {
-          console.error('Error incrementing usage for new user:', updateError);
-          throw updateError;
+        if (insertError) {
+          // If it's a duplicate key error, the user was just created by another request
+          // Try to update instead
+          if (insertError.code === '23505') {
+            console.log('User already exists, updating usage instead');
+            const { data: existingUser } = await supabase
+              .from('users')
+              .select('free_captions_used')
+              .eq('id', userId)
+              .single();
+            
+            await supabase
+              .from('users')
+              .update({
+                free_captions_used: (existingUser?.free_captions_used || 0) + 1
+              })
+              .eq('id', userId);
+          } else {
+            console.error('Error creating user:', insertError);
+            throw insertError;
+          }
         }
         
-        console.log('✅ Usage incremented for new user');
+        console.log('✅ New user created and usage set to 1');
         return;
       }
 
