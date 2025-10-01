@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { WhopUser } from '@/lib/whop-sdk';
-import { WhopCheckoutEmbed } from '@whop/checkout/react';
+// Removed WhopCheckoutEmbed import - using iframe approach instead
 
 // No need for global window interface with React component approach
 
@@ -23,6 +23,7 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
   const [isCreatingCheckout, setIsCreatingCheckout] = useState(false);
+  const [iframeError, setIframeError] = useState(false);
   const [formData, setFormData] = useState({
     name: whopUser?.username || 'User',
     email: whopUser?.email || 'user@example.com',
@@ -112,11 +113,12 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
 
     console.log('Opening Whop checkout embed for plan:', planId);
     
-        // Set the selected plan and show embedded checkout modal
-        setSelectedPlan(plan);
-        setShowCheckout(true);
-        setIsCreatingCheckout(false);
-        console.log('✅ Modal state updated - showCheckout:', true, 'selectedPlan:', plan.name);
+    // Set the selected plan and show embedded checkout modal
+    setSelectedPlan(plan);
+    setShowCheckout(true);
+    setIsCreatingCheckout(false);
+    setIframeError(false);
+    console.log('✅ Modal state updated - showCheckout:', true, 'selectedPlan:', plan.name);
     
     // Set checkout URL for reference
     const checkoutUrl = `https://whop.com/checkout/${planId}/`;
@@ -143,6 +145,11 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
     } finally {
       setIsLoading(null);
     }
+  };
+
+  const handleIframeError = () => {
+    console.log('Iframe failed to load, showing fallback options');
+    setIframeError(true);
   };
 
   return (
@@ -491,12 +498,34 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
                         </p>
                       </div>
 
-                      {/* Whop Checkout Embed Container */}
-                      <div className="border rounded-lg overflow-hidden bg-white h-[500px]">
-                        <WhopCheckoutEmbed 
-                          planId={selectedPlan.id}
-                        />
-                      </div>
+                      {/* Embedded Checkout iframe */}
+                      {!iframeError ? (
+                        <div className="border rounded-lg overflow-hidden bg-white h-[500px]">
+                          <iframe
+                            src={checkoutUrl || ''}
+                            width="100%"
+                            height="100%"
+                            frameBorder="0"
+                            onError={handleIframeError}
+                            onLoad={() => console.log('Iframe loaded successfully')}
+                            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-popups-to-escape-sandbox allow-presentation"
+                            allow="payment; fullscreen"
+                            title="Whop Checkout"
+                          />
+                        </div>
+                      ) : (
+                        <div className="border rounded-lg p-8 text-center bg-gray-50">
+                          <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <svg className="w-8 h-8 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                            </svg>
+                          </div>
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2">Embedded Checkout Not Available</h3>
+                          <p className="text-sm text-gray-600 mb-4">
+                            The embedded checkout couldn't load due to security restrictions. Please use one of the options below to complete your subscription.
+                          </p>
+                        </div>
+                      )}
 
                       {/* Payment methods info */}
                       <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -517,7 +546,7 @@ export default function Paywall({ whopUser, dbUserId, userId, onUpgrade, onClose
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                         <button
                           onClick={() => checkoutUrl && window.open(checkoutUrl, '_blank')}
-                          className="bg-gray-100 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-200 transition-colors font-medium"
+                          className="bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium"
                         >
                           Open in New Tab
                         </button>
