@@ -18,8 +18,7 @@ export async function POST(request: NextRequest) {
     const { data, error } = await supabase
       .from('users')
       .update({
-        subscription_status: subscriptionStatus,
-        plan_id: planId || null
+        subscription_status: subscriptionStatus
       })
       .eq('id', userId)
       .select();
