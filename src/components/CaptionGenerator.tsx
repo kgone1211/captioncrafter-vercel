@@ -351,8 +351,8 @@ export default function CaptionGenerator({ userId, onStatsUpdate, whopUser }: Ca
                 <SubscriptionPlanBadge userId={userId} />
               </label>
               <PlanAwareFeature
-                subscriptionStatus={whopUser?.subscription_status || 'inactive'}
-                planId={whopUser?.plan_id || whopUser?.subscription_plan_id}
+                subscriptionStatus="active"
+                planId="plan_cs24bg68DSLES"
                 feature="platforms"
                 fallback={
                   <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
