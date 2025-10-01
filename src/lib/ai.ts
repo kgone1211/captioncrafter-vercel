@@ -18,7 +18,12 @@ function getOpenAI() {
 export class CaptionGenerator {
   async generateCaptions(request: CaptionGenerationRequest): Promise<CaptionGenerationResponse[]> {
     try {
+      console.log('=== Caption Generation Start ===');
+      console.log('OpenAI API Key exists:', !!process.env.OPENAI_API_KEY);
+      console.log('Request:', JSON.stringify(request, null, 2));
+      
       if (!process.env.OPENAI_API_KEY) {
+        console.log('No OpenAI key, using fallback captions');
         return this.generateFallbackCaptions(request);
       }
 
@@ -28,9 +33,11 @@ export class CaptionGenerator {
 
       const client = getOpenAI();
       if (!client) {
+        console.log('OpenAI client not initialized, using fallback');
         return this.generateFallbackCaptions(request);
       }
 
+      console.log('Calling OpenAI API...');
       const response = await client.chat.completions.create({
         model: 'gpt-3.5-turbo',
         messages: [
@@ -41,25 +48,35 @@ export class CaptionGenerator {
         max_tokens: 1000
       });
 
+      console.log('OpenAI response received');
       const content = response.choices[0].message.content?.trim() || '';
-      return this.parseOpenAIResponse(content, request.num_variants);
+      const parsedCaptions = this.parseOpenAIResponse(content, request.num_variants);
+      console.log('Captions parsed successfully, count:', parsedCaptions.length);
+      return parsedCaptions;
 
     } catch (error) {
       console.error('OpenAI API error:', error);
+      console.error('Error type:', error instanceof Error ? error.constructor.name : typeof error);
+      console.error('Error message:', error instanceof Error ? error.message : String(error));
+      console.log('Falling back to template captions due to error');
       return this.generateFallbackCaptions(request);
     }
   }
 
   private generateFallbackCaptions(request: CaptionGenerationRequest): CaptionGenerationResponse[] {
+    console.log('=== Generating Fallback Captions ===');
+    console.log('Request:', { topic: request.topic, tone: request.tone, platform: request.platform, num_variants: request.num_variants });
+    
     const captions: CaptionGenerationResponse[] = [];
-    const topic = request.topic;
-    const tone = request.tone;
-    const platform = request.platform;
-    const length = request.length;
+    const topic = request.topic || 'your topic';
+    const tone = request.tone || 'Casual';
+    const platform = request.platform || 'instagram';
+    const length = request.length || 'medium';
     const description = request.description || '';
 
     // Get target character count based on length and platform
     const targetLength = this.getTargetLength(length, platform);
+    console.log('Target length:', targetLength);
 
     const templates: Record<string, string[]> = {
       'Casual': [
