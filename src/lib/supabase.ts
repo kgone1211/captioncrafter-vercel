@@ -67,8 +67,8 @@ export class SupabaseDatabase {
     console.log('Supabase database initialization completed (tables should be created manually)');
   }
 
-  async upsertUser(email: string, whopUserId?: string, subscriptionStatus?: string, username?: string): Promise<number> {
-    console.log('Supabase upsertUser called with:', { email, whopUserId, subscriptionStatus, username });
+  async upsertUser(email: string, whopUserId?: string, subscriptionStatus?: string, username?: string, planId?: string): Promise<number> {
+    console.log('Supabase upsertUser called with:', { email, whopUserId, subscriptionStatus, username, planId });
 
     try {
       // Check if user exists by email
@@ -82,13 +82,16 @@ export class SupabaseDatabase {
         console.log('Found existing user:', existingUser);
         
         // Update user if needed
-        if (whopUserId || subscriptionStatus) {
+        if (whopUserId || subscriptionStatus || planId) {
+          const updateData: any = {};
+          if (whopUserId) updateData.whop_user_id = whopUserId;
+          if (subscriptionStatus) updateData.subscription_status = subscriptionStatus;
+          if (planId) updateData.plan_id = planId;
+          if (username) updateData.username = username;
+          
           const { error: updateError } = await supabase
             .from('users')
-            .update({
-              whop_user_id: whopUserId || existingUser.whop_user_id,
-              subscription_status: subscriptionStatus || existingUser.subscription_status
-            })
+            .update(updateData)
             .eq('id', existingUser.id);
 
           if (updateError) {
@@ -106,6 +109,8 @@ export class SupabaseDatabase {
           email,
           whop_user_id: whopUserId,
           subscription_status: subscriptionStatus || 'inactive',
+          plan_id: planId,
+          username: username,
           free_captions_used: 0
         })
         .select('id')

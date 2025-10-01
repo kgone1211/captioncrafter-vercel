@@ -148,7 +148,7 @@ export class Database {
     
     if (supabaseAvailable) {
       console.log('Using Supabase for upsertUser');
-      return supabaseDb.upsertUser(email, whopUserId, subscriptionStatus, username);
+      return supabaseDb.upsertUser(email, whopUserId, subscriptionStatus, username, planId);
     }
     
     if (localDev) {
