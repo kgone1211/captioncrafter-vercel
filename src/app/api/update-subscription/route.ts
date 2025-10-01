@@ -15,11 +15,17 @@ export async function POST(request: NextRequest) {
     console.log('Updating subscription for userId:', userId, 'status:', subscriptionStatus, 'planId:', planId);
 
     // Direct update to Supabase
+    const updateData: any = {
+      subscription_status: subscriptionStatus
+    };
+    
+    if (planId) {
+      updateData.plan_id = planId;
+    }
+    
     const { data, error } = await supabase
       .from('users')
-      .update({
-        subscription_status: subscriptionStatus
-      })
+      .update(updateData)
       .eq('id', userId)
       .select();
 
