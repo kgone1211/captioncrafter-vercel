@@ -10,6 +10,7 @@ import { WhopUser } from '@/lib/whop-sdk';
 import { PlanAwareFeature, PlanBadge, getAvailablePlatforms } from './PlanAwareComponents';
 import SubscriptionPlanBadge from './SubscriptionPlanBadge';
 import UpgradeToPremium from './UpgradeToPremium';
+import { useSubscriptionData } from '@/hooks/useSubscriptionData';
 
 interface CaptionGeneratorProps {
   userId: number;
@@ -35,6 +36,9 @@ export default function CaptionGenerator({ userId, onStatsUpdate, whopUser }: Ca
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [showPaywall, setShowPaywall] = useState(false);
+  
+  // Fetch subscription data from database
+  const subscriptionData = useSubscriptionData(userId);
 
   const handleInputChange = (field: keyof CaptionGenerationRequest, value: string | number | boolean) => {
     setFormData(prev => {
@@ -351,8 +355,8 @@ export default function CaptionGenerator({ userId, onStatsUpdate, whopUser }: Ca
                 <SubscriptionPlanBadge userId={userId} />
               </label>
               <PlanAwareFeature
-                subscriptionStatus="active"
-                planId="plan_cs24bg68DSLES"
+                subscriptionStatus={subscriptionData.subscriptionStatus}
+                planId={subscriptionData.planId || undefined}
                 feature="platforms"
                 fallback={
                   <div className="w-full px-3 py-2 border border-gray-300 rounded-lg bg-gray-50 text-gray-500">
@@ -366,8 +370,8 @@ export default function CaptionGenerator({ userId, onStatsUpdate, whopUser }: Ca
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   {getAvailablePlatforms(
-                    whopUser?.subscription_status || 'inactive',
-                    whopUser?.plan_id || whopUser?.subscription_plan_id
+                    subscriptionData.subscriptionStatus,
+                    subscriptionData.planId || undefined
                   ).map((platform) => (
                     <option key={platform.toLowerCase()} value={platform.toLowerCase()}>
                       {platform === 'x' ? 'X (Twitter)' : platform.charAt(0).toUpperCase() + platform.slice(1)}
