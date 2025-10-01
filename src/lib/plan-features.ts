@@ -33,22 +33,22 @@ export const PLAN_FEATURES: Record<string, PlanFeatures> = {
     }
   },
   basic: {
-    id: 'prod_OAeju0utHppI2',
+    id: 'plan_cs24bg68DSLES',
     name: 'Basic Plan',
     price: 9.99,
     interval: 'month',
     features: {
-      captionLimit: 100,
+      captionLimit: 'unlimited',
       platforms: ['instagram', 'tiktok', 'x', 'facebook'],
       aiLevel: 'basic',
       support: 'email',
-      calendar: false,
+      calendar: true,
       analytics: false,
       customPrompts: false,
     }
   },
   premium: {
-    id: 'prod_Premium123',
+    id: 'plan_bB3i8FYLYYBI8',
     name: 'Premium Plan',
     price: 19.99,
     interval: 'month',
@@ -68,9 +68,12 @@ export function getPlanFeatures(subscriptionStatus: string, planId?: string): Pl
   if (subscriptionStatus === 'active' && planId) {
     // Map Whop plan IDs to our internal plan features
     const planMapping: Record<string, string> = {
-      'prod_OAeju0utHppI2': 'basic',  // Basic Plan
-      'prod_xcU9zERSGgyNK': 'premium', // Premium Plan
-      'prod_Premium123': 'premium',    // Fallback Premium Plan
+      'plan_cs24bg68DSLES': 'basic',  // Basic Plan
+      'plan_bB3i8FYLYYBI8': 'premium', // Premium Plan
+      // Legacy plan IDs for backwards compatibility
+      'prod_OAeju0utHppI2': 'basic',
+      'prod_xcU9zERSGgyNK': 'premium',
+      'prod_Premium123': 'premium',
     };
     
     const mappedPlanId = planMapping[planId] || 'premium'; // Default to premium for unknown active plans

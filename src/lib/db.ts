@@ -363,6 +363,18 @@ export class Database {
   }
 
   async listScheduledPosts(userId: number, status?: string): Promise<ScheduledPost[]> {
+    const localDev = isLocalDev();
+    const supabaseAvailable = hasSupabase();
+    
+    if (supabaseAvailable) {
+      // TODO: Implement Supabase listScheduledPosts
+      return this.localDb.listScheduledPosts(userId, status);
+    }
+    
+    if (localDev) {
+      return this.localDb.listScheduledPosts(userId, status);
+    }
+    
     try {
       if (status) {
         const result = await sql`

@@ -6,7 +6,7 @@ import CaptionGenerator from '@/components/CaptionGenerator';
 import ContentCalendar from '@/components/ContentCalendar';
 import CaptionLibrary from '@/components/CaptionLibrary';
 import NotificationToast, { useNotifications } from '@/components/NotificationToast';
-import { ThemeToggle } from '@/components/ThemeToggle';
+// Removed ThemeToggle import
 import { UserStats } from '@/types';
 import { WhopUser } from '@/lib/whop-sdk';
 
@@ -135,7 +135,6 @@ export default function HomeClientPage({ whopUser, dbUserId, onUsageRefresh }: H
             </div>
             
             <div className="flex items-center space-x-4">
-              <ThemeToggle />
               {stats && (
                 <div className="hidden md:flex items-center space-x-6 text-sm text-gray-600 dark:text-gray-400">
                   <div className="flex items-center space-x-1">
