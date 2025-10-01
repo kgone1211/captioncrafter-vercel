@@ -221,13 +221,32 @@ export class SupabaseDatabase {
       // First get current usage
       const { data: user, error: selectError } = await supabase
         .from('users')
-        .select('free_captions_used')
+        .select('free_captions_used, email')
         .eq('id', userId)
         .single();
 
       if (selectError || !user) {
         console.error('Error getting user for increment:', selectError);
-        throw selectError || new Error('User not found');
+        
+        // If user doesn't exist, create them with a default email
+        console.log('User not found, creating new user with ID:', userId);
+        await this.upsertUser(`user_${userId}@temp.com`, undefined, 'inactive');
+        
+        // Now proceed with incrementing from 0
+        const { error: updateError } = await supabase
+          .from('users')
+          .update({
+            free_captions_used: 1
+          })
+          .eq('id', userId);
+
+        if (updateError) {
+          console.error('Error incrementing usage for new user:', updateError);
+          throw updateError;
+        }
+        
+        console.log('✅ Usage incremented for new user');
+        return;
       }
 
       // Increment usage
