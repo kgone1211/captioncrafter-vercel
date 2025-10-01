@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId, eventType } = await request.json();
+    const { userId, eventType, planId } = await request.json();
     
     // Simulate different webhook events for testing
     const testEvents = {
@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
         data: {
           id: 'sub_test123',
           user_id: userId,
-          plan_id: 'plan_cs24bg68DSLES',
+          plan_id: planId || 'plan_cs24bg68DSLES',
           status: 'active',
           billing_cycle: 'month',
           next_billing_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
@@ -28,7 +28,7 @@ export async function POST(request: NextRequest) {
           id: 'pay_test123',
           user_id: userId,
           subscription_id: 'sub_test123',
-          plan_id: 'plan_cs24bg68DSLES',
+          plan_id: planId || 'plan_cs24bg68DSLES',
           amount: 999,
           currency: 'usd',
           status: 'succeeded',
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
         data: {
           id: 'sub_test123',
           user_id: userId,
-          plan_id: 'plan_cs24bg68DSLES',
+          plan_id: planId || 'plan_cs24bg68DSLES',
           status: 'cancelled',
           user: {
             email: 'test@example.com',
