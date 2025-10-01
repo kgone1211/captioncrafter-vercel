@@ -9,6 +9,7 @@ import Paywall from './Paywall';
 import { WhopUser } from '@/lib/whop-sdk';
 import { PlanAwareFeature, PlanBadge, getAvailablePlatforms } from './PlanAwareComponents';
 import SubscriptionPlanBadge from './SubscriptionPlanBadge';
+import UpgradeToPremium from './UpgradeToPremium';
 
 interface CaptionGeneratorProps {
   userId: number;
@@ -336,6 +337,9 @@ export default function CaptionGenerator({ userId, onStatsUpdate, whopUser }: Ca
         <p className="text-gray-600 mb-4">Create engaging social media captions with AI</p>
         <UsageCounter userId={userId} className="justify-center" refreshTrigger={refreshTrigger} whopUser={whopUser} />
       </div>
+
+      {/* Upgrade to Premium Banner - Only shows for Basic plan users */}
+      <UpgradeToPremium userId={userId} />
 
       {/* Generation Form */}
       <div className="bg-white rounded-xl shadow-sm border p-6">
