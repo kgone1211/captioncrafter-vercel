@@ -124,13 +124,13 @@ export class SupabaseDatabase {
     }
   }
 
-  async getUserUsage(userId: number): Promise<{ freeCaptionsUsed: number; subscriptionStatus: string }> {
+  async getUserUsage(userId: number): Promise<{ freeCaptionsUsed: number; subscriptionStatus: string; planId?: string }> {
     console.log('Supabase getUserUsage called with userId:', userId);
 
     try {
       const { data: user, error } = await supabase
         .from('users')
-        .select('free_captions_used, subscription_status')
+        .select('free_captions_used, subscription_status, plan_id')
         .eq('id', userId)
         .single();
 
@@ -142,7 +142,8 @@ export class SupabaseDatabase {
       console.log('Supabase usage result:', user);
       return {
         freeCaptionsUsed: user.free_captions_used || 0,
-        subscriptionStatus: user.subscription_status || 'inactive'
+        subscriptionStatus: user.subscription_status || 'inactive',
+        planId: user.plan_id
       };
     } catch (error) {
       console.error('Supabase getUserUsage error:', error);
