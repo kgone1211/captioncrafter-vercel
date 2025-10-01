@@ -547,8 +547,7 @@ export default function CaptionGenerator({ userId, onStatsUpdate, whopUser }: Ca
             </button>
           </div>
           
-          <div className="max-h-[800px] overflow-y-auto pr-2 space-y-6 scrollbar-thin scrollbar-thumb-gray-400 dark:scrollbar-thumb-gray-600 scrollbar-track-gray-200 dark:scrollbar-track-gray-800">
-            {captions.map((caption, index) => (
+          {captions.map((caption, index) => (
               <div key={index} className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center space-x-2">
@@ -610,7 +609,6 @@ export default function CaptionGenerator({ userId, onStatsUpdate, whopUser }: Ca
                 </div>
               </div>
             ))}
-          </div>
         </div>
       )}
     </div>
