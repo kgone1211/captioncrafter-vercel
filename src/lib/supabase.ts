@@ -310,6 +310,58 @@ export class SupabaseDatabase {
     }
   }
 
+  async listScheduledPosts(userId: number, status?: string): Promise<any[]> {
+    console.log('Supabase listScheduledPosts called with:', { userId, status });
+
+    try {
+      let query = supabase
+        .from('scheduled_posts')
+        .select('*')
+        .eq('user_id', userId)
+        .order('scheduled_at', { ascending: true });
+
+      if (status) {
+        query = query.eq('status', status);
+      }
+
+      const { data: posts, error } = await query;
+
+      if (error) {
+        console.error('Error listing scheduled posts:', error);
+        return [];
+      }
+
+      console.log('Supabase scheduled posts result:', posts);
+      return posts || [];
+    } catch (error) {
+      console.error('Supabase listScheduledPosts error:', error);
+      return [];
+    }
+  }
+
+  async listCaptions(userId: number): Promise<any[]> {
+    console.log('Supabase listCaptions called with:', { userId });
+
+    try {
+      const { data: captions, error } = await supabase
+        .from('captions')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('Error listing captions:', error);
+        return [];
+      }
+
+      console.log('Supabase captions result:', captions);
+      return captions || [];
+    } catch (error) {
+      console.error('Supabase listCaptions error:', error);
+      return [];
+    }
+  }
+
   async clearDatabase(): Promise<{ success: boolean; message: string; errors?: string[] }> {
     console.log('Clearing Supabase database...');
     const errors: string[] = [];

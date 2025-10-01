@@ -367,8 +367,8 @@ export class Database {
     const supabaseAvailable = hasSupabase();
     
     if (supabaseAvailable) {
-      // TODO: Implement Supabase listScheduledPosts
-      return this.localDb.listScheduledPosts(userId, status);
+      console.log('Using Supabase for listScheduledPosts');
+      return supabaseDb.listScheduledPosts(userId, status);
     }
     
     if (localDev) {
