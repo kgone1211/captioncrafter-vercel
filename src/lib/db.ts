@@ -148,7 +148,18 @@ export class Database {
     
     if (supabaseAvailable) {
       console.log('Using Supabase for upsertUser');
-      return supabaseDb.upsertUser(email, whopUserId, subscriptionStatus, username, planId);
+      return supabaseDb.upsertUser(
+        email, 
+        whopUserId, 
+        subscriptionStatus, 
+        username, 
+        planId,
+        billingCycle,
+        nextBillingDate,
+        subscriptionStartDate,
+        paymentMethodId,
+        whopSubscriptionId
+      );
     }
     
     if (localDev) {

@@ -67,8 +67,22 @@ export class SupabaseDatabase {
     console.log('Supabase database initialization completed (tables should be created manually)');
   }
 
-  async upsertUser(email: string, whopUserId?: string, subscriptionStatus?: string, username?: string, planId?: string): Promise<number> {
-    console.log('Supabase upsertUser called with:', { email, whopUserId, subscriptionStatus, username, planId });
+  async upsertUser(
+    email: string, 
+    whopUserId?: string, 
+    subscriptionStatus?: string, 
+    username?: string,
+    planId?: string,
+    billingCycle?: string,
+    nextBillingDate?: Date,
+    subscriptionStartDate?: Date,
+    paymentMethodId?: string,
+    whopSubscriptionId?: string
+  ): Promise<number> {
+    console.log('Supabase upsertUser called with:', { 
+      email, whopUserId, subscriptionStatus, username, planId, billingCycle, 
+      nextBillingDate, subscriptionStartDate, paymentMethodId, whopSubscriptionId 
+    });
 
     try {
       // Check if user exists by email
@@ -82,12 +96,17 @@ export class SupabaseDatabase {
         console.log('Found existing user:', existingUser);
         
         // Update user if needed
-        if (whopUserId || subscriptionStatus || planId) {
+        if (whopUserId || subscriptionStatus || planId || username || billingCycle || nextBillingDate || subscriptionStartDate || paymentMethodId || whopSubscriptionId) {
           const updateData: any = {};
           if (whopUserId) updateData.whop_user_id = whopUserId;
           if (subscriptionStatus) updateData.subscription_status = subscriptionStatus;
           if (planId) updateData.plan_id = planId;
           if (username) updateData.username = username;
+          if (billingCycle) updateData.billing_cycle = billingCycle;
+          if (nextBillingDate) updateData.next_billing_date = nextBillingDate.toISOString();
+          if (subscriptionStartDate) updateData.subscription_start_date = subscriptionStartDate.toISOString();
+          if (paymentMethodId) updateData.payment_method_id = paymentMethodId;
+          if (whopSubscriptionId) updateData.whop_subscription_id = whopSubscriptionId;
           
           const { error: updateError } = await supabase
             .from('users')
@@ -96,6 +115,8 @@ export class SupabaseDatabase {
 
           if (updateError) {
             console.error('Error updating user:', updateError);
+          } else {
+            console.log('✅ User updated successfully:', updateData);
           }
         }
         
@@ -103,16 +124,25 @@ export class SupabaseDatabase {
       }
 
       // Create new user only if not found
+      const insertData: any = {
+        email,
+        whop_user_id: whopUserId,
+        subscription_status: subscriptionStatus || 'inactive',
+        plan_id: planId,
+        username: username,
+        free_captions_used: 0
+      };
+
+      // Add optional fields if provided
+      if (billingCycle) insertData.billing_cycle = billingCycle;
+      if (nextBillingDate) insertData.next_billing_date = nextBillingDate.toISOString();
+      if (subscriptionStartDate) insertData.subscription_start_date = subscriptionStartDate.toISOString();
+      if (paymentMethodId) insertData.payment_method_id = paymentMethodId;
+      if (whopSubscriptionId) insertData.whop_subscription_id = whopSubscriptionId;
+
       const { data: newUser, error: insertError } = await supabase
         .from('users')
-        .insert({
-          email,
-          whop_user_id: whopUserId,
-          subscription_status: subscriptionStatus || 'inactive',
-          plan_id: planId,
-          username: username,
-          free_captions_used: 0
-        })
+        .insert(insertData)
         .select('id')
         .single();
 
