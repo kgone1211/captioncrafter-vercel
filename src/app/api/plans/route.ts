@@ -18,7 +18,7 @@ export async function GET() {
         ]
       },
       {
-        id: 'plan_bB3i8FYLYYBI8', // Premium Plan Access Pass ID
+        id: 'plan_qbxMJNrDzxyfw', // Premium Plan Access Pass ID
         name: 'Premium Plan',
         price: 19.99,
         interval: 'month',

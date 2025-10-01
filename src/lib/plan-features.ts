@@ -48,7 +48,7 @@ export const PLAN_FEATURES: Record<string, PlanFeatures> = {
     }
   },
   premium: {
-    id: 'plan_bB3i8FYLYYBI8',
+    id: 'plan_qbxMJNrDzxyfw',
     name: 'Premium Plan',
     price: 19.99,
     interval: 'month',
@@ -69,7 +69,7 @@ export function getPlanFeatures(subscriptionStatus: string, planId?: string): Pl
     // Map Whop plan IDs to our internal plan features
     const planMapping: Record<string, string> = {
       'plan_cs24bg68DSLES': 'basic',  // Basic Plan
-      'plan_bB3i8FYLYYBI8': 'premium', // Premium Plan
+      'plan_qbxMJNrDzxyfw': 'premium', // Premium Plan
       // Legacy plan IDs for backwards compatibility
       'prod_OAeju0utHppI2': 'basic',
       'prod_xcU9zERSGgyNK': 'premium',
