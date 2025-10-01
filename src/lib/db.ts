@@ -257,8 +257,8 @@ export class Database {
     const supabaseAvailable = hasSupabase();
     
     if (supabaseAvailable) {
-      // TODO: Implement Supabase listCaptions
-      return this.localDb.listCaptions(userId, platform, favoriteOnly);
+      console.log('Using Supabase for listCaptions');
+      return supabaseDb.listCaptions(userId);
     }
     
     if (localDev) {
